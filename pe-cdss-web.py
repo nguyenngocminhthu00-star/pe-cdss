@@ -3,7 +3,7 @@ import math
 
 # Cấu hình trang Streamlit
 st.set_page_config(
-    page_title="Hỗ trợ Quyết định Lâm sàng PE - AHA/ACC 2026",
+    page_title="Hỗ trợ Quyết định Lâm sàng PE - AHA/ACC 2026 (Bản chuẩn)",
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -71,11 +71,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<div class='main-header'>🩺 CDSS THUYÊN TẮC PHỔI CẤP (AHA/ACC 2026)</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v11)</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v12)</div>", unsafe_allow_html=True)
 
 # Quản lý Tab qua Session State để hỗ trợ chuyển tab động bằng nút bấm
 if 'active_tab' not in st.session_state:
     st.session_state.active_tab = "GIAI ĐOẠN 1"
+
+if 'is_pregnant' not in st.session_state:
+    st.session_state.is_pregnant = False
 
 # Tạo nút chọn Tab ở đầu trang
 tab_cols = st.columns(2)
@@ -102,7 +105,8 @@ if st.session_state.active_tab == "GIAI ĐOẠN 1":
         st.subheader("📋 Thông tin Sơ bộ & Đánh giá Xác suất tiền nghiệm (CPTP)")
         
         is_suspected = st.checkbox("Bệnh nhân có triệu chứng/dấu hiệu nghi ngờ PE cấp tính (khó thở, đau ngực, ho ra máu, ngất...)?", value=True)
-        is_pregnant = st.checkbox("Bệnh nhân hiện tại đang mang thai?")
+        is_pregnant = st.checkbox("Bệnh nhân hiện tại đang mang thai?", value=st.session_state.is_pregnant)
+        st.session_state.is_pregnant = is_pregnant
         
         if is_suspected:
             score_type = st.radio("Chọn Thang điểm Đánh giá Xác suất tiền nghiệm:", ["Thang điểm Wells (Ưu tiên)", "Thang điểm Geneva Rút gọn"])
@@ -235,7 +239,7 @@ if st.session_state.active_tab == "GIAI ĐOẠN 1":
                                 st.rerun()
                 
                 else: # YEARS
-                    if is_pregnant:
+                    if st.session_state.is_pregnant:
                         st.info("Chiến lược B: Thuật toán YEARS thích ứng thai kỳ (Pregnancy-Adapted YEARS) (Class 2b, LOE B-R)")
                     else:
                         st.info("Chiến lược B: Thuật toán YEARS tiêu chuẩn (Class 2a, LOE B-R)")
@@ -257,7 +261,7 @@ if st.session_state.active_tab == "GIAI ĐOẠN 1":
                     if d_dimer_val_b > 0:
                         if d_dimer_val_b < years_cutoff:
                             st.markdown(f"<div class='u-card urgency-low'><strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_b}) < Ngưỡng YEARS ({years_cutoff})</strong><br>LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để không cần chụp CTPA.</div>", unsafe_allow_html=True)
-                            if is_pregnant and y1:
+                            if st.session_state.is_pregnant and y1:
                                 st.warning("👉 *Lưu ý thai kỳ:* Nếu thai phụ có triệu chứng chi dưới và siêu âm Doppler tĩnh mạch (CUS) dương tính, có thể điều trị kháng đông ngay mà không cần chụp CTPA.")
                             if st.button("📊 Vẫn chuyển sang Phân loại & Điều trị (Giả định)", type="secondary"):
                                 st.session_state.active_tab = "GIAI ĐOẠN 2"
@@ -567,7 +571,8 @@ elif st.session_state.active_tab == "GIAI ĐOẠN 2":
         st.markdown("---")
         st.write("💼 **Các tình huống lâm sàng đặc biệt:**")
         has_aps = st.checkbox("Bệnh nhân mắc Hội chứng kháng Phospholipid (APS) xác định?", key="has_aps")
-        is_pregnant_t2 = st.checkbox("Bệnh nhân đang mang thai hoặc cho con bú?", value=is_pregnant, key="is_pregnant_t2")
+        is_pregnant_t2 = st.checkbox("Bệnh nhân đang mang thai hoặc cho con bú?", value=st.session_state.is_pregnant, key="is_pregnant_t2")
+        st.session_state.is_pregnant = is_pregnant_t2
         has_cancer = st.checkbox("Bệnh nhân mắc ung thư đang hoạt động / tiến triển (Cancer-associated thrombosis)?", key="has_cancer")
         has_drug_interactions = st.checkbox("Đang sử dụng thuốc tương tác mạnh (như Ketoconazole, Itraconazole, Ritonavir, Rifampicin, Phenytoin, Carbamazepine)?", key="has_drug_interactions")
         
