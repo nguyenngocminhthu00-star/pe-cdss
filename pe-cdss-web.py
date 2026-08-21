@@ -71,7 +71,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<div class='main-header'>🩺 CDSS THUYÊN TẮC PHỔI CẤP (AHA/ACC 2026)</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v15)</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v16)</div>", unsafe_allow_html=True)
 
 # Quản lý State bằng Session State
 if 'step' not in st.session_state:
@@ -408,14 +408,79 @@ elif st.session_state.step == 2:
             st.markdown("""
             <div class='u-card urgency-low'>
                 <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM A (Thuyên tắc phổi dưới lâm sàng - Subclinical PE)</strong><br>
-                Bệnh nhân hoàn toàn không có triệu chứng nghi ngờ và được phát hiện tình cờ trên CTPA khi làm vì mục đích khác. Thích hợp để quản lý ngoại trú an toàn.
+                Bệnh nhân hoàn toàn không có triệu chứng nghi ngờ và được phát hiện tình cờ trên CTPA khi thực hiện vì mục đích khác.
             </div>
             """, unsafe_allow_html=True)
             st.session_state.resp_modifier = False
             
-            if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
-                st.session_state.step = 3
-                st.rerun()
+            st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+            st.write("##### 📋 Đánh giá Tiêu chuẩn An toàn Điều trị Ngoại trú cho Nhóm A")
+            st.caption("Khuyến cáo AHA/ACC 2026 chỉ cho phép quản lý ngoại trú (Class 1, LOE A) cho Nhóm A khi thỏa mãn đầy đủ các tiêu chuẩn y khoa và xã hội dưới đây:")
+            
+            st.write("**1. Sàng lọc Y khoa (sPESI hoặc Hestia):**")
+            a_score_method = st.selectbox("Chọn thang điểm sàng lọc y khoa cho Nhóm A:", [
+                "Đánh giá bằng sPESI (Simplified PESI) - Đòi hỏi sPESI = 0",
+                "Đánh giá bằng Tiêu chí Hestia (11 mục loại trừ) - Đòi hỏi Hestia = 0"
+            ], key="a_score_method")
+            
+            is_a_medical_safe = False
+            
+            if "sPESI" in a_score_method:
+                st.info("Tính sPESI cho Nhóm A (Mỗi tiêu chí dương tính tính 1 điểm):")
+                as1 = st.checkbox("Tuổi > 80", key="as1")
+                as2 = st.checkbox("Tiền sử ung thư đang tiến triển", key="as2")
+                as3 = st.checkbox("Tiền sử bệnh tim phổi mạn tính (suy tim/COPD...)", key="as3")
+                as4 = st.checkbox("Tần số tim >= 110 chu kỳ/phút", key="as4")
+                as5 = st.checkbox("Huyết áp tâm thu < 100 mmHg", key="as5")
+                as6 = st.checkbox("SpO2 < 90% (hoặc cần oxy hỗ trợ)", key="as6")
+                
+                aspesi_score = sum([as1, as2, as3, as4, as5, as6])
+                st.metric("Tổng điểm sPESI cho Nhóm A", f"{aspesi_score} điểm")
+                is_a_medical_safe = (aspesi_score == 0)
+                if is_a_medical_safe:
+                    st.success("✔️ sPESI = 0 điểm (Nguy cơ thấp). Đủ tiêu chuẩn y khoa!")
+                else:
+                    st.error("❌ sPESI >= 1 điểm (Nguy cơ cao). Không khuyến cáo điều trị ngoại trú.")
+            else:
+                st.info("Sàng lọc tiêu chí Hestia cho Nhóm A (Đòi hỏi tất cả câu hỏi là 'Không'):")
+                ah1 = st.checkbox("1. Huyết động không ổn định (cần vận mạch, bù dịch truyền, đặt ống, CPR)?", key="ah1")
+                ah2 = st.checkbox("2. Cần dùng tiêu sợi huyết hoặc phẫu thuật lấy huyết khối?", key="ah2")
+                ah3 = st.checkbox("3. Nguy cơ chảy máu cao hoặc đang chảy máu hoạt động?", key="ah3")
+                ah4 = st.checkbox("4. Cần thở oxy hỗ trợ liên tục >24h để duy trì SpO2 >90%?", key="ah4")
+                ah5 = st.checkbox("5. PE khởi phát khi đang dùng kháng đông liều đầy đủ?", key="ah5")
+                ah6 = st.checkbox("6. Đau ngực dữ dội cần dùng thuốc giảm đau opioid đường truyền tĩnh mạch >24h?", key="ah6")
+                ah7 = st.checkbox("7. Có lý do y khoa hoặc xã hội cần nhập viện kéo dài >24h?", key="ah7")
+                ah8 = st.checkbox("8. Độ thanh thải Creatinine CrCl < 30 mL/phút?", key="ah8")
+                ah9 = st.checkbox("9. Có suy gan nặng?", key="ah9")
+                ah10 = st.checkbox("10. Bệnh nhân đang mang thai?", key="ah10")
+                ah11 = st.checkbox("11. Tiền sử giảm tiểu cầu do Heparin (HIT)?", key="ah11")
+                
+                ahestia_positive = any([ah1, ah2, ah3, ah4, ah5, ah6, ah7, ah8, ah9, ah10, ah11])
+                is_a_medical_safe = not ahestia_positive
+                if is_a_medical_safe:
+                    st.success("✔️ Tất cả câu hỏi Hestia là 'Không'. Đủ tiêu chuẩn y khoa!")
+                else:
+                    st.error("❌ Hestia dương tính. Bệnh nhân cần nhập viện ngắn ngày.")
+                    
+            st.write("---")
+            st.write("**2. Tiêu chuẩn Xã hội & Điều kiện Theo dõi (Bắt buộc):**")
+            asoc1 = st.checkbox("Bệnh nhân có điều kiện gia đình, xã hội ổn định, có người hỗ trợ?", key="asoc1")
+            asoc2 = st.checkbox("Tiếp cận thuốc kháng đông ngay lập tức và thuận tiện?", key="asoc2")
+            asoc3 = st.checkbox("Có kế hoạch theo dõi y khoa và hẹn tái khám chuyên khoa nhanh chóng, tin cậy (trong vòng 24-72 giờ)?", key="asoc3")
+            
+            is_a_social_safe = asoc1 and asoc2 and asoc3
+            
+            if is_a_medical_safe and is_a_social_safe:
+                st.markdown("<div class='u-card urgency-low'><strong>✔️ ĐỦ TIÊU CHUẨN ĐIỀU TRỊ NGOẠI TRÚ AN TOÀN (Class 1)</strong><br>Bệnh nhân thỏa mãn đầy đủ điều kiện y khoa và xã hội để quản lý ngoại trú an toàn.</div>", unsafe_allow_html=True)
+                if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
+                    st.session_state.step = 3
+                    st.rerun()
+            else:
+                st.markdown("<div class='u-card urgency-high'><strong>❌ CHƯA ĐỦ ĐIỀU KIỆN ĐIỀU TRỊ NGOẠI TRÚ AN TOÀN</strong><br>Khuyến cáo điều trị nội trú ngắn ngày tại khoa Thường do chưa thỏa mãn đủ các điều kiện y khoa hoặc xã hội.</div>", unsafe_allow_html=True)
+                if st.button("Vẫn xác nhận & Đi tới Bước 3 để tính liều điều trị nội trú ➡️", type="secondary", use_container_width=True):
+                    st.session_state.step = 3
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # ==============================================================================
         # LUỒNG TUẦN TỰ CHO HUYẾT ÁP ỔN ĐỊNH VÀ TỤT HUYẾT ÁP THOÁNG QUA (YÊU CẦU MỚI: ĐÁNH TỔN THƯƠNG CƠ QUAN TRƯỚC!)
@@ -825,13 +890,15 @@ elif st.session_state.step == 3:
         st.write("##### 📍 Phân luồng điều trị (Triage) & Khuyến cáo PERT:")
         
         if st.session_state.final_category in ["A", "B1", "B2"]:
-            st.info("""
-            **Khuyến cáo Quản lý Ngoại trú (Class 1, LOE A):**<br>
-            Có thể cân nhắc điều trị ngoại trú hoặc xuất viện sớm cho các bệnh nhân thuộc **Nhóm A** hoặc một số ít bệnh nhân **Nhóm B** nếu thỏa mãn đầy đủ các điều kiện y khoa - xã hội sau:<br>
-            1. Điểm sPESI = 0 hoặc Hestia âm tính (đã rà soát ở Giai đoạn 2).<br>
-            2. Bệnh nhân có điều kiện gia đình, xã hội ổn định, có người hỗ trợ.<br>
-            3. Tiếp cận thuốc kháng đông ngay lập tức và thuận tiện.<br>
-            4. Có kế hoạch theo dõi y khoa và hẹn tái khám chuyên khoa nhanh chóng, tin cậy (trong vòng 24-72 giờ đầu).
+            st.markdown("""
+            <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534; margin-bottom: 15px;'>
+                <strong>Khuyến cáo Quản lý Ngoại trú (Class 1, LOE A):</strong><br>
+                Có thể cân nhắc điều trị ngoại trú hoặc xuất viện sớm cho các bệnh nhân thuộc <strong>Nhóm A</strong> hoặc một số ít bệnh nhân <strong>Nhóm B</strong> nếu thỏa mãn đầy đủ các điều kiện y khoa - xã hội sau:<br>
+                1. Điểm sPESI = 0 hoặc Hestia âm tính (đã rà soát ở Giai đoạn 2).<br>
+                2. Bệnh nhân có điều kiện gia đình, xã hội ổn định, có người hỗ trợ.<br>
+                3. Tiếp cận thuốc kháng đông ngay lập tức và thuận tiện.<br>
+                4. Có kế hoạch theo dõi y khoa và hẹn tái khám chuyên khoa nhanh chóng, tin cậy (trong vòng 24-72 giờ đầu).
+            </div>
             """, unsafe_allow_html=True)
             
         elif st.session_state.final_category in ["C1", "C2", "C3"]:
