@@ -3,7 +3,7 @@ import math
 
 # Cấu hình trang Streamlit
 st.set_page_config(
-    page_title="Hỗ trợ Quyết định Lâm sàng PE - AHA/ACC 2026 (Bản v13)",
+    page_title="Hỗ trợ Quyết định Lâm sàng PE - AHA/ACC 2026",
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -332,6 +332,7 @@ elif st.session_state.step == 2:
         # 1. Trạng thái huyết động chính
         primary_hemo = st.selectbox("1. Hãy chọn trạng thái Huyết động chính của bệnh nhân:", [
             "Huyết động ổn định (Huyết áp bình thường)",
+            "Thuyên tắc phổi phát hiện tình cờ, hoàn toàn không có triệu chứng nghi ngờ (Category A - Subclinical PE)",
             "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch, không giảm tưới máu cơ quan)",
             "Tụt huyết áp kéo dài / Sốc tim thực sự (Huyết áp tâm thu <90 mmHg hoặc giảm >40 mmHg kéo dài >=15 phút, hoặc cần thuốc vận mạch để duy trì HA)",
             "Ngừng tuần hoàn hoặc Sốc tim kháng trị (Cần hồi sức tim phổi CPR tích cực hoặc vận mạch liều tối đa)"
@@ -348,6 +349,10 @@ elif st.session_state.step == 2:
             r_e = st.checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?")
             st.session_state.resp_modifier = r_e
             
+            if st.button("Xác nhận & Đi tới Bước 3: Điều trị", type="primary", key="btn_confirm_e2", use_container_width=True):
+                st.session_state.step = 3
+                st.rerun()
+            
         elif primary_hemo == "Tụt huyết áp kéo dài / Sốc tim thực sự (Huyết áp tâm thu <90 mmHg hoặc giảm >40 mmHg kéo dài >=15 phút, hoặc cần thuốc vận mạch để duy trì HA)":
             st.session_state.final_category = "E1"
             st.markdown("<div class='u-card urgency-high'><strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM E1 (Suy tim phổi hoàn toàn - Sốc tim thực sự)</strong><br>Cần theo dõi sát tại ICU/CCU và chuẩn bị phương án tiêu sợi huyết hoặc can thiệp cơ học MT.</div>", unsafe_allow_html=True)
@@ -357,6 +362,19 @@ elif st.session_state.step == 2:
             st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
             r_e = st.checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?")
             st.session_state.resp_modifier = r_e
+            
+            if st.button("Xác nhận & Đi tới Bước 3: Điều trị", type="primary", key="btn_confirm_e1", use_container_width=True):
+                st.session_state.step = 3
+                st.rerun()
+
+        elif primary_hemo == "Thuyên tắc phổi phát hiện tình cờ, hoàn toàn không có triệu chứng nghi ngờ (Category A - Subclinical PE)":
+            st.session_state.final_category = "A"
+            st.markdown("<div class='u-card urgency-low'><strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM A (Dưới lâm sàng - Subclinical PE)</strong><br>Thuyên tắc phổi phát hiện tình cờ trên phim chụp CTPA vì bệnh lý khác, hoàn toàn không có triệu chứng nghi ngờ PE. Đủ điều kiện xem xét điều trị ngoại trú an toàn bằng DOACs đường uống (Class 1).</div>", unsafe_allow_html=True)
+            st.session_state.resp_modifier = False
+            
+            if st.button("Xác nhận & Đi tới Bước 3: Điều trị", type="primary", key="btn_confirm_a", use_container_width=True):
+                st.session_state.step = 3
+                st.rerun()
 
         elif primary_hemo == "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch, không giảm tưới máu cơ quan)":
             # Chờ đánh giá giảm tưới máu để phân biệt D1 và D2
