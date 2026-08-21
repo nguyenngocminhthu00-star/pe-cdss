@@ -71,7 +71,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<div class='main-header'>🩺 CDSS THUYÊN TẮC PHỔI CẤP (AHA/ACC 2026)</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v6)</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v7)</div>", unsafe_allow_html=True)
 
 # Quản lý Tab qua Session State để hỗ trợ chuyển tab động bằng nút bấm
 if 'active_tab' not in st.session_state:
@@ -514,7 +514,7 @@ elif st.session_state.active_tab == "GIAI ĐOẠN 2":
         
         st.write(f"Chỉ số BMI: **{bmi:.1f} kg/m²** | Độ thanh thải Creatinine (CrCl): **{crcl:.1f} mL/phút**")
         
-        st.markdown("---\")
+        st.markdown("---")
         
         # Hiển thị phác đồ điều trị cá thể hóa tương ứng với phân nhóm
         st.write(f"##### 🩺 Phác đồ Kháng đông & Phân luồng cho nhóm **{final_group}**:")
