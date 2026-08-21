@@ -67,11 +67,25 @@ st.markdown("""
         font-size: 0.85rem;
         font-weight: 600;
     }
+    .table-style {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+    }
+    .table-style th, .table-style td {
+        border: 1px solid #CBD5E1;
+        padding: 8px 12px;
+        text-align: left;
+    }
+    .table-style th {
+        background-color: #F1F5F9;
+        font-weight: 600;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("<div class='main-header'>🩺 CDSS THUYÊN TẮC PHỔI CẤP (AHA/ACC 2026)</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v17)</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v18)</div>", unsafe_allow_html=True)
 
 # Khởi tạo kho lưu trữ toàn cục cho các lựa chọn nếu chưa có
 if 'saved_inputs' not in st.session_state:
@@ -166,7 +180,7 @@ if st.session_state.step == 1:
             <div class='u-card urgency-medium'>
                 <strong>⚠️ CẢNH BÁO LÂM SÀNG:</strong> Bệnh nhân đang dùng kháng đông liều đầy đủ không phù hợp để áp dụng các chiến lược loại trừ dựa trên D-dimer (như PERC hay YEARS) vì D-dimer bị ảnh hưởng mạnh bởi thuốc kháng đông. Hãy tiến hành đánh giá lâm sàng trực tiếp hoặc chỉ định hình ảnh học nếu nghi ngờ tắc mạch tái phát/tiến triển.
             </div>
-""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             
         is_suspected = persistent_checkbox("Bệnh nhân có triệu chứng/dấu hiệu nghi ngờ PE cấp tính (khó thở, đau ngực, ho ra máu, ngất...)?", key="is_suspected", default=True)
         is_pregnant_input = persistent_checkbox("Bệnh nhân hiện tại đang mang thai?", key="is_pregnant")
@@ -188,7 +202,7 @@ if st.session_state.step == 1:
                         <strong>🚨 CHỈ ĐỊNH SIÊU ÂM DOOPLER TĨNH MẠCH CHI DƯỚI (CUS):</strong><br>
                         Theo Guideline, thai phụ có triệu chứng DVT phải thực hiện siêu âm CUS trước tiên.
                     </div>
-""", unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
                     
                     cus_result = persistent_radio("Kết quả siêu âm CUS chi dưới:", [
                         "Chưa thực hiện / Kết quả Âm tính (Không thấy huyết khối)",
@@ -198,212 +212,224 @@ if st.session_state.step == 1:
                     if "DƯƠNG TÍNH" in cus_result:
                         st.markdown("""
                         <div class='u-card urgency-low'>
-                            <strong>>>> KẾT LUẬN CHẨN ĐOÁN: XÁC NHẬN DVT (KHỞI TRỊ KHÁNG ĐÔNG NGAY)</strong><br>
-                            Có bằng chứng DVT chân -> Chỉ định điều trị kháng đông LMWH ngay lập tức mà không cần chụp CTPA hay làm D-dimer để tránh phơi nhiễm phóng xạ!
+                            <strong>>>> KẾT LUẬN CHẨN ĐOÁN: XÁC LẬP VTE/PE LÂM SÀNG (KHỞI TRỊ KHÁNG ĐÔNG NGAY)</strong><br>
+                            Có bằng chứng DVT chân trên siêu âm -> Khuyến cáo điều trị kháng đông bằng LMWH ngay lập tức (Class 1, LOE C-LD) mà không nhất thiết phải chụp CTPA hay làm D-dimer để tránh phơi nhiễm phóng xạ (VTE/PE presumed). Vui lòng tích chọn 'Xác nhận chẩn đoán xác định PE' bên dưới để mở khóa Bước 2 và Bước 3.
                         </div>
-""", unsafe_allow_html=True)
-                        st.session_state.final_category = "B2"  # Giả định nhóm B
-                        if st.button("📊 Chuyển ngay sang Bước 3: Điều trị", type="primary"):
-                            st.session_state.step = 3
-                            st.rerun()
-                        st.markdown("</div>", unsafe_allow_html=True)
-                        st.stop()
+                        """, unsafe_allow_html=True)
+                        # KHÔNG tự gán B2, để bác sĩ xác nhận pe_confirmed và phân tầng thủ công ở Bước 2
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-            # Đánh giá Wells/Geneva tiêu chuẩn
-            score_type = persistent_radio("Chọn Thang điểm Đánh giá Xác suất lâm sàng tiền nghiệm:", ["Thang điểm Wells (Khuyên dùng)", "Thang điểm Geneva Rút gọn"], key="score_type")
-            
-            if score_type == "Thang điểm Wells (Khuyên dùng)":
-                st.info("Tính điểm Wells:")
-                w1 = persistent_checkbox("Lâm sàng có triệu chứng/dấu hiệu của DVT (sưng chân, đau dọc tĩnh mạch) (+3.0)", key="w1")
-                w2 = persistent_checkbox("PE là chẩn đoán khả thi nhất hoặc có khả năng xảy ra cao nhất (+3.0)", key="w2")
-                w3 = persistent_checkbox("Tần số tim > 100 chu kỳ/phút (+1.5)", key="w3")
-                w4 = persistent_checkbox("Bất động >= 3 ngày liên tục hoặc mới phẫu thuật trong vòng 4 tuần trước (+1.5)", key="w4")
-                w5 = persistent_checkbox("Tiền sử cá nhân đã từng bị DVT hoặc PE trước đây (+1.5)", key="w5")
-                w6 = persistent_checkbox("Bệnh nhân có ho ra máu (+1.0)", key="w6")
-                w7 = persistent_checkbox("Bệnh nhân có ung thư đang tiến triển (đang điều trị, điều trị giảm nhẹ, hoặc phát hiện trong 6 tháng) (+1.0)", key="w7")
+            # Đánh giá Wells/Geneva tiêu chuẩn (Chỉ hiển thị khi không dùng kháng đông liều đầy đủ)
+            if not is_anticoagulated:
+                score_type = persistent_radio("Chọn Thang điểm Đánh giá Xác suất lâm sàng tiền nghiệm:", ["Thang điểm Wells (Khuyên dùng)", "Thang điểm Geneva Rút gọn"], key="score_type")
                 
-                cptp_score = (3.0 if w1 else 0.0) + (3.0 if w2 else 0.0) + (1.5 if w3 else 0.0) + (1.5 if w4 else 0.0) + (1.5 if w5 else 0.0) + (1.0 if w6 else 0.0) + (1.0 if w7 else 0.0)
-                st.metric(label="Tổng điểm Wells", value=f"{cptp_score} điểm")
-                
-                if cptp_score < 2.0:
-                    cptp_category = "LOW"
-                elif cptp_score <= 6.0:
-                    cptp_category = "INTERMEDIATE"
-                else:
-                    cptp_category = "HIGH"
+                if score_type == "Thang điểm Wells (Khuyên dùng)":
+                    st.info("Tính điểm Wells:")
+                    w1 = persistent_checkbox("Lâm sàng có triệu chứng/dấu hiệu của DVT (sưng chân, đau dọc tĩnh mạch) (+3.0)", key="w1")
+                    w2 = persistent_checkbox("PE là chẩn đoán khả thi nhất hoặc có khả năng xảy ra cao nhất (+3.0)", key="w2")
+                    w3 = persistent_checkbox("Tần số tim > 100 chu kỳ/phút (+1.5)", key="w3")
+                    w4 = persistent_checkbox("Bất động >= 3 ngày liên tục hoặc mới phẫu thuật trong vòng 4 tuần trước (+1.5)", key="w4")
+                    w5 = persistent_checkbox("Tiền sử cá nhân đã từng bị DVT hoặc PE trước đây (+1.5)", key="w5")
+                    w6 = persistent_checkbox("Bệnh nhân có ho ra máu (+1.0)", key="w6")
+                    w7 = persistent_checkbox("Bệnh nhân có ung thư đang tiến triển (đang điều trị, điều trị giảm nhẹ, hoặc phát hiện trong 6 tháng) (+1.0)", key="w7")
                     
-            else:
-                st.info("Tính điểm Geneva Rút gọn (Simplified Revised Geneva):")
-                g1 = persistent_checkbox("Tuổi > 65 tuổi (+1)", key="g1")
-                g2 = persistent_checkbox("Tiền sử cá nhân bị DVT hoặc PE (+1)", key="g2")
-                g3 = persistent_checkbox("Phẫu thuật hoặc gãy xương chi dưới trong vòng 1 tháng qua (+1)", key="g3")
-                g4 = persistent_checkbox("Ung thư đang hoạt động/tiến triển (+1)", key="g4")
-                g5 = persistent_checkbox("Đau một bên chi dưới (+1)", key="g5")
-                g6 = persistent_checkbox("Ho ra máu (+1)", key="g6")
-                g7 = persistent_checkbox("Tần số tim 75 - 94 chu kỳ/phút (+1) HOẶC >= 95 chu kỳ/phút (+2)", key="g7")
-                g8 = persistent_checkbox("Đau khi sờ nắn tĩnh mạch sâu một bên chi dưới và phù một bên chân (+1)", key="g8")
-                
-                cptp_score = sum([g1, g2, g3, g4, g5, g6, g8])
-                # Tính riêng tần số tim cho Geneva
-                if g7:
-                    # Giả định nếu tích chọn g7 thì tùy tần số tim thực tế, tối thiểu +1 hoặc +2. Ta mặc định cộng 1 điểm cho đơn giản
-                    cptp_score += 1.0
-                
-                st.metric(label="Tổng điểm Geneva Rút gọn", value=f"{cptp_score} điểm")
-                
-                if cptp_score <= 1.0:
-                    cptp_category = "LOW"
-                elif cptp_score <= 4.0:
-                    cptp_category = "INTERMEDIATE"
-                else:
-                    cptp_category = "HIGH"
+                    cptp_score = (3.0 if w1 else 0.0) + (3.0 if w2 else 0.0) + (1.5 if w3 else 0.0) + (1.5 if w4 else 0.0) + (1.5 if w5 else 0.0) + (1.0 if w6 else 0.0) + (1.0 if w7 else 0.0)
+                    st.metric(label="Tổng điểm Wells", value=f"{cptp_score} điểm")
                     
+                    if cptp_score < 2.0:
+                        cptp_category = "LOW"
+                    elif cptp_score <= 6.0:
+                        cptp_category = "INTERMEDIATE"
+                    else:
+                        cptp_category = "HIGH"
+                        
+                else:
+                    st.info("Tính điểm Geneva Rút gọn (Simplified Revised Geneva):")
+                    g1 = persistent_checkbox("Tuổi > 65 tuổi (+1)", key="g1")
+                    g2 = persistent_checkbox("Tiền sử cá nhân bị DVT hoặc PE (+1)", key="g2")
+                    g3 = persistent_checkbox("Phẫu thuật hoặc gãy xương chi dưới trong vòng 1 tháng qua (+1)", key="g3")
+                    g4 = persistent_checkbox("Ung thư đang hoạt động/tiến triển (+1)", key="g4")
+                    g5 = persistent_checkbox("Đau một bên chi dưới (+1)", key="g5")
+                    g6 = persistent_checkbox("Ho ra máu (+1)", key="g6")
+                    g7 = persistent_checkbox("Tần số tim 75 - 94 chu kỳ/phút (+1) HOẶC >= 95 chu kỳ/phút (+1)", key="g7") # Sửa wording chuẩn Geneva rút gọn cả 2 mức đều +1
+                    g8 = persistent_checkbox("Đau khi sờ nắn tĩnh mạch sâu một bên chi dưới và phù một bên chân (+1)", key="g8")
+                    
+                    cptp_score = sum([g1, g2, g3, g4, g5, g6, g8])
+                    if g7:
+                        cptp_score += 1.0
+                    
+                    st.metric(label="Tổng điểm Geneva Rút gọn", value=f"{cptp_score} điểm")
+                    
+                    if cptp_score <= 1.0:
+                        cptp_category = "LOW"
+                    elif cptp_score <= 4.0:
+                        cptp_category = "INTERMEDIATE"
+                    else:
+                        cptp_category = "HIGH"
         else:
             st.success("Bệnh nhân không có triệu chứng nghi ngờ. Khám phát hiện tình cờ -> Thích hợp để quản lý ngoại trú (Category A)")
-            if st.button("📊 Chuyển thẳng sang Phân nhóm & Điều trị (Category A)", type="primary"):
-                st.session_state.step = 2
-                st.rerun()
+            
+        st.write("---")
+        st.write("##### 📌 Xác nhận kết quả chẩn đoán cuối cùng")
+        pe_confirmed_val = persistent_checkbox("Xác nhận CHẨN ĐOÁN XÁC ĐỊNH Thuyên tắc phổi (PE) trên hình ảnh học (CTPA, V/Q Scan, hoặc CUS chi dưới dương tính ở thai phụ) để mở khóa phân tầng và điều trị ở Bước 2 & 3.", key="pe_confirmed")
 
     with col1_2:
         st.subheader("⚡ 2. Thuật toán Loại trừ Không hình ảnh học")
         
-        if is_suspected and not is_anticoagulated:
-            st.write(f"Xác suất tiền nghiệm lâm sàng (CPTP): **{cptp_category}** (Điểm: {cptp_score})")
-            
-            # Sàng lọc bằng PERC nếu lâm sàng nguy cơ thấp
-            if cptp_category == "LOW":
-                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                st.write("##### 🩺 Sàng lọc bằng Tiêu chí Loại trừ PERC (PE Rule-Out Criteria)")
-                st.caption("Nếu bệnh nhân thỏa mãn toàn bộ 8 tiêu chí bên dưới (tất cả là Không), có thể loại trừ PE hoàn toàn tại giường mà không cần làm D-dimer.")
-                
-                p1 = persistent_checkbox("1. Tuổi >= 50?", key="p1")
-                p2 = persistent_checkbox("2. Tần số tim >= 100 chu kỳ/phút?", key="p2")
-                p3 = persistent_checkbox("3. SpO2 ở khí trời < 95%?", key="p3")
-                p4 = persistent_checkbox("4. Sưng phù một bên chân?", key="p4")
-                p5 = persistent_checkbox("5. Ho ra máu?", key="p5")
-                p6 = persistent_checkbox("6. Chấn thương hoặc phẫu thuật lớn cần gây mê trong 4 tuần qua?", key="p6")
-                p7 = persistent_checkbox("7. Tiền sử bị DVT hoặc PE?", key="p7")
-                p8 = persistent_checkbox("8. Sử dụng Hormone/Estrogen đường uống?", key="p8")
-                
-                any_perc_positive = any([p1, p2, p3, p4, p5, p6, p7, p8])
-                
-                if not any_perc_positive:
-                    st.markdown("""
-                    <div class='u-card urgency-low'>
-                        <strong>>>> KẾT QUẢ PERC: ÂM TÍNH (LOẠI TRỪ PE HOÀN TOÀN)</strong><br>
-                        Bệnh nhân thỏa mãn toàn bộ 8 tiêu chí loại trừ. LOẠI TRỪ PE TẠI GIƯỜNG BỆNH! Không cần làm D-dimer, không cần chụp CTPA.
-                    </div>
-""", unsafe_allow_html=True)
-                    if st.button("Xác nhận & Hoàn thành ca lâm sàng", type="primary"):
-                        st.success("Ca lâm sàng đã được loại trừ an toàn.")
-                    st.markdown("</div>", unsafe_allow_html=True)
-                    st.stop()
-                else:
-                    st.markdown("""
-                    <div class='u-card urgency-medium'>
-                        <strong>>>> KẾT QUẢ PERC: DƯƠNG TÍNH</strong><br>
-                        Không thể loại trừ bằng PERC. Bắt buộc phải thực hiện xét nghiệm D-dimer theo một trong hai chiến lược bên dưới.
-                    </div>
-""", unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            # Đánh giá D-dimer
-            if cptp_category in ["LOW", "INTERMEDIATE"] and (cptp_category == "INTERMEDIATE" or any_perc_positive):
-                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                st.write("##### 🧪 Định lượng và Loại trừ bằng D-dimer")
-                
-                strategy = persistent_selectbox("Chọn chiến lược diễn giải D-dimer:", [
-                    "Chiến lược A: Age-Adjusted D-dimer (Hiệu chỉnh theo tuổi)",
-                    "Chiến lược B: Thuật toán YEARS thích ứng (YEARS Algorithm)"
-                ], key="strategy")
-                
-                if "Age-Adjusted" in strategy:
-                    st.info("Chiến lược A: Age-Adjusted D-dimer (Class 2a, LOE B-R)")
-                    # Nhập tuổi tính ngưỡng cắt
-                    age = persistent_number_input("Nhập tuổi bệnh nhân để tính ngưỡng cắt:", 18, 120, 60, key="age_dd")
-                    cutoff_a = 500 if age <= 50 else age * 10
-                    st.write(f"Ngưỡng cắt D-dimer đề xuất: **{cutoff_a} ng/mL**")
-                    
-                    d_dimer_val_a = persistent_number_input("Nhập nồng độ D-dimer thực tế đo được (ng/mL):", 0, 50000, 0, key="d_dimer_strategy_a")
-                    
-                    if d_dimer_val_a > 0:
-                        if d_dimer_val_a < cutoff_a:
-                            st.markdown(f"""
-                            <div class='u-card urgency-low'>
-                                <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_a}) < Ngưỡng cắt ({cutoff_a})</strong><br>
-                                LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để KHÔNG chụp CTPA.
-                            </div>
-""", unsafe_allow_html=True)
-                            if st.button("📊 Vẫn chuyển sang Phân loại & Điều trị (Giả định)", type="secondary"):
-                                st.session_state.step = 2
-                                st.rerun()
-                        else:
-                            st.markdown(f"""
-                            <div class='u-card urgency-high'>
-                                <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_a}) >= Ngưỡng cắt ({cutoff_a})</strong><br>
-                                CHỈ ĐỊNH HÌNH ẢNH HỌC (CTPA) ĐỂ XÁC ĐỊNH CHẨN ĐOÁN!
-                            </div>
-""", unsafe_allow_html=True)
-                
-                else: # YEARS
-                    if st.session_state.is_pregnant:
-                        st.info("Chiến lược B: Thuật toán YEARS thích ứng thai kỳ (Pregnancy-Adapted YEARS) (Class 2b, LOE B-R)")
-                    else:
-                        st.info("Chiến lược B: Thuật toán YEARS tiêu chuẩn (Class 2a, LOE B-R)")
-                        
-                    st.write("Đánh giá 3 tiêu chí YEARS:")
-                    y1 = persistent_checkbox("1. Có dấu hiệu lâm sàng của DVT (sưng đau chân)?", key="years_y1")
-                    y2 = persistent_checkbox("2. Có ho ra máu?", key="years_y2")
-                    y3 = persistent_checkbox("3. PE là chẩn đoán khả thi nhất trên lâm sàng?", key="years_y3")
-                    
-                    years_count = (1 if y1 else 0) + (1 if y2 else 0) + (1 if y3 else 0)
-                    st.write(f"Số tiêu chí YEARS thỏa mãn: **{years_count}/3**")
-                    
-                    # Ngưỡng cắt YEARS cố định hoàn toàn (Không hiệu chỉnh tuổi!)
-                    years_cutoff = 1000 if years_count == 0 else 500
-                    st.write(f"Ngưỡng cắt D-dimer theo YEARS (cố định): **{years_cutoff} ng/mL**")
-                    
-                    d_dimer_val_b = persistent_number_input("Nhập nồng độ D-dimer thực tế đo được (ng/mL):", 0, 50000, 0, key="d_dimer_strategy_b")
-                    
-                    if d_dimer_val_b > 0:
-                        if d_dimer_val_b < years_cutoff:
-                            st.markdown(f"""
-                            <div class='u-card urgency-low'>
-                                <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_b}) < Ngưỡng YEARS ({years_cutoff})</strong><br>
-                                LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để không chụp CTPA.
-                            </div>
-""", unsafe_allow_html=True)
-                            if st.button("📊 Vẫn chuyển sang Phân loại & Điều trị (Giả định)", type="secondary"):
-                                st.session_state.step = 2
-                                st.rerun()
-                        else:
-                            st.markdown(f"""
-                            <div class='u-card urgency-high'>
-                                <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_b}) >= Ngưỡng YEARS ({years_cutoff})</strong><br>
-                                CHỈ ĐỊNH HÌNH ẢNH HỌC (CTPA) ĐỂ XÁC ĐỊNH CHẨN ĐOÁN!
-                            </div>
-""", unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            elif cptp_category == "HIGH" or is_anticoagulated:
+        if is_suspected:
+            if is_anticoagulated:
+                # ĐƯA RA NGOÀI ĐỂ KHÔNG BỊ CHẶN BỞI RẼ NHÁNH D-DIMER (SỬA LỖI FLOW NHÁNH KHÁNG ĐÔNG)
                 st.markdown("""
                 <div class='u-card urgency-high'>
-                    <strong>>>> KẾT LUẬN: CHỈ ĐỊNH CHỤP HÌNH ẢNH HỌC PHỔI KHẨN CẤP LẬP TỨC!</strong><br>
-                    Bệnh nhân có xác suất lâm sàng rất cao (hoặc đang dùng kháng đông liều đầy đủ nghi ngờ tái phát). Tiến hành chụp CT động mạch phổi (CTPA) ngay mà không làm D-dimer.
+                    <strong>>>> KẾT LUẬN: CHỈ ĐỊNH CHỤP HÌNH ẢNH HỌC PHỔI LẬP TỨC!</strong><br>
+                    Bệnh nhân đang sử dụng thuốc kháng đông liều đầy đủ (therapeutic anticoagulation). Không áp dụng các chiến lược dựa trên D-dimer (như PERC hay YEARS) vì D-dimer bị ảnh hưởng mạnh bởi thuốc kháng đông và có nguy cơ âm tính giả rất lớn.<br><br>
+                    <strong>Hành động đề xuất:</strong> Chỉ định chụp CT động mạch phổi (CTPA) ngay lập tức hoặc Xạ hình phổi (V/Q SPECT) nếu có chống chỉ định để chẩn đoán xác định/loại trừ PE tái phát.
                 </div>
-""", unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
                 
-            # Phần hướng dẫn thay thế CTPA nếu có chống chỉ định
-            st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-            st.write("🌿 **Nhánh chẩn đoán thay thế (Nếu chống chỉ định CTPA):**")
-            st.caption("Nếu bệnh nhân có chống chỉ định tuyệt đối với CTPA (như suy thận rất nặng CrCl < 30 mL/phút, dị ứng nặng với thuốc cản quang có iod, hoặc phụ nữ mang thai mong muốn giảm thiểu tia xạ vú tối đa):")
-            st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)** nhờ độ nhạy và độ đặc hiệu cao hơn đáng kể.")
-            
-            if st.button("📊 Chuyển sang Giai đoạn Phân loại & Điều trị sau khi có kết quả CTPA hoặc V/Q", type="primary"):
-                st.session_state.step = 2
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+                st.write("🌿 **Nhánh chẩn đoán thay thế (Nếu chống chỉ định CTPA):**")
+                st.caption("Nếu bệnh nhân có chống chỉ định tuyệt đối với CTPA (suy thận nặng CrCl < 30, dị ứng cản quang, có thai):")
+                st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)** nhờ độ nhạy và độ đặc hiệu cao hơn đáng kể.")
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+            else:
+                st.write(f"Xác suất tiền nghiệm lâm sàng (CPTP): **{cptp_category}** (Điểm: {cptp_score})")
+                
+                # Sàng lọc bằng PERC nếu lâm sàng nguy cơ thấp
+                if cptp_category == "LOW":
+                    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+                    st.write("##### 🩺 Sàng lọc bằng Tiêu chí Loại trừ PERC (PE Rule-Out Criteria)")
+                    st.caption("Nếu bệnh nhân thỏa mãn toàn bộ 8 tiêu chí bên dưới (tất cả là Không), có thể loại trừ PE hoàn toàn tại giường mà không cần làm D-dimer.")
+                    
+                    p1 = persistent_checkbox("1. Tuổi >= 50?", key="p1")
+                    p2 = persistent_checkbox("2. Tần số tim >= 100 chu kỳ/phút?", key="p2")
+                    p3 = persistent_checkbox("3. SpO2 ở khí trời < 95%?", key="p3")
+                    p4 = persistent_checkbox("4. Sưng phù một bên chân?", key="p4")
+                    p5 = persistent_checkbox("5. Ho ra máu?", key="p5")
+                    p6 = persistent_checkbox("6. Chấn thương hoặc phẫu thuật lớn cần gây mê trong 4 tuần qua?", key="p6")
+                    p7 = persistent_checkbox("7. Tiền sử bị DVT hoặc PE?", key="p7")
+                    p8 = persistent_checkbox("8. Sử dụng Hormone/Estrogen đường uống?", key="p8")
+                    
+                    any_perc_positive = any([p1, p2, p3, p4, p5, p6, p7, p8])
+                    
+                    if not any_perc_positive:
+                        st.markdown("""
+                        <div class='u-card urgency-low'>
+                            <strong>>>> KẾT QUẢ PERC: ÂM TÍNH (LOẠI TRỪ PE HOÀN TOÀN)</strong><br>
+                            Bệnh nhân thỏa mãn toàn bộ 8 tiêu chí loại trừ. LOẠI TRỪ PE TẠI GIƯỜNG BỆNH! Không cần làm D-dimer, không cần chụp CTPA.
+                        </div>
+                        """, unsafe_allow_html=True)
+                        if st.button("Xác nhận & Hoàn thành ca lâm sàng", type="primary"):
+                            st.success("Ca lâm sàng đã được loại trừ an toàn.")
+                        st.markdown("</div>", unsafe_allow_html=True)
+                        st.stop()
+                    else:
+                        st.markdown("""
+                        <div class='u-card urgency-medium'>
+                            <strong>>>> KẾT QUẢ PERC: DƯƠNG TÍNH</strong><br>
+                            Không thể loại trừ bằng PERC. Bắt buộc phải thực hiện xét nghiệm D-dimer theo một trong hai chiến lược bên dưới.
+                        </div>
+                        """, unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    
+                # Đánh giá D-dimer
+                if cptp_category in ["LOW", "INTERMEDIATE"]:
+                    if cptp_category == "LOW" and not any_perc_positive:
+                        pass
+                    else:
+                        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+                        st.write("##### 🧪 Định lượng và Loại trừ bằng D-dimer")
+                        
+                        strategy = persistent_selectbox("Chọn chiến lược diễn giải D-dimer:", [
+                            "Chiến lược A: Age-Adjusted D-dimer (Hiệu chỉnh theo tuổi)",
+                            "Chiến lược B: Thuật toán YEARS thích ứng (YEARS Algorithm)"
+                        ], key="strategy")
+                        
+                        if "Age-Adjusted" in strategy:
+                            st.info("Chiến lược A: Age-Adjusted D-dimer (Class 2a, LOE B-R)")
+                            age = persistent_number_input("Nhập tuổi bệnh nhân để tính ngưỡng cắt:", 18, 120, 60, key="age_dd")
+                            cutoff_a = 500 if age <= 50 else age * 10
+                            st.write(f"Ngưỡng cắt D-dimer đề xuất: **{cutoff_a} ng/mL**")
+                            
+                            d_dimer_val_a = persistent_number_input("Nhập nồng độ D-dimer thực tế đo được (ng/mL):", 0, 50000, 0, key="d_dimer_strategy_a")
+                            
+                            if d_dimer_val_a > 0:
+                                if d_dimer_val_a < cutoff_a:
+                                    st.markdown(f"""
+                                    <div class='u-card urgency-low'>
+                                        <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_a}) < Ngưỡng cắt ({cutoff_a})</strong><br>
+                                        LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để KHÔNG chụp CTPA.
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                    if st.button("📊 Vẫn chuyển sang Phân loại & Điều trị (Giả định)", type="secondary"):
+                                        st.session_state.step = 2
+                                        st.rerun()
+                                else:
+                                    st.markdown(f"""
+                                    <div class='u-card urgency-high'>
+                                        <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_a}) >= Ngưỡng cắt ({cutoff_a})</strong><br>
+                                        CHỈ ĐỊNH HÌNH ẢNH HỌC (CTPA) ĐỂ XÁC ĐỊNH CHẨN ĐOÁN!
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                        
+                        else: # YEARS
+                            if st.session_state.is_pregnant:
+                                st.info("Chiến lược B: Thuật toán YEARS thích ứng thai kỳ (Pregnancy-Adapted YEARS) (Class 2b, LOE B-R)")
+                            else:
+                                st.info("Chiến lược B: Thuật toán YEARS tiêu chuẩn (Class 2a, LOE B-R)")
+                                
+                            st.write("Đánh giá 3 tiêu chí YEARS:")
+                            y1 = persistent_checkbox("1. Có dấu hiệu lâm sàng của DVT (sưng đau chân)?", key="years_y1")
+                            y2 = persistent_checkbox("2. Có ho ra máu?", key="years_y2")
+                            y3 = persistent_checkbox("3. PE là chẩn đoán khả thi nhất trên lâm sàng?", key="years_y3")
+                            
+                            years_count = (1 if y1 else 0) + (1 if y2 else 0) + (1 if y3 else 0)
+                            st.write(f"Số tiêu chí YEARS thỏa mãn: **{years_count}/3**")
+                            
+                            years_cutoff = 1000 if years_count == 0 else 500
+                            st.write(f"Ngưỡng cắt D-dimer theo YEARS (cố định): **{years_cutoff} ng/mL**")
+                            
+                            d_dimer_val_b = persistent_number_input("Nhập nồng độ D-dimer thực tế đo được (ng/mL):", 0, 50000, 0, key="d_dimer_strategy_b")
+                            
+                            if d_dimer_val_b > 0:
+                                if d_dimer_val_b < years_cutoff:
+                                    st.markdown(f"""
+                                    <div class='u-card urgency-low'>
+                                        <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_b}) < Ngưỡng YEARS ({years_cutoff})</strong><br>
+                                        LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để không chụp CTPA.
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                    if st.button("📊 Vẫn chuyển sang Phân loại & Điều trị (Giả định)", type="secondary"):
+                                        st.session_state.step = 2
+                                        st.rerun()
+                                else:
+                                    st.markdown(f"""
+                                    <div class='u-card urgency-high'>
+                                        <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_b}) >= Ngưỡng YEARS ({years_cutoff})</strong><br>
+                                        CHỈ ĐỊNH HÌNH ẢNH HỌC (CTPA) ĐỂ XÁC ĐỊNH CHẨN ĐOÁN!
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+                        
+                elif cptp_category == "HIGH":
+                    st.markdown("""
+                    <div class='u-card urgency-high'>
+                        <strong>>>> KẾT LUẬN: CHỈ ĐỊNH CHỤP HÌNH ẢNH HỌC PHỔI KHẨN CẤP LẬP TỨC!</strong><br>
+                        Bệnh nhân có xác suất lâm sàng rất cao (Wells > 6 hoặc Geneva > 4). Tiến hành chụp CT động mạch phổi (CTPA) ngay mà không làm D-dimer.
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                # Phần hướng dẫn thay thế CTPA nếu có chống chỉ định
+                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+                st.write("🌿 **Nhánh chẩn đoán thay thế (Nếu chống chỉ định CTPA):**")
+                st.caption("Nếu bệnh nhân có chống chỉ định tuyệt đối với CTPA (suy thận nặng CrCl < 30, dị ứng thuốc cản quang có iod, hoặc phụ nữ mang thai mong muốn giảm thiểu tia xạ vú tối đa):")
+                st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)** nhờ độ nhạy và độ đặc hiệu cao hơn đáng kể.")
+                
+                if st.button("📊 Chuyển sang Giai đoạn Phân loại & Điều trị sau khi có kết quả CTPA hoặc V/Q", type="primary"):
+                    st.session_state.step = 2
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
 
     # Nút chuyển tiếp nhanh ở cuối trang
     st.markdown("---")
@@ -413,10 +439,19 @@ if st.session_state.step == 1:
             st.session_state.step = 2
             st.rerun()
 
-# =============================================================================
+# ==============================================================================
 # BƯỚC 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026 (RẼ NHÁNH TUẦN TỰ)
-# =============================================================================
+# ==============================================================================
 elif st.session_state.step == 2:
+    # KHÓA TRANG NẾU CHƯA XÁC NHẬN PE Ở BƯỚC 1 (ĐỒNG BỘ GATE THEO BÁC SĨ YÊU CẦU)
+    if not st.session_state.saved_inputs.get('pe_confirmed'):
+        st.subheader("📊 GIAI ĐOẠN 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026")
+        st.warning("⚠️ **CẢNH BÁO:** Bạn chưa xác nhận đã có chẩn đoán xác định Thuyên tắc phổi (PE) ở Bước 1. Vui lòng hoàn thành Bước 1 và tích chọn 'Xác nhận chẩn đoán xác định PE' để mở khóa Giai đoạn phân tầng nguy cơ và tính liều.")
+        if st.button("⬅️ Quay lại Bước 1 để xác nhận chẩn đoán PE", type="primary"):
+            st.session_state.step = 1
+            st.rerun()
+        st.stop()
+
     st.subheader("📊 GIAI ĐOẠN 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026")
     
     col2_1, col2_2 = st.columns([1, 1], gap="large")
@@ -453,7 +488,7 @@ elif st.session_state.step == 2:
                 <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM E2 (Suy tim phổi hoàn toàn - Sốc kháng trị / Ngừng tuần hoàn)</strong><br>
                 <em>Định nghĩa:</em> Sốc tim kháng trị (SCAI Stage D hoặc E) hoặc ngừng tuần hoàn (cardiac arrest) không đạt ROSC sau 30 phút hồi sức tích cực. Đòi hỏi hồi sức nâng cao khẩn cấp.
             </div>
-""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             
             # Sàng lọc suy hô hấp (Modifier R) cho nhóm E
             st.write("---")
@@ -472,7 +507,7 @@ elif st.session_state.step == 2:
                 <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM E1 (Suy tim phổi hoàn toàn - Sốc tim thực sự)</strong><br>
                 <em>Định nghĩa:</em> Sốc tim hoặc tụt huyết áp kéo dài (HA tâm thu <90 mmHg hoặc giảm >40 mmHg kéo dài >=15 phút, hoặc cần dùng vận mạch). Cần điều trị tích cực tại ICU.
             </div>
-""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             
             # Sàng lọc suy hô hấp (Modifier R) cho nhóm E
             st.write("---")
@@ -491,12 +526,12 @@ elif st.session_state.step == 2:
                 <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM A (Thuyên tắc phổi dưới lâm sàng - Subclinical PE)</strong><br>
                 Bệnh nhân hoàn toàn không có triệu chứng nghi ngờ và được phát hiện tình cờ trên CTPA khi thực hiện vì mục đích khác.
             </div>
-""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             st.session_state.resp_modifier = False
             
             st.markdown("<div class='section-card'>", unsafe_allow_html=True)
             st.write("##### 📋 Đánh giá Tiêu chuẩn An toàn Điều trị Ngoại trú cho Nhóm A")
-            st.caption("Khuyến cáo AHA/ACC 2026 chỉ cho phép quản lý ngoại trú (Class 1, LOE A) cho Nhóm A khi thỏa mãn đầy đủ các tiêu chuẩn y khoa và xã hội dưới đây:")
+            st.caption("Khuyến cáo AHA/ACC 2026 cho phép quản lý ngoại trú (Class 2a, LOE B-R) cho một số bệnh nhân được lựa chọn thuộc Nhóm A khi thỏa mãn đầy đủ các tiêu chuẩn y khoa và xã hội dưới đây:")
             
             st.write("**1. Sàng lọc Y khoa (sPESI hoặc Hestia):**")
             a_score_method = persistent_selectbox("Chọn thang điểm sàng lọc y khoa cho Nhóm A:", [
@@ -552,12 +587,12 @@ elif st.session_state.step == 2:
             is_a_social_safe = asoc1 and asoc2 and asoc3
             
             if is_a_medical_safe and is_a_social_safe:
-                st.markdown("<div class='u-card urgency-low'><strong>✔️ ĐỦ TIÊU CHUẨN ĐIỀU TRỊ NGOẠI TRÚ AN TOÀN (Class 1)</strong><br>Bệnh nhân thỏa mãn đầy đủ điều kiện y khoa và xã hội để quản lý ngoại trú an toàn.</div>", unsafe_allow_html=True)
+                st.markdown("<div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534;'><strong>✔️ ĐỦ TIÊU CHUẨN ĐIỀU TRỊ NGOẠI TRÚ (Class 2a, LOE B-R)</strong><br>Bệnh nhân thỏa mãn đầy đủ điều kiện y khoa và xã hội để quản lý ngoại trú an toàn.</div>", unsafe_allow_html=True)
                 if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
                     st.session_state.step = 3
                     st.rerun()
             else:
-                st.markdown("<div class='u-card urgency-high'><strong>❌ CHƯA ĐỦ ĐIỀU KIỆN ĐIỀU TRỊ NGOẠI TRÚ AN TOÀN</strong><br>Khuyến cáo điều trị nội trú ngắn ngày tại khoa Thường do chưa thỏa mãn đủ các điều kiện y khoa hoặc xã hội.</div>", unsafe_allow_html=True)
+                st.markdown("<div class='u-card urgency-high'><strong>❌ CHƯA ĐỦ ĐIỀU KIỆN ĐIỀU TRỊ NGOẠI TRÚ</strong><br>Khuyến cáo điều trị nội trú ngắn ngày tại khoa Thường do chưa thỏa mãn đủ các điều kiện y khoa hoặc xã hội.</div>", unsafe_allow_html=True)
                 if st.button("Vẫn xác nhận & Đi tới Bước 3 để tính liều điều trị nội trú ➡️", type="secondary", use_container_width=True):
                     st.session_state.step = 3
                     st.rerun()
@@ -595,7 +630,7 @@ elif st.session_state.step == 2:
                         <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM D2 (Sốc ẩn - Incipient Cardiopulmonary Failure)</strong><br>
                         Phát hiện thấy bằng chứng giảm tưới máu mô/tổn thương cơ quan đích mặc dù huyết áp vẫn đang được cơ thể bù trừ. Bệnh nhân có nguy cơ sụp đổ tuần hoàn cao!
                     </div>
-""", unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
                     
                     # Đánh giá Respiratory Modifier cho nhóm D
                     st.write("---")
@@ -617,7 +652,7 @@ elif st.session_state.step == 2:
                             <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM D1 (Tụt huyết áp thoáng qua)</strong><br>
                             Huyết động có biểu hiện mất bù thoáng qua nhưng chưa tiến triển thành tổn thương cơ quan đích.
                         </div>
-""", unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
                         
                         # Đánh giá Respiratory Modifier cho nhóm D
                         st.write("---")
@@ -629,7 +664,7 @@ elif st.session_state.step == 2:
                             st.session_state.step = 3
                             st.rerun()
                     else:
-                        # Huyết áp bình thường + Không giảm tưới máu -> Đánh giá CPES (as requested!)
+                        # Huyết áp bình thường + Không giảm tưới máu -> Đánh giá CPES
                         st.info("Huyết áp bình thường và không có giảm tưới máu. Hãy bấm nút dưới đây để chuyển sang đánh giá thang điểm CPES.")
                         if st.button("Xác nhận Không giảm tưới máu -> Tiếp tục đánh giá CPES ➡️", type="primary", use_container_width=True):
                             st.session_state.g2_stable_flow = "cpes"
@@ -660,7 +695,7 @@ elif st.session_state.step == 2:
                         <strong>>>> ĐẠT ĐIỂM CPES TỐI ĐA 6/6!</strong><br>
                         Bệnh nhân đạt CPES 6/6 -> Tự động quy đổi phân loại vào <strong>Nhóm D2 (Sốc ẩn - Nguy cơ rất cao)</strong> theo AHA/ACC 2026.
                     </div>
-""", unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
                     st.session_state.final_category = "D2"
                     
                     # Đánh giá Respiratory Modifier cho nhóm D
@@ -904,6 +939,15 @@ elif st.session_state.step == 2:
 # BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH LIỀU
 # ==============================================================================
 elif st.session_state.step == 3:
+    # KHÓA TRANG NẾU CHƯA XÁC NHẬN PE Ở BƯỚC 1 (ĐỒNG BỘ GATE THEO BÁC SĨ YÊU CẦU)
+    if not st.session_state.saved_inputs.get('pe_confirmed'):
+        st.subheader("💊 GIAI ĐOẠN 3: CÁ THỂ HÓA ĐIỀU TRỊ VÀ TÍNH LIỀU THUỐC")
+        st.warning("⚠️ **CẢNH BÁO:** Bạn chưa xác nhận đã có chẩn đoán xác định Thuyên tắc phổi (PE) ở Bước 1. Vui lòng hoàn thành Bước 1 và tích chọn 'Xác nhận chẩn đoán xác định PE' để mở khóa Giai đoạn phân tầng nguy cơ và tính liều.")
+        if st.button("⬅️ Quay lại Bước 1 để xác nhận chẩn đoán PE", type="primary"):
+            st.session_state.step = 1
+            st.rerun()
+        st.stop()
+
     st.subheader("💊 GIAI ĐOẠN 3: CÁ THỂ HÓA ĐIỀU TRỊ VÀ TÍNH LIỀU THUỐC")
     
     col3_1, col3_2 = st.columns([1, 1], gap="large")
@@ -930,11 +974,12 @@ elif st.session_state.step == 3:
         
         st.write(f"Chỉ số BMI: **{bmi:.1f} kg/m²** | Độ thanh thải Creatinine (CrCl): **{crcl:.1f} mL/phút**")
         
-        # TÌNH HUỐNG LÂM SÀNG ĐẶC BIỆT
+        # TÌNH HUỐNG LÂM SÀNG ĐẶC BIỆT (TÁCH BIỆT BÉ BÚ & MANG THAI)
         st.markdown("---")
         st.write("💼 **Các tình huống lâm sàng đặc biệt:**")
         has_aps = persistent_checkbox("Bệnh nhân mắc Hội chứng kháng Phospholipid (APS) xác định?", key="has_aps")
-        is_pregnant_t2 = persistent_checkbox("Bệnh nhân đang mang thai hoặc cho con bú?", key="is_pregnant") # Đồng bộ với Giai đoạn 1!
+        is_pregnant_t2 = persistent_checkbox("Bệnh nhân hiện tại đang MANG THAI?", key="is_pregnant") # Đồng bộ với Giai đoạn 1!
+        is_breastfeeding_t2 = persistent_checkbox("Bệnh nhân hiện tại đang CHO CON BÚ?", key="is_breastfeeding_t2") # Tách riêng cho con bú
         
         has_cancer = persistent_checkbox("Bệnh nhân mắc ung thư đang hoạt động / tiến triển (Cancer-associated thrombosis)?", key="has_cancer")
         has_drug_interactions = persistent_checkbox("Đang sử dụng thuốc tương tác mạnh (như Ketoconazole, Itraconazole, Ritonavir, Rifampicin, Phenytoin, Carbamazepine)?", key="has_drug_interactions")
@@ -943,7 +988,6 @@ elif st.session_state.step == 3:
         st.markdown("---")
         st.write("**Bảng kiểm Chống chỉ định của Tiêu sợi huyết Hệ thống:**")
         with st.expander("Bấm vào để rà soát chống chỉ định tiêu sợi huyết"):
-            st.markdown("**Chống chỉ định tuyệt đối (Absolute Contraindications):**")
             abs1 = persistent_checkbox("Tiền sử xuất huyết não hoặc đột quỵ không rõ nguyên nhân bất kỳ thời điểm nào", key="abs1")
             abs2 = persistent_checkbox("Đột quỵ nhồi máu não trong vòng 6 tháng qua", key="abs2")
             abs3 = persistent_checkbox("U hệ thần kinh trung ương hoặc dị dạng động tĩnh mạch não", key="abs3")
@@ -978,24 +1022,24 @@ elif st.session_state.step == 3:
         st.markdown(f"<div class='result-card'><h3>PHÂN NHÓM LÂM SÀNG: <span style='color:#DC2626;'>NHÓM {final_group}</span></h3></div>", unsafe_allow_html=True)
         
         # --------------------------------------------------------------------------
-        # PHÁC ĐỒ TRIAGE & KHUYẾN CÁO PERT (Class 2a, LOE C-LD cho C, D, E)
+        # PHÁC ĐỒ TRIAGE & KHUYẾN CÁO PERT (Sửa COR/LOE theo chuẩn Hướng dẫn)
         # --------------------------------------------------------------------------
         st.write("##### 📍 Phân luồng điều trị (Triage) & Khuyến cáo PERT:")
         
         if st.session_state.final_category in ["A", "B1", "B2"]:
             st.markdown("""
             <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534; margin-bottom: 15px;'>
-                <strong>Khuyến cáo Quản lý Ngoại trú (Class 1, LOE A):</strong><br>
-                Có thể cân nhắc điều trị ngoại trú hoặc xuất viện sớm cho các bệnh nhân thuộc <strong>Nhóm A</strong> hoặc một số ít bệnh nhân <strong>Nhóm B</strong> nếu thỏa mãn đầy đủ các điều kiện y khoa - xã hội sau:<br>
+                <strong>Khuyến cáo Quản lý Ngoại trú (Class 2a, LOE B-R):</strong><br>
+                Có thể cân nhắc điều trị ngoại trú hoặc xuất viện sớm cho các bệnh nhân thuộc <strong>Nhóm A</strong> hoặc một số bệnh nhân <strong>Nhóm B</strong> nếu thỏa mãn đầy đủ các điều kiện y khoa - xã hội sau:<br>
                 1. Điểm sPESI = 0 hoặc Hestia âm tính (đã rà soát ở Giai đoạn 2).<br>
                 2. Bệnh nhân có điều kiện gia đình, xã hội ổn định, có người hỗ trợ.<br>
                 3. Tiếp cận thuốc kháng đông ngay lập tức và thuận tiện.<br>
                 4. Có kế hoạch theo dõi y khoa và hẹn tái khám chuyên khoa nhanh chóng, tin cậy (trong vòng 24-72 giờ đầu).
             </div>
-""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             
         elif st.session_state.final_category in ["C1", "C2", "C3"]:
-            pert_text = "📞 **Khuyến cáo kích hoạt PERT (Pulmonary Embolism Response Team):** Cân nhắc hội chẩn đa chuyên khoa PERT (Class 2a, LOE C-LD) để tối ưu hóa quyết định điều trị nâng cao nếu cần thiết, đặc biệt là nhóm C3."
+            pert_text = "📞 **Khuyến cáo kích hoạt PERT (Pulmonary Embolism Response Team) (Class 1, LOE B-NR):** Khuyến cáo mạnh mẽ hội chẩn đa chuyên khoa PERT để tối ưu hóa quyết định điều trị và đẩy nhanh tiến trình điều trị kháng đông tại viện."
             if st.session_state.final_category == "C3":
                 st.markdown(f"""
                 <div class='u-card urgency-medium'>
@@ -1003,18 +1047,18 @@ elif st.session_state.step == 3:
                     Theo dõi sát huyết động liên tục trong 24-72 giờ đầu (Class 2a) do có nguy cơ tiến triển thành sốc ẩn rất cao.<br>
                     {pert_text}
                 </div>
-""", unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
             else:
-                st.info(f"📍 **Nơi điều trị:** Nhập viện điều trị nội trú tại Khoa Thường (Nội tim mạch/Nội chung).\\n\\n{pert_text}")
+                st.info(f"📍 **Nơi điều trị:** Nhập viện điều trị nội trú tại Khoa Thường (Nội tim mạch/Nội chung).\n\n{pert_text}")
                 
         elif st.session_state.final_category in ["D1", "D2", "E1", "E2"]:
             st.markdown(f"""
             <div class='u-card urgency-high'>
                 <strong>📍 Nơi điều trị: KHOA HỒI SỨC TÍCH CỰC (ICU/CCU) tối khẩn cấp</strong><br>
                 Theo dõi huyết động liên tục.<br>
-                📞 **BẮT BUỘC KÍCH HOẠT NGAY ĐỘI PHẢN ỨNG NHANH PERT:** Phối hợp đa chuyên khoa khẩn cấp (Class 2a, LOE C-LD) để đưa ra quyết định tái tưới máu can thiệp nâng cao.
+                📞 **BẮT BUỘC KÍCH HOẠT NGAY ĐỘI PHẢN ỨNG NHANH PERT (Class 1, LOE B-NR):** Phối hợp đa chuyên khoa khẩn cấp để đưa ra quyết định tái tưới máu can thiệp nâng cao.
             </div>
-""", unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
         st.write("---")
         
@@ -1025,41 +1069,48 @@ elif st.session_state.step == 3:
             st.success("💊 **Kháng đông ưu tiên: DOACs đường uống (Class 1, LOE B-R)**")
             
             if st.session_state.final_category == "B1":
-                st.warning("👉 *Lưu ý Nhóm B1 (Dưới phân thùy):* Guideline cho phép theo dõi sát lâm sàng và siêu âm tĩnh mạch chi dưới định kỳ mà chưa cần dùng kháng đông ngay nếu bệnh nhân có nguy cơ chảy máu cao, không có triệu chứng lâm sàng và KHÔNG CÓ DVT chi dưới (Class 2b). Nếu có DVT đi kèm, bắt buộc dùng kháng đông tiêu chuẩn.")
+                st.warning("👉 *Lưu ý Nhóm B1 (Dưới phân thùy):* Guideline cho phép theo dõi sát lâm sàng và siêu âm tĩnh mạch chi dưới định kỳ mà chưa cần dùng kháng đông ngay nếu bệnh nhân có nguy cơ chảy máu cao, không có triệu chứng lâm sàng và KHÔNG CÓ DVT chi dưới (Class 2b, LOE B-R). Nếu có DVT đi kèm, bắt buộc dùng kháng đông tiêu chuẩn.")
             
             # Check tình huống bắt buộc VKA hoặc LMWH
             if st.session_state.is_pregnant:
-                st.error("🤰 **CHỈ ĐỊNH BẮT BUỘC CHO THAI KỲ (CHỐNG CHỈ ĐỊNH DOACs/VKA):**\\nChống chỉ định dùng DOACs và VKA trong thai kỳ. Bắt buộc sử dụng LMWH (Enoxaparin) liều chuẩn theo cân nặng suốt thai kỳ và ít nhất 6 tuần sau sinh (tối thiểu 3 tháng tổng thời gian điều trị).")
+                st.error("🤰 **CHỈ ĐỊNH BẮT BUỘC CHO THAI KỲ (CHỐNG CHỈ ĐỊNH DOACs/VKA):**\nChống chỉ định dùng DOACs và VKA trong thai kỳ (Class 3-Harm, LOE C-LD). Bắt buộc sử dụng LMWH (Enoxaparin) hoặc UFH để ngăn ngừa tái phát huyết khối (Class 1, LOE C-LD). LMWH/UFH không đi qua nhau thai nên tuyệt đối an toàn cho thai nhi.")
                 st.write(f"- **Phác đồ Enoxaparin đề xuất:** **{weight * 1.0:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg mỗi 12h).")
+            elif is_breastfeeding_t2:
+                st.warning("🍼 **LỰA CHỌN KHÁNG ĐÔNG KHI CHO CON BÚ:**\nLMWH, UFH hoặc Kháng vitamin K (Warfarin) được khuyến cáo lựa chọn hơn là các thuốc DOACs (Class 1, LOE C-LD) do các DOACs có thể bài tiết qua sữa mẹ và chưa có đầy đủ dữ liệu an toàn ở trẻ sơ sinh.")
+                st.write(f"- **Phác đồ Enoxaparin đề xuất:** **{weight * 1.0:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg mỗi 12h) hoặc khởi đầu gối Warfarin nâng INR đạt 2.0-3.0.")
             elif has_aps:
-                st.error("🩸 **HỘI CHỨNG KHÁNG PHOSPHOLIPID - APS (CHỐNG CHỈ ĐỊNH DOACs):**\\nChống chỉ định dùng DOACs do tăng nguy cơ tắc mạch tái phát. Bắt buộc khởi đầu bằng kháng đông tiêm (LMWH/UFH) sau đó gối sang **Kháng Vitamin K (VKA - Warfarin)** duy trì lâu dài với đích **INR 2.0 - 3.0 (Class 1)**.")
+                st.error("🩸 **HỘI CHỨNG KHÁNG PHOSPHOLIPID - APS (CHỐNG CHỈ ĐỊNH DOACs):**\nChống chỉ định dùng DOACs do tăng nguy cơ tắc mạch tái phát nghiêm trọng (Class 1, LOE A). Bắt buộc khởi đầu bằng kháng đông tiêm (LMWH/UFH) sau đó gối sang **Kháng Vitamin K (VKA - Warfarin)** duy trì lâu dài với đích **INR 2.0 - 3.0 (Class 1, LOE A)**.")
             elif has_drug_interactions:
-                st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH (CHỐNG CHỈ ĐỊNH DOACs):**\\nThuốc đồng vận làm biến đổi nồng độ DOACs nguy hiểm. Khuyến cáo dùng LMWH dài hạn hoặc chuyển sang VKA (theo dõi sát INR).")
+                st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH (CHỐNG CHỈ ĐỊNH DOACs):**\nThuốc đồng vận làm biến đổi nồng độ DOACs nguy hiểm. Khuyến cáo dùng LMWH dài hạn hoặc chuyển sang VKA (theo dõi sát INR).")
             else:
                 if has_cancer:
-                    st.info("🎗️ *Bệnh nhân Ung thư (CAT):* Khuyến cáo ưu tiên dùng DOACs hoặc LMWH hơn là VKA (Class 1).")
+                    st.info("🎗️ *Bệnh nhân Ung thư (CAT):* Khuyến cáo ưu tiên dùng DOACs hoặc LMWH hơn là VKA (Class 1, LOE A).")
                 
                 # CHUẨN HÓA LIỀU DOAC (BỎ LỖI GIẢM LIỀU CỦA AF!)
                 st.write("**• Apixaban:**")
                 st.write(f"  - *Liều tấn công:* **10 mg uống x 2 lần/ngày** (10 mg BID) trong 7 ngày đầu.")
                 st.write("  - *Liều duy trì:* **5 mg uống x 2 lần/ngày** (5 mg BID).")
-                st.caption("⚠️ *Lưu ý y khoa:* Không áp dụng công thức giảm liều AF (giảm xuống 2.5 mg BID dựa trên tuổi, cân nặng, creatinine) trong điều trị PE cấp tính. Liều 2.5 mg BID chỉ dùng ở giai đoạn kéo dài (extended phase) sau 3-6 tháng điều trị ban đầu.")
+                st.caption("⚠️ *Lưu ý y khoa:* Không áp dụng công thức giảm liều AF (giảm xuống 2.5 mg BID dựa trên tuổi, cân nặng, creatinine) trong điều trị PE cấp tính. Liều 2.5 mg BID chỉ dùng ở giai đoạn kéo dài (extended phase) sau 3-6 tháng điều trị ban đầu để phòng ngừa thứ phát (Class 1, LOE A).")
+                
+                # Chỉnh liều suy thận nặng dựa trên eGFR / CKD Stage
+                if crcl < 30:
+                    st.warning("🏥 **Lưu ý chức năng thận giảm nặng (eGFR < 30 mL/phút hoặc suy thận giai đoạn cuối):**\nTheo Hướng dẫn AHA/ACC 2026, đối với bệnh nhân suy thận nặng (eGFR < 30 mL/phút) hoặc suy thận giai đoạn cuối lọc máu, việc lựa chọn giữa Apixaban và VKA là chưa rõ ràng (Class 2b, LOE B-NR) để phòng ngừa chảy máu nặng. Các DOAC khác (như Rivaroxaban) nhìn chung chống chỉ định hoặc cần tránh dùng.")
                 
                 st.write("**• Rivaroxaban:**")
-                st.write(f"  - *Liều tấn công:* **15 mg uống x 2 lần/ngày** (15 mg BID) trong 21 ngày đầu.")
+                st.write(f"  - *Liều tấn công:* **15 mg uống x 2 lần/ngày** (15 mg BID) cùng thức ăn trong 21 ngày đầu.")
                 st.write("  - *Liều duy trì:* **20 mg uống hằng ngày** (20 mg QD) cùng thức ăn.")
-                st.caption("⚠️ *Lưu ý y khoa:* Không giảm liều duy trì xuống 15 mg QD cho bệnh nhân suy thận CrCl 30-49 mL/phút trong điều trị PE cấp tính. Nếu bệnh nhân suy thận nặng (CrCl < 30 mL/phút), chống chỉ định DOACs, cân nhắc dùng LMWH hoặc VKA.")
+                st.caption("⚠️ *Lưu ý y khoa:* Không giảm liều duy trì xuống 15 mg QD cho bệnh nhân suy thận CrCl 30-49 mL/phút trong điều trị PE cấp tính ở pha cấp cứu (luôn giữ liều tấn công 15mg BID x 21 ngày và duy trì 20mg QD).")
 
         # --------------------------------------------------------------------------
         # PHÁC ĐỒ KHÁNG ĐÔNG TIÊM CHO NHÓM C1, C2, C3, D1, D2, E1 (LMWH > UFH)
         # --------------------------------------------------------------------------
         elif st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1"]:
-            st.success("💊 **Kháng đông tiêm khởi đầu (C1 - E1): LMWH được khuyến cáo hơn UFH (Class 1)**")
-            st.caption("Kháng đông tiêm được chỉ định ngay lập tức trong thời gian chờ đánh giá thêm hoặc can thiệp.")
+            st.success("💊 **Kháng đông tiêm khởi đầu (C1 - E1): LMWH được khuyến cáo hơn UFH (Class 1, LOE B-R)**")
+            st.caption("LMWH được chứng minh làm giảm nguy cơ tái phát VTE và giảm nguy cơ chảy máu nặng, giảm biến chứng HIT tốt hơn UFH.")
             
             # Tính liều Enoxaparin (LMWH) - ƯU TIÊN HÀNG ĐẦU
             st.write("🌟 **LỰA CHỌN ƯU TIÊN: Heparin trọng lượng phân tử thấp (LMWH - Enoxaparin)**")
-            if is_pregnant_t2:
+            if st.session_state.is_pregnant:
                 st.info("🤰 *Bệnh nhân đang mang thai:* Enoxaparin là lựa chọn an toàn và bắt buộc (không qua bánh nhau).")
                 
             if crcl >= 30:
@@ -1068,20 +1119,23 @@ elif st.session_state.step == 3:
                 if bmi >= 40 or weight > 150:
                     enox_reduced = weight * 0.8
                     st.warning(f"⚠️ *Lưu ý béo phì độ III (BMI = {bmi:.1f}):* Có thể cân nhắc điều chỉnh giảm liều xuống **{enox_reduced:.1f} mg mỗi 12 giờ** (0.8 mg/kg Q12h) để giảm nguy cơ chảy máu (Class 2b, LOE B-NR).")
+                st.caption("⚠️ *Theo dõi Anti-Xa:* Không có chỉ định theo dõi nồng độ anti-Xa thường quy ở hầu hết bệnh nhân dùng LMWH theo cân nặng thực tế (Class 3: No Benefit, LOE A).")
             elif 15 <= crcl < 30:
                 enox_dose = weight * 1.0
-                st.write(f"- **Liều Enoxaparin hiệu chỉnh suy thận nặng (CrCl 15-29 mL/phút):** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg Q24h). Cần theo dõi nồng độ đỉnh Anti-Xa (đạt 3-5h sau liều thứ 3).")
+                st.write(f"- **Liều Enoxaparin hiệu chỉnh suy thận nặng (CrCl 15-29 mL/phút):** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg Q24h).")
+                st.caption("⚠️ *Theo dõi Anti-Xa (Class 2a, LOE C-LD):* Ở bệnh nhân suy thận nặng (CrCl < 30 mL/phút) dùng LMWH, việc đo nồng độ đỉnh anti-Xa (3-5 giờ sau liều thứ 3 ở trạng thái ổn định) là hợp lý để hỗ trợ điều chỉnh liều.")
             else:
                 st.error("- **Enoxaparin (LMWH):** Chống chỉ định tuyệt đối do CrCl < 15 mL/phút.")
 
             # Tính liều UFH - THAY THẾ
             st.write("👉 **LỰA CHỌN THAY THẾ: Heparin không phân đoạn (UFH) truyền tĩnh mạch**")
-            st.caption("Chỉ định thay thế khi bệnh nhân có chống chỉ định với LMWH (CrCl < 15), hoặc khi bác sĩ dự kiến sẽ can thiệp tái tưới máu ngay lập tức và cần tính đảo ngược nhanh của UFH.")
+            st.caption("Chỉ định thay thế khi bệnh nhân chống chỉ định với LMWH (CrCl < 15), hoặc khi bác sĩ dự kiến sẽ can thiệp tái tưới máu ngay lập tức và cần tính đảo ngược nhanh của UFH.")
             
             ufh_bolus = min(80 * weight, 10000)
             ufh_maint = min(18 * weight, 1600)  # SỬA LỖI: ÁP TRẦN 1600 UI/h
             st.write(f"- **Liều nạp Bolus tĩnh mạch ban đầu:** **{ufh_bolus:.0f} UI** (Áp trần tối đa 10,000 UI).")
             st.write(f"- **Tốc độ truyền tĩnh mạch duy trì ban đầu:** **{ufh_maint:.0f} UI/giờ** (Áp trần tối đa **1,600 UI/giờ** để phòng ngừa quá liều ban đầu trước khi có kết quả aPTT/Anti-Xa), chỉnh liều theo aPTT.")
+            st.caption("👉 *Lưu ý y khoa:* Phác đồ bolus 80 UI/kg và truyền 18 UI/kg/h với các mức trần trên là phác đồ ngoài nước được chuẩn hóa (local/external VTE nomogram), không phải do hướng dẫn AHA 2026 trực tiếp quy định cụ thể.")
 
         # --------------------------------------------------------------------------
         # PHÁC ĐỒ KHÁNG ĐÔNG TIÊM CHO NHÓM E2 (YÊU CẦU: LINH HOẠT LMWH/UFH)
@@ -1099,6 +1153,7 @@ elif st.session_state.step == 3:
                 ufh_maint = min(18 * weight, 1600)
                 st.write(f"- **Liều nạp Bolus tĩnh mạch ban đầu:** **{ufh_bolus:.0f} UI** (Áp trần tối đa 10,000 UI).")
                 st.write(f"- **Tốc độ truyền tĩnh mạch duy trì ban đầu:** **{ufh_maint:.0f} UI/giờ** (Áp trần tối đa **1,600 UI/giờ**), chỉnh liều sát theo aPTT.")
+                st.caption("👉 *Lưu ý y khoa:* Phác đồ trên dựa theo chuẩn local/external VTE nomogram, không do hướng dẫn AHA 2026 trực tiếp quy định.")
                 
             with tab_lmwh:
                 st.write("**Heparin trọng lượng phân tử thấp (LMWH - Enoxaparin):**")
@@ -1109,6 +1164,7 @@ elif st.session_state.step == 3:
                 elif 15 <= crcl < 30:
                     enox_dose = weight * 1.0
                     st.write(f"- **Liều Enoxaparin hiệu chỉnh:** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg Q24h).")
+                    st.caption("⚠️ *Lưu ý:* Đo nồng độ đỉnh anti-Xa (3-5 giờ sau liều thứ 3) là hợp lý (Class 2a, LOE C-LD) để hướng dẫn chỉnh liều.")
                 else:
                     st.error("- Chống chỉ định Enoxaparin do CrCl < 15 mL/phút.")
 
@@ -1119,24 +1175,61 @@ elif st.session_state.step == 3:
             st.write("---")
             st.write("##### ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao (AHA/ACC 2026):")
             
-            # Đồng bộ phác đồ Alteplase chuẩn (Bỏ lỗi tự ý chia liều unapproved)
-            st.info("💊 **Phác đồ Tiêu sợi huyết Hệ thống chuẩn (Alteplase):**\\n- **rt-PA liều chuẩn:** **100 mg truyền tĩnh mạch liên tục trong 2 giờ** (Phác đồ chuẩn duy nhất được FDA phê duyệt và khuyến cáo mạnh bởi AHA/ACC).\\n- *Cân nhắc liều thấp (Lower-dose):* Có thể cân nhắc **50 mg rt-PA truyền trong 2 giờ** ở bệnh nhân có nguy cơ chảy máu cao hoặc nhẹ cân (<65kg) (Class 2b, LOE C-LD).\\n- *Lưu ý về Tenecteplase (TNK-tPA):* Đã được nghiên cứu lâm sàng nhưng **CHƯA ĐƯỢC FDA PHÊ DUYỆT** cho chỉ định thuyên tắc phổi (off-label).")
+            # Đồng bộ phác đồ Alteplase chuẩn (Sửa lại chuẩn FDA và alteplase)
+            st.info("💊 **Phác đồ Tiêu sợi huyết Hệ thống (Systemic Thrombolysis):**\n- **Các thuốc được FDA phê duyệt cho PE:** **Streptokinase, Urokinase, và rt-PA (Alteplase)**. Trong đó, rt-PA (alteplase) là thuốc phổ biến nhất trong thực hành lâm sàng hiện đại.\n- **Phác đồ Alteplase chuẩn:** **100 mg truyền tĩnh mạch liên tục trong 2 giờ**.\n- *Cân nhắc liều thấp (Lower-dose):* Có thể cân nhắc truyền liều thấp (ví dụ: **50 mg rt-PA truyền trong 2 giờ** hoặc các phác đồ liều thấp khác) để giảm nguy cơ chảy máu (**Class 2b, LOE C-LD**), đặc biệt ở bệnh nhân có nguy cơ xuất huyết cao (Không áp dụng công thức chia liều cố định universally theo cân nặng).\n- *Lưu ý về Tenecteplase (TNK-tPA):* Đã được nghiên cứu lâm sàng nhưng **CHƯA ĐƯỢC FDA PHÊ DUYỆT** cho chỉ định thuyên tắc phổi (off-label) và không được xem là phác đồ tương đương quy chuẩn.")
+            
+            # COPY GẦN NHƯ NGUYÊN BẢN LOGIC TABLE 7 KHÔNG DIỄN GIẢI THÊM (SỬA LỖI TABLE 7)
+            st.markdown("**Khuyến cáo can thiệp nâng cao theo quy chuẩn Table 7 (AHA/ACC 2026):**", unsafe_allow_html=True)
             
             if st.session_state.final_category == "C3":
-                st.warning("👉 **Khuyến cáo Nhóm C3 (Nguy cơ trung bình-cao):**\\n- **Theo dõi sát tại ICU/Step-down** và duy trì kháng đông tiêu chuẩn.\\n- **KHÔNG chỉ định tiêu sợi huyết hệ thống thường quy** ngay từ đầu (Class 3: Harm do tăng nguy cơ xuất huyết nặng).\\n- **Tiêu sợi huyết giải cứu (Rescue Thrombolysis):** Chỉ chỉ định khi bệnh nhân có biểu hiện suy sụp huyết động rõ rệt trên lâm sàng (Class 2a).\\n- **Can thiệp Catheter (CDL/MT):** Xem xét can thiệp qua Catheter (CDL) hoặc lấy huyết khối cơ học (MT) khi bệnh nhân có suy sụp huyết động mà có chống chỉ định tuyệt đối hoặc thất bại với tiêu sợi huyết hệ thống.")
+                st.markdown("""
+                <table class='table-style'>
+                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
+                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
+                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
+                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#FEF2F2; color:#991B1B;'>Class 3: No Benefit, LOE C-EO</span></td><td>Not recommended over anticoagulation alone.</td></tr>
+                </table>
+""", unsafe_allow_html=True)
+                st.warning("👉 **Lưu ý lâm sàng:** Chỉ định tiêu sợi huyết hệ thống thường quy ngay từ đầu cho Nhóm C1-C2 là **Class 3: Harm (Class 3: Harm, LOE B-R)** do tăng nguy cơ xuất huyết nặng/xuất huyết não một cách không cần thiết.")
                 
             elif st.session_state.final_category in ["D1", "D2"]:
-                st.warning("👉 **Khuyến cáo Nhóm D (Sắp sụp đổ / Sốc ẩn):**\\n- Liệu pháp can thiệp có thể được cân nhắc để ngăn ngừa diễn tiến xấu hơn (Class 2b).\\n- **Tiêu sợi huyết hệ thống:** Có thể cân nhắc (Class 2b) nếu nguy cơ chảy máu thấp.\\n- **Can thiệp Catheter qua da (CDL / MT):** Là lựa chọn hợp lý (Class 2b), đặc biệt hữu ích khi bệnh nhân có nguy cơ chảy máu cao.\\n- **Phẫu thuật lấy huyết khối (Surgical Embolectomy):** Có thể cân nhắc (Class 2b) bởi phẫu thuật viên giàu kinh nghiệm.")
+                st.markdown("""
+                <table class='table-style'>
+                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
+                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>May be considered (to prevent clinical deterioration).</td></tr>
+                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE B-NR</span></td><td>May be considered.</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE B-NR</span></td><td>May be considered.</td></tr>
+                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
+                </table>
+""", unsafe_allow_html=True)
                 
             elif st.session_state.final_category == "E1":
-                st.success("👉 **Khuyến cáo Nhóm E1 (Sốc tim thực sự - Nguy cơ rất cao):**\\n- **Tiêu sợi huyết hệ thống hệ thống kết hợp kháng đông:** Được khuyến cáo mạnh mẽ nếu nguy cơ xuất huyết chấp nhận được (**Class 2a, LOE C-LD**).\\n- **Lấy huyết khối cơ học (MT) hoặc Phẫu thuật lấy huyết khối (Surgical Embolectomy):** Được khuyến cáo (**Class 2a**) khi bệnh nhân có chống chỉ định tuyệt đối với tiêu sợi huyết hệ thống, hoặc tiêu sợi huyết hệ thống thất bại.\\n- **Tiêu sợi huyết qua Catheter (CDL):** Có thể cân nhắc (**Class 2b**).")
+                st.markdown("""
+                <table class='table-style'>
+                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
+                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Reasonable to choose over anticoagulation alone.</td></tr>
+                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Reasonable to choose.</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE B-NR</span></td><td>Reasonable to choose.</td></tr>
+                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE B-NR</span></td><td>Reasonable to choose.</td></tr>
+                </table>
+""", unsafe_allow_html=True)
                 
             elif st.session_state.final_category == "E2":
-                st.success("👉 **Khuyến cáo Nhóm E2 (Sốc kháng trị / Ngừng tuần hoàn):**\\n- **Tiêu sợi huyết hệ thống:** Được chỉ định khẩn cấp kết hợp hồi sức tích cực (**Class 2a**).\\n- **Phẫu thuật lấy huyết khối giải cứu hoặc MT:** Được khuyến cáo mạnh mẽ (**Class 2a**).\\n- **Hỗ trợ tuần hoàn ngoài cơ thể VA-ECMO:** Khuyến cáo sử dụng **VA-ECMO (Veno-Arterial ECMO) (Class 2a)** ở bệnh nhân sốc tim kháng trị (SCAI Stage D/E) hoặc trong quá trình hồi sức tim phổi tích cực (E-CPR) để duy trì tưới máu cơ quan và nâng đỡ thất phải.")
+                st.markdown("""
+                <table class='table-style'>
+                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
+                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Reasonable to choose over anticoagulation alone.</td></tr>
+                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#94A3B8; color:#1E293B;'>N/A</span></td><td>Not applicable.</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#94A3B8; color:#1E293B;'>N/A</span></td><td>Not applicable.</td></tr>
+                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#FEF2F2; color:#991B1B;'>Class 3: No Benefit, LOE B-NR</span></td><td>Not recommended unless on mechanical circulatory support (MCS).</td></tr>
+                </table>
+""", unsafe_allow_html=True)
+                st.info("💡 **Hỗ trợ VA-ECMO trong Nhóm E2 (Sốc tim kháng trị / Ngừng tuần hoàn):** Khuyến cáo thiết lập VA-ECMO (**Class 2a, LOE B-NR**) để ổn định huyết động và hỗ trợ chức năng tim phổi hồi sức nâng cao (E-CPR).")
 
         # Hiển thị Respiratory Modifier nếu có R
         if st.session_state.resp_modifier:
-            st.error("📢 **CẢNH BÁO SUY HÔ HẤP (Respiratory Modifier R):**\\nBệnh nhân có suy hô hấp nặng đi kèm. Hạn chế đặt nội khí quản máy thở áp lực dương lớn trừ khi bắt buộc để tránh làm sụp đổ tuần hoàn tim phải đang suy cấp. Ưu tiên tối đa hỗ trợ oxy dòng cao (HFNC) hoặc thở máy không xâm lấn.")
+            st.error("📢 **CẢNH BÁO SUY HÔ HẤP (Respiratory Modifier R):**\nBệnh nhân có suy hô hấp nặng đi kèm. Hạn chế tối đa việc đặt nội khí quản máy thở áp lực dương lớn trừ khi bắt buộc để tránh làm sụp đổ tuần hoàn tim phải đang suy cấp. Ưu tiên sử dụng hỗ trợ oxy dòng cao (HFNC) (Class 2a, LOE C-LD) hoặc thông khí không xâm lấn (NIV).")
 
         # Nút chuyển tiếp ngược
         st.markdown("---")
