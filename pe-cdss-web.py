@@ -8,6 +8,16 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# MENU ĐIỀU HƯỚNG
+st.sidebar.page_link(
+    "pe-cdss-web.py",
+    label="🫁 Thuyên tắc phổi cấp"
+)
+
+st.sidebar.page_link(
+    "pages/1_❤️_Hoi_chung_vanh_man.py",
+    label="❤️ Hội chứng vành mạn"
+)
 
 # Custom CSS cho giao diện y tế hiện đại, chuyên nghiệp
 st.markdown("""
