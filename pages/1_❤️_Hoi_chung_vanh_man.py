@@ -372,13 +372,20 @@ with st.expander("🩺 BƯỚC 1: ĐÁNH GIÁ LÂM SÀNG BAN ĐẦU & CẬN LÂM
         # Chest X-ray
         done_cxr = st.checkbox("Chụp X-quang ngực thẳng (Chest X-ray)")
         if done_cxr:
-            cxr_res = st.multiselect("Bất thường trên Chest X-ray (Class IIa C):", 
-                                     ["Bóng tim to (Cardiomegaly)", 
-                                      "Sung huyết phổi (Pulmonary congestion)", 
-                                      "Tràn dịch màng phổi (Pleural effusion)"])
-            st.session_state.cxr_abnormal = len(cxr_res) > 0
-            if st.session_state.cxr_abnormal:
-                st.warning("⚠️ Phát hiện bất thường trên X-quang ngực: Gợi ý suy tim hoặc bệnh lý phổi đi kèm.")
+            cxr_status = st.radio("Kết quả Chest X-ray (Class IIa C):", 
+                                  ["Chưa ghi nhận bất thường (Bình thường)", "Có bất thường"],
+                                  key="cxr_status_radio")
+            if cxr_status == "Có bất thường":
+                cxr_res = st.multiselect("Bất thường trên Chest X-ray:", 
+                                         ["Bóng tim to (Cardiomegaly)", 
+                                          "Sung huyết phổi (Pulmonary congestion)", 
+                                          "Tràn dịch màng phổi (Pleural effusion)"])
+                st.session_state.cxr_abnormal = len(cxr_res) > 0
+                if st.session_state.cxr_abnormal:
+                    st.warning("⚠️ Phát hiện bất thường trên X-quang ngực: Gợi ý suy tim hoặc bệnh lý phổi đi kèm.")
+            else:
+                st.session_state.cxr_abnormal = False
+                st.success("✅ Kết quả X-quang ngực bình thường / Chưa ghi nhận bất thường.")
                 
         # PFT
         done_pft = st.checkbox("Đo chức năng hô hấp (Pulmonary Function Test - PFT)")
@@ -699,85 +706,110 @@ with st.expander("🔍 BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN, PHÂN TẦNG NGUY 
 
         st.divider()
 
-        # 2. Event-Risk Stratification
-        st.subheader("2. Đánh giá Nguy cơ Biến cố Tim mạch Tương lai (Event-Risk Stratification)")
-        st.markdown("<p style='font-size: 0.95rem; color: #555;'>Xác định xem bệnh nhân có thuộc nhóm nguy cơ cao xảy ra biến cố tim mạch bất lợi (MACE) - Khuyến cáo <span class='class-badge-1'>Class I B</span>:</p>", unsafe_allow_html=True)
+                # 2. Results of CCTA or ICA
+        st.subheader("2. Kết quả Thăm dò Giải phẫu Mạch vành (CCTA hoặc ICA)")
+        st.markdown("<p style='font-size: 0.95rem; color: #555;'>Để phân tầng nguy cơ biến cố hoặc hướng tới chẩn đoán ANOCA/INOCA, vui lòng xác định kết quả giải phẫu mạch vành:</p>", unsafe_allow_html=True)
         
-        risk_col1, risk_col2 = st.columns(2)
-        with risk_col1:
-            st.markdown("**Các tiêu chuẩn về cấu trúc giải phẫu (Anatomical):**")
-            high_risk_anatomy = st.checkbox("CCTA/ICA: Tổn thương Thân chung Động mạch vành trái (Left Main) hẹp ≥ 50%")
-            high_risk_anatomy_2 = st.checkbox("CCTA/ICA: Hẹp nặng ≥ 70% ở cả 3 nhánh mạch vành (Three-vessel disease)")
-            high_risk_anatomy_3 = st.checkbox("CCTA/ICA: Hẹp đoạn gần động mạch liên thất trước (Proximal LAD) ≥ 70%")
+        coronary_anatomy_status = st.radio(
+            "Tình trạng hẹp động mạch vành giải phẫu:",
+            [
+                "Chưa thực hiện (hoặc đang chờ kết quả)",
+                "Có hẹp động mạch vành TẮC NGHẼN (Obstructive CAD: ≥50% thân chung LMS, hoặc ≥70% nhánh lớn khác, hoặc FFR ≤ 0.80 / iFR ≤ 0.89)",
+                "LOẠI TRỪ hẹp động mạch vành tắc nghẽn (Non-obstructive CAD: Không hẹp hoặc hẹp nhẹ-vừa <50% thân chung LMS, <70% nhánh lớn)"
+            ],
+            key="coronary_anatomy_status_radio"
+        )
         
-        with risk_col2:
-            st.markdown("**Các tiêu chuẩn về chức năng thiếu máu (Functional):**")
-            high_risk_functional = st.checkbox("Stress Echo: ≥ 3/16 phân vùng cơ tim bị giảm động hoặc vô động do gắng sức")
-            high_risk_functional_2 = st.checkbox("Stress CMR: ≥ 2/16 phân vùng thiếu máu cơ tim diện rộng")
-            high_risk_functional_3 = st.checkbox("Stress SPECT/PET: Diện tích thiếu máu cơ tim ≥ 10% cơ thất trái")
-            high_risk_functional_4 = st.checkbox("Exercise ECG: Điểm số gắng sức Duke (Duke Treadmill Score) < -10")
-
-        is_high_risk = (high_risk_anatomy or high_risk_anatomy_2 or high_risk_anatomy_3 or 
-                        high_risk_functional or high_risk_functional_2 or high_risk_functional_3 or high_risk_functional_4)
-
-        if is_high_risk:
-            st.error("""
-            **🚨 BỆNH NHÂN THUỘC NHÓM NGUY CƠ BIẾN CỐ CAO (HIGH EVENT-RISK) - Khuyến cáo Class I B:**
-            - Khuyến cáo thực hiện chụp mạch vành xâm lấn (ICA) - phối hợp đo FFR/iFR nếu cần - để lập kế hoạch tái thông mạch vành sớm nhằm cải thiện triệu chứng và tiên lượng sống còn.
-            """)
-        else:
-            st.info("💡 Bệnh nhân chưa phát hiện các tiêu chuẩn nguy cơ biến cố cao diện rộng trên thăm dò hình ảnh. Ưu tiên điều trị thuốc tối ưu (GDMT).")
-
-        st.divider()
-
-        # 3. ANOCA/INOCA Diagnostic Section (New!)
-        st.subheader("🧩 3. Định hướng Quản lý ANOCA/INOCA (Khi không có Hẹp Mạch Vành Tắc Nghẽn)")
-        st.markdown("<p style='font-size: 0.95rem; color: #555;'>Áp dụng khi kết quả thăm dò hình ảnh chẩn đoán loại trừ bệnh động mạch vành tắc nghẽn (Obstructive CAD), nhưng triệu chứng vẫn dai dẳng:</p>", unsafe_allow_html=True)
-        
-        has_obstructive_cad = st.radio("Kết quả chẩn đoán hình ảnh (CCTA hoặc ICA):", 
-                                       ["Chưa có kết quả / Có hẹp động mạch vành tắc nghẽn (≥50% Thân chung, hoặc ≥70% nhánh lớn)",
-                                        "LOẠI TRỪ hẹp động mạch vành tắc nghẽn (Không hẹp hoặc hẹp nhẹ-vừa <50% thân chung, <70% các nhánh chính)"])
-        
+        # Initialize flags
+        is_high_risk = False
         st.session_state.anoca_suspected = False
-        if has_obstructive_cad == "LOẠI TRỪ hẹp động mạch vành tắc nghẽn (Không hẹp hoặc hẹp nhẹ-vừa <50% thân chung, <70% các nhánh chính)":
-            st.session_state.anoca_suspected = True
-            st.markdown("""
-            <div class='warning-box' style='border-left-color: #f1c40f; background-color: #fefdf3;'>
-                <h4 style='color: #d4ac0d; margin-top: 0;'>🧩 NGHI NGỜ CAO MẮC ANOCA / INOCA (Cơn đau thắt ngực/Thiếu máu cơ tim không do tắc nghẽn)</h4>
-                <p>Bệnh nhân vẫn có triệu chứng đau ngực/khó thở dai dẳng nhưng giải phẫu mạch vành bình thường hoặc chỉ hẹp nhẹ. Hướng dẫn ESC 2024 khuyến nghị:</p>
-                <ul>
-                    <li><strong>Đo chức năng mạch vành xâm lấn (Invasive Coronary Function Testing - ICFT):</strong> Khuyến cáo thực hiện để xác định cơ chế bệnh sinh (Class I B cho bệnh nhân có triệu chứng hạn chế dai dẳng).</li>
-                    <li><strong>Phép thử chức năng vi tuần hoàn (Coronary Microvascular Function):</strong> Đo CFR (Coronary Flow Reserve) và IMR/HMR (Microcirculatory Resistance).</li>
-                    <li><strong>Nghiệm pháp kích thích co thắt mạch (Acetylcholine Spasm Provocation):</strong> Xác định co thắt mạch vành thượng tâm mạc hoặc vi tuần hoàn.</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
+        
+        if coronary_anatomy_status == "Chưa thực hiện (hoặc đang chờ kết quả)":
+            st.info("💡 Chưa có kết quả giải phẫu mạch vành. Hãy tiến hành thăm dò hình ảnh theo khuyến cáo ở Phần 1 để chẩn đoán xác định và phân tầng nguy cơ.")
             
-            # Interactive endotype identification
-            st.write("**Xác định kiểu hình (Endotypes) của ANOCA/INOCA dựa trên thăm dò chức năng mạch vành:**")
-            endo_col1, endo_col2 = st.columns(2)
-            with endo_col1:
-                icft_cfr = st.selectbox("1. Lưu lượng dự trữ mạch vành (CFR):", ["Bình thường (CFR ≥ 2.0)", "Giảm (CFR < 2.0)"])
-                icft_imr = st.selectbox("2. Chỉ số kháng vi tuần hoàn (IMR/HMR):", ["Bình thường (IMR < 25 / HMR < 1.9)", "Tăng (IMR ≥ 25 / HMR ≥ 1.9)"])
-            with endo_col2:
-                icft_spasm = st.selectbox("3. Nghiệm pháp kích thích Acetylcholine (ACh):", 
-                                          ["Âm tính", 
-                                           "Dương tính co thắt thượng tâm mạc (Hẹp đường kính mạch vành ≥ 90% kèm tái phát đau ngực và ST thay đổi)", 
-                                           "Dương tính co thắt vi mạch (ST thay đổi và tái phát đau ngực nhưng không co thắt mạch lớn)"])
+        elif coronary_anatomy_status == "Có hẹp động mạch vành TẮC NGHẼN (Obstructive CAD: ≥50% thân chung LMS, hoặc ≥70% nhánh lớn khác, hoặc FFR ≤ 0.80 / iFR ≤ 0.89)":
+            st.divider()
+            st.subheader("⚡ 3. Phân tầng Nguy cơ Biến cố Tim mạch (Cho Bệnh nhân Hẹp Mạch Vành Tắc Nghẽn)")
+            st.markdown("<p style='font-size: 0.95rem; color: #555;'>Xác định xem bệnh nhân có thuộc nhóm nguy cơ cao xảy ra biến cố tim mạch bất lợi (MACE) - Khuyến cáo <span class='class-badge-1'>Class I B</span>:</p>", unsafe_allow_html=True)
             
-            # Formulating Endotype Conclusion
-            st.session_state.anoca_endotype = "Chưa phân loại"
-            if icft_cfr == "Giảm (CFR < 2.0)" or icft_imr == "Tăng (IMR ≥ 25 / HMR ≥ 1.9)":
-                if icft_spasm == "Âm tính":
-                    st.session_state.anoca_endotype = "Đau thắt ngực vi mạch (Microvascular Angina - MVA)"
-                else:
-                    st.session_state.anoca_endotype = "Kiểu hình hỗn hợp (Mixed MVA + Vasospastic)"
-            elif icft_spasm != "Âm tính":
-                st.session_state.anoca_endotype = "Co thắt mạch vành (Vasospastic Angina - VSA)"
+            risk_col1, risk_col2 = st.columns(2)
+            with risk_col1:
+                st.markdown("**Các tiêu chuẩn về cấu trúc giải phẫu (Anatomical):**")
+                high_risk_anatomy = st.checkbox("CCTA/ICA: Tổn thương Thân chung Động mạch vành trái (Left Main) hẹp ≥ 50%")
+                high_risk_anatomy_2 = st.checkbox("CCTA/ICA: Hẹp nặng ≥ 70% ở cả 3 nhánh mạch vành (Three-vessel disease)")
+                high_risk_anatomy_3 = st.checkbox("CCTA/ICA: Hẹp đoạn gần động mạch liên thất trước (Proximal LAD) ≥ 70%")
+            
+            with risk_col2:
+                st.markdown("**Các tiêu chuẩn về chức năng thiếu máu (Functional):**")
+                high_risk_functional = st.checkbox("Stress Echo: ≥ 3/16 phân vùng cơ tim bị giảm động hoặc vô động do gắng sức")
+                high_risk_functional_2 = st.checkbox("Stress CMR: ≥ 2/16 phân vùng thiếu máu cơ tim diện rộng")
+                high_risk_functional_3 = st.checkbox("Stress SPECT/PET: Diện tích thiếu máu cơ tim ≥ 10% cơ thất trái")
+                high_risk_functional_4 = st.checkbox("Exercise ECG: Điểm số gắng sức Duke (Duke Treadmill Score) < -10")
+
+            is_high_risk = (high_risk_anatomy or high_risk_anatomy_2 or high_risk_anatomy_3 or 
+                            high_risk_functional or high_risk_functional_2 or high_risk_functional_3 or high_risk_functional_4)
+
+            if is_high_risk:
+                st.error("""
+                **🚨 BỆNH NHÂN THUỘC NHÓM NGUY CƠ BIẾN CỐ CAO (HIGH EVENT-RISK) - Khuyến cáo Class I B:**
+                - Khuyến cáo thực hiện chụp mạch vành xâm lấn (ICA) - phối hợp đo FFR/iFR nếu cần - để lập kế hoạch tái thông mạch vành sớm nhằm cải thiện triệu chứng và tiên lượng sống còn.
+                """)
             else:
-                st.session_state.anoca_endotype = "Đau ngực không do tim (Non-cardiac Chest Pain)"
+                st.info("💡 Bệnh nhân có hẹp tắc nghẽn nhưng chưa phát hiện các tiêu chuẩn nguy cơ biến cố cao diện rộng trên thăm dò hình ảnh. Ưu tiên điều trị thuốc tối ưu (GDMT) và xem xét tái thông mạch để cải thiện triệu chứng nếu đau thắt ngực vẫn dai dẳng.")
                 
-            st.success(f"🎯 **Kiểu hình ANOCA/INOCA xác định:** `{st.session_state.anoca_endotype}`. *Phác đồ điều trị cá thể hóa tương ứng đã được kích hoạt tại Bước 4.*")
+        elif coronary_anatomy_status == "LOẠI TRỪ hẹp động mạch vành tắc nghẽn (Non-obstructive CAD: Không hẹp hoặc hẹp nhẹ-vừa <50% thân chung LMS, <70% nhánh lớn)":
+            st.divider()
+            st.subheader("🧩 3. Định hướng Quản lý ANOCA/INOCA (Khi không có Hẹp Mạch Vành Tắc Nghẽn)")
+            
+            # Now ask if symptoms are persistent
+            has_persistent_symptoms = st.radio(
+                "Bệnh nhân có triệu chứng đau ngực hoặc khó thở dai dẳng, ảnh hưởng chất lượng cuộc sống (sau khi đã loại trừ nguyên nhân ngoài tim) không?",
+                ["Có triệu chứng dai dẳng (Persistent symptoms of ischemia)", "Không còn triệu chứng / Triệu chứng nhẹ đã ổn định"],
+                key="has_persistent_symptoms_radio"
+            )
+            
+            if has_persistent_symptoms == "Có triệu chứng dai dẳng (Persistent symptoms of ischemia)":
+                st.session_state.anoca_suspected = True
+                st.markdown("""
+                <div class='warning-box' style='border-left-color: #f1c40f; background-color: #fefdf3;'>
+                    <h4 style='color: #d4ac0d; margin-top: 0;'>🧩 NGHI NGỜ CAO MẮC ANOCA / INOCA (Cơn đau thắt ngực/Thiếu máu cơ tim không do tắc nghẽn)</h4>
+                    <p>Bệnh nhân vẫn có triệu chứng đau ngực/khó thở dai dẳng nhưng giải phẫu mạch vành bình thường hoặc chỉ hẹp không tắc nghẽn. Hướng dẫn ESC 2024 khuyến nghị:</p>
+                    <ul>
+                        <li><strong>Đo chức năng mạch vành xâm lấn (Invasive Coronary Function Testing - ICFT):</strong> Khuyến cáo thực hiện để xác định cơ chế bệnh sinh (Class I B cho bệnh nhân có triệu chứng hạn chế dai dẳng).</li>
+                        <li><strong>Phép thử chức năng vi tuần hoàn (Coronary Microvascular Function):</strong> Đo CFR (Coronary Flow Reserve) và IMR/HMR (Microcirculatory Resistance).</li>
+                        <li><strong>Nghiệm pháp kích thích co thắt mạch (Acetylcholine Spasm Provocation):</strong> Xác định co thắt mạch vành thượng tâm mạc hoặc vi tuần hoàn.</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Interactive endotype identification
+                st.write("**Xác định kiểu hình (Endotypes) của ANOCA/INOCA dựa trên thăm dò chức năng mạch vành:**")
+                endo_col1, endo_col2 = st.columns(2)
+                with endo_col1:
+                    icft_cfr = st.selectbox("1. Lưu lượng dự trữ mạch vành (CFR):", ["Bình thường (CFR ≥ 2.0)", "Giảm (CFR < 2.0)"])
+                    icft_imr = st.selectbox("2. Chỉ số kháng vi tuần hoàn (IMR/HMR):", ["Bình thường (IMR < 25 / HMR < 1.9)", "Tăng (IMR ≥ 25 / HMR ≥ 1.9)"])
+                with endo_col2:
+                    icft_spasm = st.selectbox("3. Nghiệm pháp kích thích Acetylcholine (ACh):", 
+                                              ["Âm tính", 
+                                               "Dương tính co thắt thượng tâm mạc (Hẹp đường kính mạch vành ≥ 90% kèm tái phát đau ngực và ST thay đổi)", 
+                                               "Dương tính co thắt vi mạch (ST thay đổi và tái phát đau ngực nhưng không co thắt mạch lớn)"])
+                
+                # Formulating Endotype Conclusion
+                st.session_state.anoca_endotype = "Chưa phân loại"
+                if icft_cfr == "Giảm (CFR < 2.0)" or icft_imr == "Tăng (IMR ≥ 25 / HMR ≥ 1.9)":
+                    if icft_spasm == "Âm tính":
+                        st.session_state.anoca_endotype = "Đau thắt ngực vi mạch (Microvascular Angina - MVA)"
+                    else:
+                        st.session_state.anoca_endotype = "Kiểu hình hỗn hợp (Mixed MVA + Vasospastic)"
+                elif icft_spasm != "Âm tính":
+                    st.session_state.anoca_endotype = "Co thắt mạch vành (Vasospastic Angina - VSA)"
+                else:
+                    st.session_state.anoca_endotype = "Đau ngực không do tim (Non-cardiac Chest Pain)"
+                    
+                st.success(f"🎯 **Kiểu hình ANOCA/INOCA xác định:** `{st.session_state.anoca_endotype}`. *Phác đồ điều trị cá thể hóa tương ứng đã được kích hoạt tại Bước 4.*")
+            else:
+                st.session_state.anoca_suspected = False
+                st.success("✅ Bệnh nhân không có hẹp mạch vành tắc nghẽn và không có triệu chứng cơ năng dai dẳng. Không có chỉ định chẩn đoán hay can thiệp gì thêm về ANOCA/INOCA.")
 
         # Step navigation
         st.write("")
