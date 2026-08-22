@@ -132,6 +132,12 @@ st.divider()
 # Session State Initialization for Step Flow (Option A: Dynamic Expansion)
 if 'step' not in st.session_state:
     st.session_state.step = 1
+if 'hr_val' not in st.session_state:
+    st.session_state.hr_val = 72
+if 'sbp_val' not in st.session_state:
+    st.session_state.sbp_val = 120
+if 'lvef_val' not in st.session_state:
+    st.session_state.lvef_val = 55
 if 'acute_flag' not in st.session_state:
     st.session_state.acute_flag = False
 if 'lipid_unit' not in st.session_state:
@@ -310,6 +316,15 @@ with st.expander("🩺 BƯỚC 1: ĐÁNH GIÁ LÂM SÀNG BAN ĐẦU & CẬN LÂM
     st.subheader("🧪 3. Thăm dò Cận lâm sàng Ban đầu (Basic & Selected Testing) & Nhập Kết quả")
     st.markdown("<p style='font-size: 0.95rem; color: #555;'>Tích chọn các thăm dò đã thực hiện và điền kết quả để hệ thống liên kết dữ liệu tự động sang các bước sau:</p>", unsafe_allow_html=True)
     
+    # Vital signs input section (Linked to Step 4 drug choices)
+    st.markdown("**💓 Dấu hiệu sinh tồn cơ bản lúc nghỉ (Vitals):**")
+    v_col1, v_col2 = st.columns(2)
+    with v_col1:
+        st.session_state.sbp_val = st.number_input("Huyết áp tâm thu lúc nghỉ (mmHg):", min_value=50, max_value=220, value=st.session_state.sbp_val, step=5)
+    with v_col2:
+        st.session_state.hr_val = st.number_input("Tần số tim lúc nghỉ (nhịp/phút):", min_value=30, max_value=180, value=st.session_state.hr_val, step=5)
+    st.write("")
+    
     test_col1, test_col2 = st.columns(2)
     with test_col1:
         st.markdown("**1. Xét nghiệm thường quy bắt buộc (Cho mọi bệnh nhân - Class I):**")
@@ -421,6 +436,7 @@ with st.expander("📊 BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU & ƯỚC TÍNH KHẢ 
         echo_col1, echo_col2 = st.columns(2)
         with echo_col1:
             lvef = st.slider("Phân suất tống máu thất trái (LVEF %)", min_value=10, max_value=80, value=55)
+            st.session_state.lvef_val = lvef
         with echo_col2:
             echo_findings = st.multiselect("Phát hiện bất thường trên siêu âm tim lúc nghỉ:", [
                 "Rối loạn vận động vùng cơ tim thất trái (Regional wall motion abnormality)",
@@ -840,28 +856,271 @@ with st.expander("💊 BƯỚC 4: CHIẾN LƯỢC ĐIỀU TRỊ TỐI ƯU (GDMT 
         ])
         
         with tab_med:
-            st.subheader("1. Thay đổi lối sống và Kiểm soát các yếu tố nguy cơ (Class I)")
-            st.markdown("""
-            *   **Bỏ hoàn toàn thuốc lá:** Hỗ trợ tư vấn cai thuốc, tránh phơi nhiễm khói thuốc lá thụ động (Class I A).
-            *   **Chế độ ăn Địa Trung Hải (Mediterranean Diet):** Hạn chế chất béo bão hòa < 10% tổng năng lượng, tăng cường rau quả, ngũ cốc nguyên hạt. Hạn chế rượu bia (<100g/tuần).
-            *   **Hoạt động thể lực:** Tập luyện thể dục cường độ trung bình 30-60 phút ít nhất 5 ngày/tuần. Giảm thời gian ngồi tĩnh tại.
-            *   **Kiểm soát cân nặng:** Đưa cân nặng về mức BMI mục tiêu (18.5 - 24.9 kg/m2).
-            """)
+            # We split tab_med into two sub-tabs: Prognostic and Symptomatic (Figure 9)
+            sub_tab_med_prognostic, sub_tab_med_symptomatic = st.tabs([
+                "🛡️ 1. Điều trị Cải thiện Tiên lượng",
+                "💊 2. Tối ưu hóa Thuốc Chống Đau Thắt Ngực (Figure 9)"
+            ])
             
-            st.subheader("2. Thuốc bảo vệ mạch vành và Cải thiện tiên lượng (Class I)")
-            st.markdown("""
-            *   **Kháng kết tập tiểu cầu (Antiplatelets):** 
-                *   *Aspirin 75-100 mg/ngày* hoặc *Clopidogrel 75 mg/ngày* được khuyến cáo lâu dài ở bệnh nhân có bệnh mạch vành tắc nghẽn (Class I A).
-            *   **Kiểm soát huyết áp:** Mục tiêu **120-129 / 70-79 mmHg** nếu dung nạp tốt (Class I A, ưu tiên ACEi hoặc ARB).
-            *   **Bệnh nhân Đái tháo đường đi kèm:** Bắt buộc sử dụng thuốc **ức chế SGLT2 (SGLT2i)** và/hoặc **đồng vận thụ thể GLP-1 (GLP-1 RA)** để giảm nguy cơ tử vong do tim mạch và nhồi máu cơ tim (Class I A).
-            """)
-            
-            st.subheader("3. Thuốc giảm triệu chứng đau thắt ngực (Antianginal - Anti-ischemic)")
-            st.markdown("""
-            *   **Lựa chọn đầu tay (First-line):** Thuốc **Chẹn beta (Beta-blockers)** và/hoặc **Chẹn kênh Canxi (CCBs)** để kiểm soát tần số tim và giảm đau ngực (Class I A).
-            *   **Cắt cơn đau ngực cấp:** Luôn luôn kê đơn Nitroglycerin dạng xịt hoặc ngậm dưới lưỡi cho bệnh nhân mang theo người (Class I B).
-            """)
-            
+            with sub_tab_med_prognostic:
+                st.subheader("1. Thay đổi lối sống và Kiểm soát các yếu tố nguy cơ (Class I)")
+                st.markdown("""
+                *   **Bỏ hoàn toàn thuốc lá:** Hỗ trợ tư vấn cai thuốc, tránh phơi nhiễm khói thuốc lá thụ động (Class I A).
+                *   **Chế độ ăn Địa Trung Hải (Mediterranean Diet):** Hạn chế chất béo bão hòa < 10% tổng năng lượng, tăng cường rau quả, ngũ cốc nguyên hạt. Hạn chế rượu bia (<100g/tuần).
+                *   **Hoạt động thể lực:** Tập luyện thể dục cường độ trung bình 150-300 phút hoặc cường độ mạnh 75-150 phút mỗi tuần (Class I B). Giảm thời gian ngồi tĩnh tại (Class I B).
+                *   **Kiểm soát cân nặng:** Đưa cân nặng về mức BMI mục tiêu (18.5 - 24.9 kg/m2).
+                """)
+                
+                st.subheader("2. Thuốc bảo vệ mạch vành và Cải thiện tiên lượng (Class I)")
+                st.markdown("""
+                *   **Kháng kết tập tiểu cầu (Antiplatelets):** 
+                    *   *Aspirin 75-100 mg/ngày* hoặc *Clopidogrel 75 mg/ngày* được khuyến cáo lâu dài ở bệnh nhân có bệnh mạch vành tắc nghẽn (Class I A).
+                *   **Kiểm soát huyết áp:** Mục tiêu **120-129 / 70-79 mmHg** nếu dung nạp tốt (Class I A, ưu tiên ACEi hoặc ARB).
+                *   **Bệnh nhân Đái tháo đường đi kèm:** Bắt buộc sử dụng thuốc **ức chế SGLT2 (SGLT2i)** (như Dapagliflozin 10mg q.d., Empagliflozin 10mg q.d.) và/hoặc **đồng vận thụ thể GLP-1 (GLP-1 RA)** để giảm nguy cơ tử vong do tim mạch và nhồi máu cơ tim (Class I A).
+                """)
+                
+            with sub_tab_med_symptomatic:
+                st.subheader("💊 Kê đơn & Phối hợp Thuốc chống Thiếu máu theo Figure 9 (ESC 2024)")
+                st.markdown("<p style='font-size: 0.95rem; color: #555;'>Hệ thống tự động phân tích tương tác thuốc, liều lượng, và chống chỉ định phối hợp dựa trên đặc tính lâm sàng của bệnh nhân:</p>", unsafe_allow_html=True)
+                
+                # Show dynamic Patient Profile
+                hr_val = st.session_state.get('hr_val', 72)
+                sbp_val = st.session_state.get('sbp_val', 120)
+                lvef_val = st.session_state.get('lvef_val', 55)
+                egfr_val = st.session_state.get('egfr_val', 90)
+                pft_abnormal = st.session_state.get('pft_abnormal', False)
+                anoca_suspected = st.session_state.get('anoca_suspected', False)
+                anoca_endotype = st.session_state.get('anoca_endotype', "Chưa phân loại")
+                
+                # Profile status calculation
+                hr_status = "Bình thường" if 55 <= hr_val <= 90 else ("Nhịp nhanh" if hr_val > 90 else "Nhịp chậm")
+                sbp_status = "Bình thường" if 95 <= sbp_val <= 140 else ("Huyết áp cao" if sbp_val > 140 else "Huyết áp thấp")
+                lvef_status = "Giảm nặng (HFrEF)" if lvef_val <= 40 else "Bình thường / Bảo tồn"
+                
+                profile_html = f"""
+                <div class='info-box' style='background-color: #f7f9fa; border-left: 5px solid #17b978; margin-bottom: 20px;'>
+                    <h5 style='margin-top: 0; color: #1e3d59; font-weight: bold;'>👤 TÓM TẮT ĐẶC ĐIỂM BỆNH NHÂN ĐÃ NHẬP:</h5>
+                    <div style='display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.95rem;'>
+                        <div>• <strong>Tần số tim (HR):</strong> {hr_val} nhịp/phút (<span style='color: {"#e74c3c" if hr_status != "Bình thường" else "#27ae60"}; font-weight: bold;'>{hr_status}</span>)</div>
+                        <div>• <strong>Huyết áp tâm thu (SBP):</strong> {sbp_val} mmHg (<span style='color: {"#e74c3c" if sbp_status != "Bình thường" else "#27ae60"}; font-weight: bold;'>{sbp_status}</span>)</div>
+                        <div>• <strong>Chức năng thất trái (LVEF):</strong> {lvef_val}% (<span style='color: {"#e74c3c" if lvef_val <= 40 else "#27ae60"}; font-weight: bold;'>{lvef_status}</span>)</div>
+                        <div>• <strong>Mức lọc cầu thận (eGFR):</strong> {egfr_val} mL/min</div>
+                        <div>• <strong>Kiểu hình động mạch vành:</strong> <span style='color: #fd7e14; font-weight: bold;'>{"ANOCA/INOCA: " + anoca_endotype if anoca_suspected else "Mạch vành tắc nghẽn (Obstructive CAD)"}</span></div>
+                    </div>
+                </div>
+                """
+                st.markdown(profile_html, unsafe_allow_html=True)
+                
+                # Checkbox selectors for antianginal medications
+                st.markdown("#### 1. Lựa chọn các thuốc chống đau thắt ngực muốn kê đơn:")
+                
+                col_sel1, col_sel2 = st.columns(2)
+                with col_sel1:
+                    prescribe_bb = st.checkbox("Chẹn beta (Beta-blockers - BB)", key="pres_bb")
+                    prescribe_dhp_ccb = st.checkbox("Chẹn kênh Canxi Dihydropyridine (DHP-CCB)", key="pres_dhp")
+                    prescribe_non_dhp_ccb = st.checkbox("Chẹn kênh Canxi Non-Dihydropyridine (Verapamil / Diltiazem)", key="pres_nondhp")
+                    prescribe_la_nitrate = st.checkbox("Nitrates tác dụng kéo dài (LA Nitrates)", key="pres_lanit")
+                with col_sel2:
+                    prescribe_ivabradine = st.checkbox("Ivabradine", key="pres_iva")
+                    prescribe_ranolazine = st.checkbox("Ranolazine", key="pres_rano")
+                    prescribe_trimetazidine = st.checkbox("Trimetazidine", key="pres_tri")
+                    prescribe_nicorandil = st.checkbox("Nicorandil", key="pres_nico")
+                
+                # Dynamic comorbidities based on antianginal safety
+                st.markdown("**Khai báo thêm tình trạng đi kèm (nếu có):**")
+                park_col, pde5_col, hcm_col = st.columns(3)
+                with park_col:
+                    parkinson_flag = st.checkbox("Có hội chứng Parkinson?")
+                with pde5_col:
+                    pde5_flag = st.checkbox("Đang dùng ức chế PDE-5 (Sildenafil...)")
+                with hcm_col:
+                    hcm_flag = st.checkbox("Bệnh cơ tim phì đại HCM?")
+                
+                st.markdown("#### 2. Kết quả kiểm tra an toàn phối hợp thuốc (Figure 9 & 15):")
+                
+                safety_alerts = []
+                success_alerts = []
+                
+                # Rule 1: BB + Non-DHP CCB (Verapamil/Diltiazem)
+                if prescribe_bb and prescribe_non_dhp_ccb:
+                    safety_alerts.append("""
+                    <div class='warning-box'>
+                        <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ TỐI KỴ - PHỐI HỢP KHÔNG KHUYẾN CÁO (Class III / Figure 9 Sơ đồ đỏ)</h5>
+                        <strong>Chẹn beta (BB) + Chẹn kênh Canxi Non-DHP (Verapamil / Diltiazem):</strong><br>
+                        - Không phối hợp 2 nhóm thuốc này do hiệu ứng hiệp đồng ức chế mạnh nút xoang, nút nhĩ thất và sức co bóp cơ tim.<br>
+                        - <strong>Nguy cơ lâm sàng:</strong> Nhịp tim chậm mức độ nặng đe dọa tính mạng, block nhĩ thất độ cao, hoặc suy tim cấp.
+                    </div>
+                    """)
+                    
+                # Rule 2: Ivabradine + Non-DHP CCB
+                if prescribe_ivabradine and prescribe_non_dhp_ccb:
+                    safety_alerts.append("""
+                    <div class='warning-box'>
+                        <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ TỐI KỴ - CHỐNG CHỈ ĐỊNH PHỐI HỢP (Class III B)</h5>
+                        <strong>Ivabradine + Chẹn kênh canxi Non-DHP (Verapamil / Diltiazem):</strong><br>
+                        - Chống chỉ định phối hợp do cả hai thuốc đều gây chậm nhịp tim qua cơ chế khác nhau. Tương tác làm tăng nồng độ ivabradine trong máu do ức chế mạnh CYP3A4.<br>
+                        - <strong>Nguy cơ lâm sàng:</strong> Suy nút xoang, nhịp chậm nghiêm trọng.
+                    </div>
+                    """)
+                    
+                # Rule 3: LA Nitrate + PDE5 inhibitor
+                if prescribe_la_nitrate and pde5_flag:
+                    safety_alerts.append("""
+                    <div class='warning-box'>
+                        <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ TỐI KỴ - CHỐNG CHỈ ĐỊNH PHỐI HỢP (Class III B)</h5>
+                        <strong>Nitrates tác dụng kéo dài + Thuốc ức chế PDE-5 (Sildenafil, Tadalafil...):</strong><br>
+                        - Tương tác gây giãn mạch hệ thống cực độ, dẫn đến tụt huyết áp nghiêm trọng kịch trần, đe dọa tính mạng.<br>
+                        - <strong>Nguy cơ lâm sàng:</strong> Trụy mạch, shock, nhồi máu cơ tim thứ phát. Không sử dụng Nitrates trong vòng 24 giờ sau dùng Sildenafil, và 48 giờ sau dùng Tadalafil.
+                    </div>
+                    """)
+                    
+                # Rule 4: Non-DHP CCB in HFrEF (LVEF <= 40%)
+                if prescribe_non_dhp_ccb and lvef_val <= 40:
+                    safety_alerts.append("""
+                    <div class='warning-box'>
+                        <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH - LVEF THẤP (LVEF ≤ 40%)</h5>
+                        <strong>Chẹn kênh Canxi Non-DHP ở bệnh nhân LVEF ≤ 40%:</strong><br>
+                        - Chống chỉ định do hiệu ứng ức chế co bóp cơ tim âm tính (negative inotropic effect).<br>
+                        - <strong>Nguy cơ lâm sàng:</strong> Làm khởi phát suy tim cấp hoặc nặng lên tình trạng suy tim HFrEF hiện tại.
+                    </div>
+                    """)
+                    
+                # Rule 5: Ivabradine in LVEF > 40% with no clinical HF
+                if prescribe_ivabradine and lvef_val > 40:
+                    safety_alerts.append("""
+                    <div class='warning-box' style='border-left-color: #f1c40f;'>
+                        <h5 style='color: #d4ac0d; margin: 0; font-weight: bold;'>⚠️ KHÔNG KHUYẾN CÁO (Class III B)</h5>
+                        <strong>Ivabradine ở bệnh nhân LVEF > 40% không suy tim:</strong><br>
+                        - Theo thử nghiệm SIGNIFY, việc bổ sung ivabradine trên nền bệnh nhân CCS có chức năng tim bình thường không làm giảm biến cố tim mạch mà làm tăng nguy cơ nhịp chậm và rung nhĩ.
+                    </div>
+                    """)
+                    
+                # Rule 6: Trimetazidine in Parkinson
+                if prescribe_trimetazidine and parkinson_flag:
+                    safety_alerts.append("""
+                    <div class='warning-box'>
+                        <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH</h5>
+                        <strong>Trimetazidine ở bệnh nhân Parkinson:</strong><br>
+                        - Trimetazidine có thể đi qua hàng rào máu não và ức chế thụ thể dopamine ở nhân nền.<br>
+                        - <strong>Nguy cơ lâm sàng:</strong> Làm khởi phát hoặc nặng lên nghiêm trọng các triệu chứng run, cứng đờ, mất vận động (giả Parkinson).
+                    </div>
+                    """)
+                    
+                # Rule 7: Nitrates in HCM
+                if prescribe_la_nitrate and hcm_flag:
+                    safety_alerts.append("""
+                    <div class='warning-box'>
+                        <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH (Class III B)</h5>
+                        <strong>Nitrates ở bệnh nhân Bệnh cơ tim phì đại tắc nghẽn (HCM):</strong><br>
+                        - Giãn mạch do Nitrates làm giảm tiền gánh, dẫn đến giảm thể tích thất trái và làm trầm trọng thêm mức độ tắc nghẽn đường ra thất trái (LVOT obstruction).
+                    </div>
+                    """)
+                    
+                # Rule 8: Renal Impairment
+                if egfr_val < 30:
+                    if prescribe_trimetazidine:
+                        safety_alerts.append("""
+                        <div class='warning-box'>
+                            <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH - SUY THẬN NẶNG (eGFR < 30)</h5>
+                            <strong>Trimetazidine ở bệnh nhân eGFR < 30 mL/min:</strong><br>
+                            - Thuốc thải trừ chủ yếu qua thận. Suy thận nặng làm tích lũy thuốc gây độc tính thần kinh.
+                        </div>
+                        """)
+                    if prescribe_ranolazine:
+                        safety_alerts.append("""
+                        <div class='warning-box'>
+                            <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH - SUY THẬN NẶNG (eGFR < 30)</h5>
+                            <strong>Ranolazine ở bệnh nhân eGFR < 30 mL/min:</strong><br>
+                            - Ranolazine và các chất chuyển hóa tích lũy mạnh ở bệnh nhân suy thận nặng, làm tăng nguy cơ kéo dài khoảng QT và độc tính tích lũy.
+                        </div>
+                        """)
+                        
+                # Rule 9: Bradycardia alert (HR < 55)
+                if hr_val < 55 and (prescribe_bb or prescribe_non_dhp_ccb or prescribe_ivabradine):
+                    safety_alerts.append("""
+                    <div class='warning-box' style='border-left-color: #f1c40f;'>
+                        <h5 style='color: #d4ac0d; margin: 0; font-weight: bold;'>⚠️ THẬN TRỌNG - BỆNH NHÂN NHỊP CHẬM (HR < 55)</h5>
+                        <strong>Sử dụng thuốc hạ nhịp tim (Chẹn beta, Non-DHP CCB, hoặc Ivabradine):</strong><br>
+                        - Nhịp tim nền của bệnh nhân đang thấp ({hr_val} nhịp/phút). Việc kê đơn thêm các thuốc này có thể gây ngừng xoang, block tim nặng.<br>
+                        - <strong>Giải pháp thay thế:</strong> Hãy ưu tiên chọn **Ranolazine** hoặc **Trimetazidine** vì chúng không làm giảm nhịp tim nền của bệnh nhân.
+                    </div>
+                    """)
+                    
+                # Rule 10: Low Blood Pressure alert (SBP < 95)
+                if sbp_val < 95 and (prescribe_bb or prescribe_dhp_ccb or prescribe_non_dhp_ccb or prescribe_la_nitrate or prescribe_nicorandil):
+                    safety_alerts.append("""
+                    <div class='warning-box' style='border-left-color: #f1c40f;'>
+                        <h5 style='color: #d4ac0d; margin: 0; font-weight: bold;'>⚠️ THẬN TRỌNG - BỆNH NHÂN HUYẾT ÁP THẤP (SBP < 95)</h5>
+                        <strong>Sử dụng thuốc gây giãn mạch / hạ áp:</strong><br>
+                        - Huyết áp tâm thu nền đang thấp ({sbp_val} mmHg). Các thuốc được chọn có thể làm hạ huyết áp thêm.<br>
+                        - <strong>Giải pháp thay thế:</strong> Ưu tiên chọn **Ranolazine**, **Trimetazidine** (không gây tụt huyết áp) hoặc **Ivabradine** (chỉ làm giảm nhịp tim, không tác dụng lên huyết áp).
+                    </div>
+                    """)
+                    
+                # Rule 11: Asthma / COPD with Beta-blockers
+                if pft_abnormal and prescribe_bb:
+                    safety_alerts.append("""
+                    <div class='warning-box' style='border-left-color: #f1c40f;'>
+                        <h5 style='color: #d4ac0d; margin: 0; font-weight: bold;'>⚠️ THẬN TRỌNG - CO THẮT PHẾ QUẢN (COPD / Hen)</h5>
+                        <strong>Chẹn beta (BB) ở bệnh nhân có rối loạn thông khí tắc nghẽn:</strong><br>
+                        - Tránh dùng các Chẹn beta không chọn lọc (như Propranolol).<br>
+                        - <strong>Khuyến cáo lâm sàng:</strong> Bắt buộc phải chọn Chẹn beta siêu chọn lọc tim (như <strong>Bisoprolol</strong> hoặc <strong>Metoprolol Succinate</strong>) ở liều thấp nhất, tăng liều chậm và theo dõi sát triệu chứng hô hấp. Nếu xuất hiện co thắt phế quản, chuyển sang nhóm CCBs.
+                    </div>
+                    """)
+                    
+                # Rule 12: ANOCA Vasospastic Angina (VSA) with Beta-blockers (Class III for monotherapy)
+                if anoca_suspected and "Vasospastic" in anoca_endotype and prescribe_bb:
+                    safety_alerts.append("""
+                    <div class='warning-box'>
+                        <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH ĐƠN TRỊ LIỆU (Class III / Figure 15 Cảnh báo đỏ)</h5>
+                        <strong>Chẹn beta (BB) đơn trị liệu ở bệnh nhân Co thắt mạch vành (VSA):</strong><br>
+                        - Tránh tuyệt đối dùng Chẹn beta đơn trị liệu ở bệnh nhân co thắt mạch (VSA), do chẹn thụ thể beta-2 làm hoạt hóa thụ thể alpha-adrenergic không đối kháng dẫn đến co thắt mạch vành dữ dội hơn.<br>
+                        - <strong>Điều trị đúng đầu tay:</strong> Chẹn kênh canxi (CCBs) liều cao (Class I A) phối hợp với Nitrates (Class IIa B).
+                    </div>
+                    """)
+                    
+                # Success & Helpful Combo Check
+                # Combo 1: BB + DHP CCB (Useful combination)
+                if prescribe_bb and prescribe_dhp_ccb and not prescribe_non_dhp_ccb:
+                    success_alerts.append("""
+                    <div class='success-box' style='background-color: #e8f8f5; border-left: 5px solid #2ecc71; padding: 10px; margin-bottom: 10px;'>
+                        <span class='class-badge-1'>Class I</span> <strong>Phối hợp thuốc chuẩn: Chẹn beta (BB) + Chẹn kênh canxi DHP (như Amlodipine):</strong><br>
+                        - Đây là phối hợp hữu ích và phổ biến nhất ở bệnh nhân CCS khi đơn trị liệu không kiểm soát tốt đau ngực.<br>
+                        - <strong>Cơ chế tối ưu:</strong> Chẹn beta giúp triệt tiêu phản xạ nhịp nhanh do DHP-CCB gây ra, đồng thời hiệp đồng tăng hiệu quả chống thiếu máu cơ tim.
+                    </div>
+                    """)
+                
+                # Render Alerts
+                if len(safety_alerts) > 0:
+                    for alert in safety_alerts:
+                        st.markdown(alert, unsafe_allow_html=True)
+                else:
+                    if (prescribe_bb or prescribe_dhp_ccb or prescribe_non_dhp_ccb or prescribe_la_nitrate or prescribe_ivabradine or prescribe_ranolazine or prescribe_trimetazidine or prescribe_nicorandil):
+                        st.success("✅ **Đánh giá phối hợp thuốc:** Phối hợp thuốc an toàn, không phát hiện chống chỉ định hoặc tương tác bất lợi nghiêm trọng theo Figure 9.")
+                    else:
+                        st.info("💡 Hãy tích chọn các thuốc chống đau ngực ở trên để hệ thống tự động kiểm tra tương tác an toàn.")
+                        
+                if len(success_alerts) > 0:
+                    for s_alert in success_alerts:
+                        st.markdown(s_alert, unsafe_allow_html=True)
+                
+                # 3. Dosage and titration table
+                st.markdown("#### 3. Bảng tra cứu liều lượng chi tiết và chống chỉ định các thuốc thường gặp:")
+                
+                with st.expander("📖 Xem bảng tra cứu liều lượng chi tiết (8 nhóm thuốc)", expanded=False):
+                    st.markdown("""
+                    | Nhóm thuốc | Thuốc thường gặp (Tên biệt dược) | Liều khởi đầu khuyến cáo | Liều đích mục tiêu | Chống chỉ định chính & Cảnh báo |
+                    | :--- | :--- | :--- | :--- | :--- |
+                    | **1. Chẹn Beta (BB)** | **Metoprolol Succinate** (Betaloc Zok)<br>**Bisoprolol** (Concor)<br>**Carvedilol** (Dilatrend) | 25 - 50 mg q.d.<br>2.5 - 5 mg q.d.<br>6.25 mg b.i.d. | 100 - 200 mg q.d.<br>10 - 20 mg q.d.<br>25 - 50 mg b.i.d. | Suy nút xoang, block nhĩ thất độ II, III, nhịp chậm (HR < 50), suy tim mất bù. Thận trọng với Hen/COPD.<br>*(Đích HR lúc nghỉ: 55-60 nhịp/phút)* |
+                    | **2. DHP-CCB** | **Amlodipine** (Amlor)<br>**Felodipine** (Plendil) | 5 mg q.d.<br>5 mg q.d. | 10 mg q.d.<br>10 mg q.d. | Huyết áp thấp nặng (SBP < 90), hẹp khít van động mạch chủ lơn, phù ngoại biên nặng. |
+                    | **3. Non-DHP CCB** | **Verapamil** (Isoptin)<br>**Diltiazem** (Herbesser) | 120 - 240 mg/ngày<br>120 - 180 mg/ngày | 360 - 480 mg/ngày<br>360 mg/ngày | **Chống chỉ định ở HFrEF (LVEF ≤ 40%)**, nhịp chậm, block nhĩ thất, suy nút xoang. **Tuyệt đối không phối hợp cùng Chẹn beta hoặc Ivabradine (Class III)**. |
+                    | **4. LA Nitrates** | **Isosorbide Mononitrate** (Imdur)<br>**Isosorbide Dinitrate** | 30 mg q.d.<br>10 mg b.i.d. | 60 - 120 mg q.d.<br>40 mg t.i.d. | **Chống chỉ định ở bệnh cơ tim phì đại tắc nghẽn (HCM) và dùng chung PDE-5i (Sildenafil...) (Class III)**. Bắt buộc có khoảng nghỉ nitrate-free 10-14h hàng ngày để tránh lờn thuốc. |
+                    | **5. Ivabradine** | **Ivabradine** (Procoralan) | 5 mg b.i.d. (2.5mg nếu nhịp chậm) | 7.5 mg b.i.d. | Nhịp xoang < 50, rung nhĩ/cuồng nhĩ, nhồi máu cơ tim cấp. **CCĐ ở LVEF > 40% không suy tim (Class III)**. Không dùng chung với Non-DHP CCB (Class III). |
+                    | **6. Ranolazine** | **Ranolazine** (Ranexa) | 375 mg b.i.d. | 500 - 1000 mg b.i.d. | **Chống chỉ định ở eGFR < 30 mL/min**, suy gan nặng, dùng chung chất ức chế CYP3A4 mạnh.<br>*Ưu điểm: Không ảnh hưởng nhịp tim và huyết áp.* |
+                    | **7. Trimetazidine** | **Trimetazidine MR** (Vastarel MR) | 35 mg b.i.d. | 35 mg b.i.d. | **Chống chỉ định ở bệnh Parkinson / rối loạn ngoại tháp**, **suy thận nặng (eGFR < 30 mL/min)**. |
+                    | **8. Nicorandil** | **Nicorandil** (Ikorel) | 10 mg b.i.d. | 20 - 30 mg b.i.d. | Shock tim, tụt huyết áp nặng. Nguy cơ gây loét đường tiêu hóa hoặc loét da nghiêm trọng (ngừng thuốc ngay nếu xuất hiện loét). |
+                    """)
+        
         with tab_lipid:
             st.subheader("🩸 PHÂN TÍCH VÀ ĐIỀU CHỈNH LIPID MÁU THEO TIÊU CHUẨN ESC 2024")
             
@@ -984,55 +1243,81 @@ with st.expander("💊 BƯỚC 4: CHIẾN LƯỢC ĐIỀU TRỊ TỐI ƯU (GDMT 
                 st.info(f"Lp(a) trong giới hạn bình thường: {lpa_now} nmol/L.")
 
         with tab_revasc:
-            st.subheader("1. Tiêu chuẩn chỉ định Tái thông mạch vành (Revascularization)")
+            is_anoca_suspected = st.session_state.get('anoca_suspected', False)
             
-            is_high_risk = st.session_state.get('high_risk_flag', False)
-            if is_high_risk:
+            if is_anoca_suspected:
                 st.markdown("""
-                <div class='warning-box' style='border-left-color: #fd7e14;'>
-                    <h4 style='color: #fd7e14; margin-top: 0;'>👉 CHỈ ĐỊNH TÁI THÔNG MẠCH VÀNH ĐỂ CẢI THIỆN TIÊN LƯỢNG (Class I A)</h4>
-                    <p>Do bệnh nhân thuộc nhóm nguy cơ biến cố cao (Hẹp Thân chung trái, 3 nhánh mạch vành, hoặc đoạn gần LAD), can thiệp mạch vành qua da (PCI) hoặc phẫu thuật làm cầu nối chủ-vành (CABG) được chỉ định để kéo dài thời gian sống còn và ngăn ngừa Nhồi máu cơ tim tự phát.</p>
+                <div class='warning-box' style='border-left-color: #f1c40f; background-color: #fefdf3;'>
+                    <h4 style='color: #d4ac0d; margin-top: 0; font-weight: bold;'>🚫 KHÔNG CÓ CHỈ ĐỊNH TÁI THÔNG MẠCH VÀNH (PCI / CABG)</h4>
+                    <p>Bệnh nhân được chẩn đoán xác định hội chứng <strong>ANOCA / INOCA</strong> (Cơn đau thắt ngực / Thiếu máu cơ tim không do tắc nghẽn động mạch vành).</p>
+                    <p>Vì giải phẫu động mạch vành thượng tâm mạc hoàn toàn bình thường hoặc chỉ hẹp không tắc nghẽn (&lt; 50% Thân chung LMS, &lt; 70% các nhánh lớn), việc can thiệp nong/đặt stent mạch vành (PCI) hay mổ bắc cầu chủ-vành (CABG) <strong>hoàn toàn không có chỉ định</strong> và không đem lại lợi ích lâm sàng.</p>
+                    <p>👉 <strong>Hướng xử trí:</strong> Tập trung điều trị nội khoa cá thể hóa dựa trên Kiểu hình (Endotype) được xác định từ Thăm dò chức năng mạch vành xâm lấn ở bên dưới.</p>
                 </div>
                 """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div class='info-box'>
-                    <strong>Xem xét Tái thông mạch vành để cải thiện triệu chứng (Class I A):</strong><br>
-                    Ở những bệnh nhân không thuộc nhóm nguy cơ biến cố cao, chỉ định tái thông mạch vành được đặt ra khi:
-                    Triệu chứng đau thắt ngực hoặc khó thở vẫn dai dẳng, ảnh hưởng nặng đến chất lượng cuộc sống mặc dù đã điều trị nội khoa tối ưu (GDMT) với tối thiểu 2 nhóm thuốc kháng đau thắt ngực.
-                </div>
-                """, unsafe_allow_html=True)
-
-            # 2. ANOCA / INOCA Pharmacological Management (New!)
-            if st.session_state.get('anoca_suspected', False):
-                st.subheader("2. Điều trị nội khoa cá thể hóa cho ANOCA / INOCA (Figure 15)")
-                st.info(f"Phác đồ điều trị được cá thể hóa dựa trên Kiểu hình (Endotype) xác định: **{st.session_state.get('anoca_endotype', 'Chưa phân loại')}**")
+                
+                st.subheader("🛠️ Điều trị nội khoa cá thể hóa cho ANOCA / INOCA theo Kiểu hình (Figure 15)")
+                st.info(f"Kiểu hình (Endotype) xác định từ Bước 3: **{st.session_state.get('anoca_endotype', 'Chưa phân loại')}**")
                 
                 endotype_active = st.session_state.get('anoca_endotype', 'Chưa phân loại')
                 
                 if "Microvascular" in endotype_active or "MVA" in endotype_active:
                     st.markdown("""
-                    *   **Thuốc chống đau ngực:** 
-                        *   <span class='class-badge-2a'>Class IIa B</span> **Chẹn beta (Beta-blockers)** là lựa chọn đầu tay (như Nebivolol, Bisoprolol).
-                        *   <span class='class-badge-2a'>Class IIa B</span> Phối hợp **Chẹn kênh canxi dihydropyridine (DHP-CCBs)** (như Amlodipine) nếu chẹn beta chưa kiểm soát được triệu chứng.
-                        *   <span class='class-badge-2b'>Class IIb B</span> Nicorandil hoặc Ranolazine nếu triệu chứng kháng trị.
-                    *   **Thuốc bảo vệ mạch vành:** Khuyến cáo sử dụng **ACEi/ARB** và **Statin** để cải thiện chức năng nội mạc vi tuần hoàn (Class IIa B).
+                    *   **1. Thuốc chống đau thắt ngực:** 
+                        *   <span class='class-badge-2a'>Class IIa B</span> **Chẹn beta (Beta-blockers)** là lựa chọn hàng đầu (ưu tiên các chẹn beta thế hệ mới có hoạt tính giãn mạch như Nebivolol, hoặc chẹn chọn lọc như Bisoprolol).
+                        *   <span class='class-badge-2a'>Class IIa B</span> Phối hợp thêm **Chẹn kênh canxi dihydropyridine (DHP-CCBs)** (như Amlodipine) nếu chẹn beta đơn trị chưa đủ kiểm soát triệu chứng.
+                        *   <span class='class-badge-2b'>Class IIb B</span> Nicorandil, Ranolazine, hoặc Trimetazidine được xem xét phối hợp nếu triệu chứng vẫn dai dẳng kháng trị.
+                    *   **2. Thuốc bảo vệ mạch và cải thiện chức năng nội mạc (GDMT):**
+                        *   <span class='class-badge-2a'>Class IIa B</span> Khuyến cáo sử dụng **Thuốc ức chế men chuyển (ACEi)** hoặc chẹn thụ thể (ARB) và **Statin** để phục hồi chức năng tế bào nội mạc vi tuần hoàn mạch vành.
                     """, unsafe_allow_html=True)
                 elif "Vasospastic" in endotype_active or "VSA" in endotype_active:
                     st.markdown("""
-                    *   **Thuốc điều trị đầu tay:** 
-                        *   <span class='class-badge-1'>Class I B</span> **Chẹn kênh canxi (CCBs)** liều cao (như Diltiazem, Amlodipine) là nền tảng điều trị quan trọng nhất để ngăn ngừa co thắt mạch.
-                        *   <span class='class-badge-2a'>Class IIa B</span> Phối hợp thêm **Nitrates tác dụng kéo dài** nếu CCB đơn trị chưa đủ kiểm soát.
-                    *   **🚨 CẢNH BÁO ĐỎ (Class III):** **TRÁNH DÙNG THUỐC CHẸN BETA ĐƠN TRỊ LIỆU** ở bệnh nhân co thắt mạch vành, vì có thể gây hoạt hóa thụ thể alpha-adrenergic dẫn đến co thắt mạch vành trầm trọng hơn.
+                    *   **1. Thuốc chống đau thắt ngực (Lựa chọn đầu tay):** 
+                        *   <span class='class-badge-1'>Class I A</span> **Chẹn kênh canxi (CCBs)** liều cao (như Diltiazem, Amlodipine) là nền tảng điều trị bắt buộc và quan trọng nhất để phòng ngừa co thắt mạch.
+                        *   <span class='class-badge-2a'>Class IIa B</span> Phối hợp thêm **Nitrates tác dụng kéo dài** để dự phòng các cơn co thắt tái phát.
+                    *   **2. 🚨 CẢNH BÁO ĐỎ (Class III / Figure 15 Cảnh báo đỏ):**
+                        *   **TRÁNH DÙNG THUỐC CHẸN BETA ĐƠN TRỊ LIỆU** ở bệnh nhân co thắt mạch (VSA), vì ức chế thụ thể beta-2 sẽ gây co thắt phế quản và gây hoạt hóa thụ thể alpha-adrenergic không đối kháng làm co thắt mạch vành dữ dội hơn.
                     """, unsafe_allow_html=True)
                 elif "Mixed" in endotype_active:
                     st.markdown("""
-                    *   **Phối hợp điều trị:** 
-                        *   Sử dụng **Chẹn kênh canxi (CCBs)** làm chủ đạo do kiểm soát được cả co thắt thượng tâm mạc và cải thiện vi tuần hoàn.
-                        *   Có thể cân nhắc phối hợp chẹn beta cẩn thận nếu ưu thế thành phần đau thắt ngực vi mạch rõ rệt.
-                    """)
+                    *   **1. Phối hợp thuốc chống co thắt & giãn mạch vi tuần hoàn:** 
+                        *   <span class='class-badge-2b'>Class IIb B</span> Sử dụng **Chẹn kênh canxi (CCBs)** làm điều trị chủ đạo để kiểm soát co thắt và cải thiện dòng chảy vi tuần hoàn.
+                        *   Có thể cân nhắc phối hợp chẹn beta chọn lọc tim cực kỳ cẩn thận nếu thành phần đau thắt ngực vi mạch (MVA) chiếm ưu thế lâm sàng rõ rệt.
+                        *   Phối hợp thêm Nitrates hoặc Nicorandil nếu CCB liều cao chưa kiểm soát tốt triệu chứng.
+                    *   **2. Thuốc bảo vệ mạch:** Khuyến khích điều trị **Statin + ACEi/ARB** để ổn định mảng xơ vữa nhẹ và chống rối loạn chức năng nội mạc.
+                    """, unsafe_allow_html=True)
                 else:
-                    st.markdown("*Chưa xác định kiểu hình ANOCA cụ thể. Vui lòng hoàn thành đánh giá chức năng mạch vành xâm lấn (ICFT) ở Bước 3.*")
+                    st.markdown("""
+                    *   **Đau ngực không do tim (Non-cardiac chest pain):**
+                        *   Tìm các nguyên nhân ngoài tim: Dạ dày - thực quản (trào ngược dạ dày thực quản GERD), bệnh phổi (COPD, viêm màng phổi), cơ xương khớp, thần kinh liên sườn hoặc rối loạn lo âu tâm lý.
+                        *   Ngừng các thuốc tim mạch không cần thiết để tránh tác dụng phụ (như tụt huyết áp, nhịp chậm).
+                    """)
+            else:
+                # Obstructive CAD or Wait-and-see
+                st.subheader("1. Tiêu chuẩn chỉ định Tái thông mạch vành (Revascularization)")
+                
+                is_high_risk = st.session_state.get('high_risk_flag', False)
+                if is_high_risk:
+                    st.markdown("""
+                    <div class='warning-box' style='border-left-color: #fd7e14;'>
+                        <h4 style='color: #fd7e14; margin-top: 0; font-weight: bold;'>👉 CHỈ ĐỊNH TÁI THÔNG MẠCH VÀNH ĐỂ CẢI THIỆN TIÊN LƯỢNG (Class I A)</h4>
+                        <p>Do bệnh nhân thuộc nhóm nguy cơ biến cố cao (Hẹp Thân chung trái, 3 nhánh mạch vành, hoặc đoạn gần LAD), can thiệp mạch vành qua da (PCI) hoặc phẫu thuật làm cầu nối chủ-vành (CABG) được chỉ định để kéo dài thời gian sống còn và ngăn ngừa Nhồi máu cơ tim tự phát.</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                    <div class='info-box'>
+                        <strong>Xem xét Tái thông mạch vành để cải thiện triệu chứng (Class I A):</strong><br>
+                        Ở những bệnh nhân không thuộc nhóm nguy cơ biến cố cao, chỉ định tái thông mạch vành được đặt ra khi:<br>
+                        Triệu chứng đau thắt ngực hoặc khó thở vẫn dai dẳng, ảnh hưởng nặng đến chất lượng cuộc sống mặc dù đã điều trị nội khoa tối ưu (GDMT) với tối thiểu 2 nhóm thuốc kháng đau thắt ngực.
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("""
+                **Các lưu ý kỹ thuật quan trọng của ESC 2024:**
+                *   **Hẹp ranh giới (Intermediate stenosis):** Luôn đánh giá chức năng bằng **FFR (fractional flow reserve)** hoặc **iFR (instantaneous wave-free ratio)** trước khi quyết định can thiệp (Class I).
+                *   **Can thiệp phức tạp:** Sử dụng các phương tiện chẩn đoán hình ảnh trong lòng mạch như **IVUS (intravascular ultrasound)** hoặc **OCT** được khuyến cáo để hướng dẫn kỹ thuật can thiệp tối ưu (Class I).
+                *   **Thảo luận nhóm tim mạch (Heart Team):** Khuyên dùng ở những ca tổn thương mạch vành đa nhánh, tổn thương thân chung phức tạp hoặc có đái tháo đường kèm theo để lựa chọn giữa PCI hay CABG (Class I).
+                """)
 
         st.write("")
         if st.button("⬅️ Quay lại Bước 3"):
