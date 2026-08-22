@@ -7,6 +7,16 @@ st.set_page_config(
     page_icon="🫀",
     layout="wide"
 )
+# MENU ĐIỀU HƯỚNG
+st.sidebar.page_link(
+    "pe-cdss-web.py",
+    label="🫁 Thuyên tắc phổi cấp"
+)
+
+st.sidebar.page_link(
+    "pages/1_❤️_Hoi_chung_vanh_man.py",
+    label="❤️ Hội chứng vành mạn"
+)
 
 # Custom Styling for cardiology clinical aesthetics
 st.markdown("""
