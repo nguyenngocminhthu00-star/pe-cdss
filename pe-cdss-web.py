@@ -1295,24 +1295,7 @@ elif st.session_state.step == 3:
                     else:
                         st.error("- Chống chỉ định Enoxaparin do CrCl < 15 mL/phút.")
 
-            # --------------------------------------------------------------------------
-            # KẾ HOẠCH DUY TRÌ DÀI HẠN CHO C1 - E2 SAU KHI TIÊM ỔN ĐỊNH
-            # --------------------------------------------------------------------------
-            if st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]:
-                st.markdown("---")
-                st.markdown("<div style='background-color: #F8FAFC; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px;'>", unsafe_allow_html=True)
-                st.write("🔄 **Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn (AHA/ACC 2026):**")
-                
-                # Check các tình huống đặc biệt để hướng dẫn chuyển đổi
-                if has_aps:
-                    st.error("🩸 **HỘI CHỨNG KHÁNG PHOSPHOLIPID (APS) (CHỐNG CHỈ ĐỊNH DOACs - Class 1, LOE A):**\n- **Thời gian tiêm gối:** Phải tiêm kháng đông đầy đủ (LMWH hoặc UFH) khởi đầu, đồng thời bắt đầu uống **Warfarin (VKA)** hằng ngày.\n- **Quy trình chuyển đổi:** Phải duy trì gối overlap cả tiêm và uống trong **ít nhất 5 ngày VÀ cho đến khi INR đạt mục tiêu 2.0 - 3.0 trong 24 giờ liên tục** (2 lần đo cách nhau 24h). Khi INR đạt đích y khoa, ngừng kháng đông tiêm.\n- **Thời gian duy trì:** Bắt buộc duy trì Warfarin lâu dài **vô hạn định** với đích INR 2.0 - 3.0 (Class 1, LOE A) để tránh huyết khối động mạch/tĩnh mạch tái phát cực kỳ nguy kịch.")
-                elif has_cancer:
-                    st.info("🎗️ **UNG THƯ TIẾN TRIỂN (Cancer-Associated Thrombosis):**\n- **Kháng đông ưu tiên:** Khuyến cáo sử dụng **DOAC (Apixaban hoặc Rivaroxaban) ưu tiên hơn VKA (Class 1, LOE B-R)**. Việc chuyển đổi từ tiêm LMWH sang DOAC đường uống thực hiện ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm (không cần gối overlap).\n- **Thời gian điều trị:** Điều trị tối thiểu từ **3 đến 6 tháng** (Class 1, LOE A), và kéo dài **vô hạn định** miễn là ung thư còn hoạt động hoặc đang tiếp nhận hóa/xạ trị (Class 1, LOE A).")
-                elif has_drug_interactions:
-                    st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH:**\n- Do tương tác làm thay đổi nồng độ DOACs nguy hiểm, khuyến cáo **tránh dùng DOACs**. Duy trì kháng đông tiêm LMWH dài hạn hoặc gối sang Warfarin (VKA) với thời gian gối overlap ít nhất 5 ngày và INR đạt 2.0 - 3.0 mới ngắt tiêm. Duy trì từ 3 - 6 tháng hoặc kéo dài tùy yếu tố nguy cơ.")
-                else:
-                    st.success("🏠 **DUY TRÌ THÔNG THƯỜNG (Standard Case - Không có bối cảnh đặc biệt):**\n- **Kháng đông ưu tiên:** Khuyến cáo chuyển đổi từ kháng đông tiêm sang **DOACs đường uống** (Apixaban hoặc Rivaroxaban) (Class 1, LOE B-R) sau khi bệnh nhân ổn định tại viện.\n- **Cách thức chuyển đổi:** Bắt đầu uống liều DOAC đầu tiên **ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm** (không cần gối overlap liều), hoặc uống ngay khi ngừng truyền UFH tĩnh mạch.\n- **Thời gian điều trị cụ thể (Duration):**\n  1. **Nếu PE do yếu tố nguy cơ có thể đảo ngược lớn (như phẫu thuật lớn):** Ngừng điều trị kháng đông sau **3 tháng** điều trị đầy đủ (Class 1, LOE B-NR) để cân bằng lợi ích - nguy cơ chảy máu.\n  2. **Nếu PE tự phát (không rõ nguyên nhân) hoặc có yếu tố nguy cơ dai dẳng:** Khuyến cáo tiếp tục điều trị kháng đông kéo dài **vô hạn định (extended phase)** (Class 1, LOE A) với việc đánh giá định kỳ nguy cơ chảy máu và lợi ích (Class 1, LOE B-NR). Khi chuyển sang giai đoạn kéo dài (sau 3-6 tháng), khuyến cáo **giảm xuống liều dự phòng thứ phát: Apixaban 2.5mg BID HOẶC Rivaroxaban 10mg hằng ngày** để giảm nguy cơ chảy máu nặng (Class 1, LOE A).")
-                st.markdown("</div>", unsafe_allow_html=True)
+            
 
         # --------------------------------------------------------------------------
         # LIỆU PHÁP CAN THIỆP TÁI TƯỚI MÁU NÂNG CAO (CDL, SURGERY, VA-ECMO THEO TABLE 7)
@@ -1376,6 +1359,26 @@ elif st.session_state.step == 3:
         # Hiển thị Respiratory Modifier nếu có R
         if st.session_state.resp_modifier:
             st.error("📢 **CẢNH BÁO SUY HÔ HẤP (Respiratory Modifier R):**\nBệnh nhân có suy hô hấp đi kèm. Theo Hướng dẫn AHA/ACC 2026, liệu pháp oxy dòng cao qua gọng mũi (HFNC) được khuyến cáo sử dụng ở bệnh nhân có suy hô hấp giảm oxy máu từ vừa đến nặng (Class 2a, LOE C-LD).\\n\\n*Lưu ý lâm sàng cực kỳ quan trọng:* Khuyến cáo không tự ý áp dụng thông khí áp lực dương (như NIV/CPAP hoặc thở máy xâm lấn) như một phương án ưu tiên thường quy, vì áp lực dương lồng ngực làm giảm tiền gánh và tăng hậu gánh thất phải cấp, dễ dẫn đến sụp đổ tuần hoàn tim phải cấp (NIV/thông khí áp lực dương chính là một marker lâm sàng của mức độ nguy kịch E-R).")
+
+        
+        # --------------------------------------------------------------------------
+        # KẾ HOẠCH DUY TRÌ DÀI HẠN CHO C1 - E2 SAU KHI TIÊM ỔN ĐỊNH
+        # --------------------------------------------------------------------------
+        if not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]:
+            st.markdown("---")
+            st.markdown("<div style='background-color: #F8FAFC; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px;'>", unsafe_allow_html=True)
+            st.write("🔄 **Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn (AHA/ACC 2026):**")
+            
+            # Check các tình huống đặc biệt để hướng dẫn chuyển đổi
+            if has_aps:
+                st.error("🩸 **HỘI CHỨNG KHÁNG PHOSPHOLIPID (APS) (CHỐNG CHỈ ĐỊNH DOACs - Class 1, LOE A):**\n- **Thời gian tiêm gối:** Phải tiêm kháng đông đầy đủ (LMWH hoặc UFH) khởi đầu, đồng thời bắt đầu uống **Warfarin (VKA)** hằng ngày.\n- **Quy trình chuyển đổi:** Phải duy trì gối overlap cả tiêm và uống trong **ít nhất 5 ngày VÀ cho đến khi INR đạt mục tiêu 2.0 - 3.0 trong 24 giờ liên tục** (2 lần đo cách nhau 24h). Khi INR đạt đích y khoa, ngừng kháng đông tiêm.\n- **Thời gian duy trì:** Bắt buộc duy trì Warfarin lâu dài **vô hạn định** với đích INR 2.0 - 3.0 (Class 1, LOE A) để tránh huyết khối động mạch/tĩnh mạch tái phát cực kỳ nguy kịch.")
+            elif has_cancer:
+                st.info("🎗️ **UNG THƯ TIẾN TRIỂN (Cancer-Associated Thrombosis):**\n- **Kháng đông ưu tiên:** Khuyến cáo sử dụng **DOAC (Apixaban hoặc Rivaroxaban) ưu tiên hơn VKA (Class 1, LOE B-R)**. Việc chuyển đổi từ tiêm LMWH sang DOAC đường uống thực hiện ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm (không cần gối overlap).\n- **Thời gian điều trị:** Điều trị tối thiểu từ **3 đến 6 tháng** (Class 1, LOE A), và kéo dài **vô hạn định** miễn là ung thư còn hoạt động hoặc đang tiếp nhận hóa/xạ trị (Class 1, LOE A).")
+            elif has_drug_interactions:
+                st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH:**\n- Do tương tác làm thay đổi nồng độ DOACs nguy hiểm, khuyến cáo **tránh dùng DOACs**. Duy trì kháng đông tiêm LMWH dài hạn hoặc gối sang Warfarin (VKA) với thời gian gối overlap ít nhất 5 ngày và INR đạt 2.0 - 3.0 mới ngắt tiêm. Duy trì từ 3 - 6 tháng hoặc kéo dài tùy yếu tố nguy cơ.")
+            else:
+                st.success("🏠 **DUY TRÌ THÔNG THƯỜNG (Standard Case - Không có bối cảnh đặc biệt):**\n- **Kháng đông ưu tiên:** Khuyến cáo chuyển đổi từ kháng đông tiêm sang **DOACs đường uống** (Apixaban hoặc Rivaroxaban) (Class 1, LOE B-R) sau khi bệnh nhân ổn định tại viện.\n- **Cách thức chuyển đổi:** Bắt đầu uống liều DOAC đầu tiên **ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm** (không cần gối overlap liều), hoặc uống ngay khi ngừng truyền UFH tĩnh mạch.\n- **Thời gian điều trị cụ thể (Duration):**\n  1. **Nếu PE do yếu tố nguy cơ có thể đảo ngược lớn (như phẫu thuật lớn):** Ngừng điều trị kháng đông sau **3 tháng** điều trị đầy đủ (Class 1, LOE B-NR) để cân bằng lợi ích - nguy cơ chảy máu.\n  2. **Nếu PE tự phát (không rõ nguyên nhân) hoặc có yếu tố nguy cơ dai dẳng:** Khuyến cáo tiếp tục điều trị kháng đông kéo dài **vô hạn định (extended phase)** (Class 1, LOE A) với việc đánh giá định kỳ nguy cơ chảy máu và lợi ích (Class 1, LOE B-NR). Khi chuyển sang giai đoạn kéo dài (sau 3-6 tháng), khuyến cáo **giảm xuống liều dự phòng thứ phát: Apixaban 2.5mg BID HOẶC Rivaroxaban 10mg hằng ngày** để giảm nguy cơ chảy máu nặng (Class 1, LOE A).")
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # Nút chuyển tiếp ngược
         st.markdown("---")
