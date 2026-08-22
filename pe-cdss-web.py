@@ -219,8 +219,9 @@ if st.session_state.step == 1:
                         # KHÔNG tự gán B2, để bác sĩ xác nhận pe_confirmed và phân tầng thủ công ở Bước 2
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-            # Đánh giá Wells/Geneva tiêu chuẩn (Chỉ hiển thị khi không dùng kháng đông liều đầy đủ)
-            if not is_anticoagulated:
+            # Đánh giá Wells/Geneva tiêu chuẩn (Chỉ hiển thị khi không dùng kháng đông liều đầy đủ VÀ không phải thai phụ có CUS dương tính)
+            is_preg_cus_positive = st.session_state.is_pregnant and st.session_state.saved_inputs.get('has_dvt_sym') and "DƯƠNG TÍNH" in st.session_state.saved_inputs.get('cus_result', '')
+            if not is_anticoagulated and not is_preg_cus_positive:
                 score_type = persistent_radio("Chọn Thang điểm Đánh giá Xác suất lâm sàng tiền nghiệm:", ["Thang điểm Wells (Khuyên dùng)", "Thang điểm Geneva Rút gọn"], key="score_type")
                 
                 if score_type == "Thang điểm Wells (Khuyên dùng)":
@@ -275,7 +276,19 @@ if st.session_state.step == 1:
         st.subheader("⚡ 2. Thuật toán Loại trừ Không hình ảnh học")
         
         if is_suspected:
-            if is_anticoagulated:
+            is_preg_cus_positive = st.session_state.is_pregnant and st.session_state.saved_inputs.get('has_dvt_sym') and "DƯƠNG TÍNH" in st.session_state.saved_inputs.get('cus_result', '')
+            if is_preg_cus_positive:
+                st.markdown("""
+                <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534; padding: 15px; border-radius: 8px;'>
+                    <strong>>>> KẾT LUẬN: CHẨN ĐOÁN THUYÊN TẮC HUYẾT KHỐI Presumed VTE</strong><br>
+                    Thai phụ có triệu chứng lâm sàng nghi ngờ và siêu âm Doppler tĩnh mạch sâu chi dưới (CUS) dương tính.<br><br>
+                    <strong>Khuyến cáo của Hướng dẫn AHA/ACC 2026 (Class 1, LOE C-LD):</strong><br>
+                    - Điều trị kháng đông bằng <strong>LMWH (Enoxaparin)</strong> liều điều trị đầy đủ ngay lập tức mà không cần làm xét nghiệm D-dimer hay chẩn đoán hình ảnh lồng ngực (CTPA hoặc V/Q Scan).<br>
+                    - Điều này giúp tránh phơi nhiễm bức xạ ion hóa không cần thiết cho cả mẹ và thai nhi.<br><br>
+                    <em>Bác sĩ hãy chuyển tiếp sang Giai đoạn 2 hoặc 3 để bắt đầu phân tầng và tính liều kháng đông chi tiết.</em>
+                </div>
+                """, unsafe_allow_html=True)
+            elif is_anticoagulated:
                 # ĐƯA RA NGOÀI ĐỂ KHÔNG BỊ CHẶN BỞI RẼ NHÁNH D-DIMER (SỬA LỖI FLOW NHÁNH KHÁNG ĐÔNG)
                 st.markdown("""
                 <div class='u-card urgency-high'>
@@ -450,15 +463,6 @@ if st.session_state.step == 1:
 # BƯỚC 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026 (RẼ NHÁNH TUẦN TỰ)
 # ==============================================================================
 elif st.session_state.step == 2:
-    # KHÓA TRANG NẾU CHƯA XÁC NHẬN PE Ở BƯỚC 1 (ĐỒNG BỘ GATE THEO BÁC SĨ YÊU CẦU)
-    if not st.session_state.saved_inputs.get('pe_confirmed'):
-        st.subheader("📊 GIAI ĐOẠN 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026")
-        st.warning("⚠️ **CẢNH BÁO:** Bạn chưa xác nhận đã có chẩn đoán xác định Thuyên tắc phổi (PE) ở Bước 1. Vui lòng hoàn thành Bước 1 và tích chọn 'Xác nhận chẩn đoán xác định PE' để mở khóa Giai đoạn phân tầng nguy cơ và tính liều.")
-        if st.button("⬅️ Quay lại Bước 1 để xác nhận chẩn đoán PE", type="primary"):
-            st.session_state.step = 1
-            st.rerun()
-        st.stop()
-
     st.subheader("📊 GIAI ĐOẠN 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026")
     
     col2_1, col2_2 = st.columns([1, 1], gap="large")
@@ -949,15 +953,6 @@ elif st.session_state.step == 3:
     # Đồng bộ hóa hai biến pregnancy để tránh lỗi hiển thị lệch pha
     st.session_state.is_pregnant = st.session_state.saved_inputs.get('is_pregnant', False)
 
-    # KHÓA TRANG NẾU CHƯA XÁC NHẬN PE Ở BƯỚC 1 (ĐỒNG BỘ GATE THEO BÁC SĨ YÊU CẦU)
-    if not st.session_state.saved_inputs.get('pe_confirmed'):
-        st.subheader("💊 GIAI ĐOẠN 3: CÁ THỂ HÓA ĐIỀU TRỊ VÀ TÍNH LIỀU THUỐC")
-        st.warning("⚠️ **CẢNH BÁO:** Bạn chưa xác nhận đã có chẩn đoán xác định Thuyên tắc phổi (PE) ở Bước 1. Vui lòng hoàn thành Bước 1 và tích chọn 'Xác nhận chẩn đoán xác định PE' để mở khóa Giai đoạn phân tầng nguy cơ và tính liều.")
-        if st.button("⬅️ Quay lại Bước 1 để xác nhận chẩn đoán PE", type="primary"):
-            st.session_state.step = 1
-            st.rerun()
-        st.stop()
-
     st.subheader("💊 GIAI ĐOẠN 3: CÁ THỂ HÓA ĐIỀU TRỊ VÀ TÍNH LIỀU THUỐC")
     
     col3_1, col3_2 = st.columns([1, 1], gap="large")
@@ -1078,159 +1073,188 @@ elif st.session_state.step == 3:
 """, unsafe_allow_html=True)
 
         st.write("---")
-        
-        # --------------------------------------------------------------------------
-        # PHÁC ĐỒ ĐIỀU TRỊ CHO NHÓM A, B (DOACs/LMWH ĐỘNG THEO THAI KỲ)
-        # --------------------------------------------------------------------------
-        if st.session_state.final_category in ["A", "B1", "B2"]:
-            if st.session_state.is_pregnant:
-                st.error("🤰 **Kháng đông ưu tiên cho Thai kỳ: Kháng đông tiêm LMWH hoặc UFH (Class 1, LOE C-LD)**")
-                st.caption("Kháng đông uống DOACs và VKA chống chỉ định tuyệt đối (Class 3: Harm, LOE C-LD) trong suốt thai kỳ do nguy cơ sảy thai và quái thai.")
-            elif is_breastfeeding_t2:
-                st.warning("🍼 **Kháng đông ưu tiên cho thời kỳ Cho con bú: LMWH, UFH hoặc Warfarin (VKA) (Class 1, LOE C-LD)**")
-                st.caption("Tránh dùng DOACs trong thời kỳ cho con bú do thiếu dữ liệu an toàn và nguy cơ bài tiết qua sữa mẹ.")
-            else:
-                st.success("💊 **Kháng đông ưu tiên: DOACs đường uống (Class 1, LOE B-R)**")
-            
-            if st.session_state.final_category == "B1" and not st.session_state.is_pregnant:
-                st.warning("👉 *Lưu ý Nhóm B1 (Dưới phân thùy):* Guideline cho phép theo dõi sát lâm sàng và siêu âm tĩnh mạch chi dưới định kỳ mà chưa cần dùng kháng đông ngay nếu bệnh nhân có nguy cơ chảy máu cao, không có triệu chứng lâm sàng và KHÔNG CÓ DVT chi dưới (Class 2b, LOE B-R). Nếu có DVT đi kèm, bắt buộc dùng kháng đông tiêu chuẩn.")
-            
-            # Khởi trị kháng đông cấp tính cho nhóm A/B dựa trên tình huống đặc biệt
-            if st.session_state.is_pregnant:
-                st.error("🤰 **CHỈ ĐỊNH BẮT BUỘC CHO THAI KỲ (CHỐNG CHỈ ĐỊNH DOACs/VKA - Class 3: Harm):**\nBắt buộc sử dụng LMWH (Enoxaparin) hoặc UFH để ngăn ngừa tái phát huyết khối (Class 1, LOE C-LD). LMWH/UFH không đi qua nhau thai nên tuyệt đối an toàn cho thai nhi.")
-                st.write(f"- **Phác đồ Enoxaparin đề xuất:** **{weight * 1.0:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg mỗi 12h).")
-            elif is_breastfeeding_t2:
-                st.warning("🍼 **LỰA CHỌN KHÁNG ĐÔNG KHI CHO CON BÚ:**\nLMWH, UFH hoặc Kháng vitamin K (Warfarin) được khuyến cáo lựa chọn hơn là các thuốc DOACs (Class 1, LOE C-LD) do các DOACs có thể bài tiết qua sữa mẹ và chưa có đầy đủ dữ liệu an toàn ở trẻ sơ sinh.")
-                st.write(f"- **Phác đồ Enoxaparin đề xuất:** **{weight * 1.0:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg mỗi 12h) hoặc khởi đầu gối Warfarin nâng INR đạt 2.0-3.0.")
-            elif has_aps:
-                st.error("🩸 **HỘI CHỨNG KHÁNG PHOSPHOLIPID - APS (CHỐNG CHỈ ĐỊNH DOACs):**\nChống chỉ định dùng DOACs do tăng nguy cơ tắc mạch tái phát nghiêm trọng (Class 1, LOE A). Bắt buộc khởi đầu bằng kháng đông tiêm (LMWH/UFH) sau đó gối sang **Kháng Vitamin K (VKA - Warfarin)** duy trì lâu dài với đích **INR 2.0 - 3.0 (Class 1, LOE A)**.")
-            elif has_drug_interactions:
-                st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH (CHỐNG CHỈ ĐỊNH DOACs):**\nThuốc đồng vận làm biến đổi nồng độ DOACs nguy hiểm. Khuyến cáo dùng LMWH dài hạn hoặc chuyển sang VKA (theo dõi sát INR).")
-            else:
-                if has_cancer:
-                    st.info("🎗️ *Bệnh nhân Ung thư (CAT):* Khuyến cáo ưu tiên sử dụng DOACs (như Apixaban, Rivaroxaban) hơn là Kháng vitamin K (VKA) để dự phòng tái phát VTE (Class 1, LOE B-R). Các nghiên cứu cho thấy DOAC không kém hơn LMWH về mặt hiệu quả và an toàn, tuy nhiên việc lựa chọn giữa DOAC và LMWH cần cá thể hóa dựa trên loại ung thư (ví dụ: tránh dùng DOAC ở bệnh nhân ung thư biểu mô đường tiêu hóa hoặc tiết niệu chưa cắt bỏ do làm tăng nguy cơ chảy máu).")
-                
-                # CHUẨN HÓA LIỀU DOAC (BỎ LỖI GIẢM LIỀU CỦA AF!)
-                st.write("**• Apixaban:**")
-                st.write(f"  - *Liều tấn công:* **10 mg uống x 2 lần/ngày** (10 mg BID) trong 7 ngày đầu.")
-                st.write("  - *Liều duy trì:* **5 mg uống x 2 lần/ngày** (5 mg BID).")
-                st.caption("⚠️ *Lưu ý y khoa:* Không áp dụng công thức giảm liều AF (giảm xuống 2.5 mg BID dựa trên tuổi, cân nặng, creatinine) trong điều trị PE cấp tính. Liều 2.5 mg BID chỉ dùng ở giai đoạn kéo dài (extended phase) sau 3-6 tháng điều trị ban đầu để phòng ngừa thứ phát (Class 1, LOE A).")
-                
-                # Chỉnh liều suy thận nặng dựa trên CrCl và eGFR tách biệt
-                if crcl < 30:
-                    st.warning("🏥 **Lưu ý chức năng thận giảm nặng (eGFR hoặc CrCl < 30 mL/phút, hoặc suy thận giai đoạn cuối):**\nTheo Hướng dẫn AHA/ACC 2026, đối với bệnh nhân suy thận mạn nặng (CKD Stage 4 hoặc 5, eGFR < 30 mL/phút hoặc suy thận giai đoạn cuối lọc máu), việc lựa chọn giữa Apixaban và VKA là chưa rõ ràng (Class 2b, LOE B-NR) để phòng ngừa chảy máu nặng; các DOAC khác (như Rivaroxaban) nhìn chung cần tránh dùng.\n\n*Lưu ý y khoa:* Độ thanh thải Creatinine tính theo công thức Cockcroft-Gault (CrCl) là thông số chuẩn mực được FDA quy định để hiệu chỉnh liều lượng thuốc, trong khi eGFR được dùng để phân độ suy thận mạn.")
-                
-                st.write("**• Rivaroxaban:**")
-                st.write(f"  - *Liều tấn công:* **15 mg uống x 2 lần/ngày** (15 mg BID) cùng thức ăn trong 21 ngày đầu.")
-                st.write("  - *Liều duy trì:* **20 mg uống hằng ngày** (20 mg QD) cùng thức ăn.")
-                st.caption("⚠️ *Lưu ý y khoa:* Không giảm liều duy trì xuống 15 mg QD cho bệnh nhân suy thận CrCl 30-49 mL/phút trong điều trị PE cấp tính ở pha cấp cứu (luôn giữ liều tấn công 15mg BID x 21 ngày và duy trì 20mg QD).")
 
         # --------------------------------------------------------------------------
-        # PHÁC ĐỒ KHÁNG ĐÔNG TIÊM CHO NHÓM C1, C2, C3, D1, D2, E1 (LMWH > UFH)
+        # PHÁC ĐỒ ĐIỀU TRỊ CHUYÊN BIỆT CHO THAI KỲ / CHO CON BÚ TRƯỚC (KHÔNG HIỆN DOACs)
         # --------------------------------------------------------------------------
-        elif st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1"]:
-            if st.session_state.is_pregnant:
-                st.error("🤰 **Kháng đông ưu tiên cho Thai kỳ: Kháng đông tiêm LMWH hoặc UFH (Class 1, LOE C-LD)**")
-                st.caption("Kháng đông uống DOACs và VKA chống chỉ định tuyệt đối (Class 3: Harm, LOE C-LD) trong suốt thai kỳ do nguy cơ sảy thai và quái thai.")
-            else:
-                st.success("💊 **Kháng đông tiêm khởi đầu (C1 - E1): LMWH được khuyến cáo hơn UFH (Class 1, LOE B-R)**")
-                st.caption("LMWH được chứng minh làm giảm nguy cơ tái phát VTE và giảm nguy cơ chảy máu nặng, giảm biến chứng HIT tốt hơn UFH.")
+        if st.session_state.is_pregnant:
+            st.error("🤰 **PHÁC ĐỒ KHÁNG ĐÔNG BẮT BUỘC TRONG THAI KỲ (CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI DOACs / VKA - Class 3: Harm, LOE C-LD)**")
+            st.caption("Kháng đông uống DOACs (Apixaban, Rivaroxaban...) và VKA (Warfarin) chống chỉ định tuyệt đối trong suốt thai kỳ do nguy cơ sảy thai, dị tật bẩm sinh và quái thai.")
             
-            # Tính liều Enoxaparin (LMWH) - ƯU TIÊN HÀNG ĐẦU
-            st.write("🌟 **LỰA CHỌN ƯU TIÊN: Heparin trọng lượng phân tử thấp (LMWH - Enoxaparin)**")
-            if st.session_state.is_pregnant:
-                st.info("🤰 *Bệnh nhân đang mang thai:* Enoxaparin là lựa chọn an toàn và bắt buộc (LMWH không đi qua nhau thai, an toàn cho thai nhi).")
-                
+            st.write("🌟 **1. KHỞI TRỊ BAN ĐẦU VÀ DUY TRÌ TRONG THAI KỲ:**")
+            st.write("Kháng đông tiêm **LMWH (Enoxaparin) được khuyến cáo lựa chọn hàng đầu (Class 1, LOE C-LD)** do tính an toàn cao cho thai nhi (không đi qua bánh nhau).")
+            
             if crcl >= 30:
                 enox_dose = weight * 1.0
-                st.write(f"- **Liều Enoxaparin tiêu chuẩn:** **{enox_dose:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg Q12h).")
-                if bmi >= 40 or weight > 150:
-                    st.warning(f"⚠️ *Lưu ý béo phì độ III (BMI = {bmi:.1f} hoặc cân nặng > 150 kg):* Hướng dẫn AHA/ACC 2026 cho thấy việc cân nhắc điều chỉnh giảm liều LMWH ở bệnh nhân béo phì độ III nhằm phòng ngừa nguy cơ chảy máu nặng là hợp lý (Class 2b, LOE B-NR). Tuy nhiên, liều tối ưu chưa được xác lập thống nhất và công thức giảm liều (như giảm xuống 0.8 mg/kg mỗi 12 giờ) chỉ là một phác đồ từ nghiên cứu thử nghiệm nhỏ; việc quyết định điều chỉnh liều cần cá thể hóa sát sao dựa trên bối cảnh lâm sàng thực tế.")
-                st.caption("⚠️ *Theo dõi Anti-Xa:* Không có chỉ định theo dõi nồng độ anti-Xa thường quy ở hầu hết bệnh nhân dùng LMWH theo cân nặng thực tế (Class 3: No Benefit, LOE A).")
+                st.write(f"- **Liều Enoxaparin tiêu chuẩn:** **{enox_dose:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg mỗi 12 giờ).")
+                st.caption("⚠️ *Lưu ý:* Không cần theo dõi nồng độ anti-Xa thường quy ở thai phụ có cân nặng bình thường (Class 3: No Benefit, LOE A). Cân nhắc đo nồng độ đỉnh anti-Xa (3-5 giờ sau liều thứ 3) ở thai phụ béo phì độ III hoặc cực kỳ nhẹ cân (Class 2a, LOE C-LD).")
             elif 15 <= crcl < 30:
                 enox_dose = weight * 1.0
-                st.write(f"- **Liều Enoxaparin hiệu chỉnh suy thận nặng (CrCl 15-29 mL/phút):** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg Q24h).")
-                st.caption("⚠️ *Theo dõi Anti-Xa (Class 2a, LOE C-LD):* Ở bệnh nhân suy thận nặng (CrCl < 30 mL/phút) dùng LMWH, việc đo nồng độ đỉnh anti-Xa (3-5 giờ sau liều thứ 3 ở trạng thái ổn định) là hợp lý để hỗ trợ điều chỉnh liều.")
+                st.write(f"- **Liều Enoxaparin hiệu chỉnh suy thận nặng (CrCl 15-29 mL/phút):** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg mỗi 24 giờ). Cần theo dõi đỉnh anti-Xa.")
             else:
-                st.error("- **Enoxaparin (LMWH):** Chống chỉ định tuyệt đối do CrCl < 15 mL/phút.")
-
-            # Tính liều UFH - THAY THẾ
-            st.write("👉 **LỰA CHỌN THAY THẾ: Heparin không phân đoạn (UFH) truyền tĩnh mạch**")
-            st.caption("Chỉ định thay thế khi bệnh nhân chống chỉ định với LMWH (CrCl < 15), hoặc khi bác sĩ dự kiến sẽ can thiệp tái tưới máu ngay lập tức và cần tính đảo ngược nhanh của UFH.")
-            
-            ufh_bolus = min(80 * weight, 10000)
-            ufh_maint = min(18 * weight, 1600)  # SỬA LỖI: ÁP TRẦN 1600 UI/h
-            st.write(f"- **Liều nạp Bolus tĩnh mạch ban đầu:** **{ufh_bolus:.0f} UI** (Áp trần tối đa 10,000 UI).")
-            st.write(f"- **Tốc độ truyền tĩnh mạch duy trì ban đầu:** **{ufh_maint:.0f} UI/giờ** (Áp trần tối đa **1,600 UI/giờ** để phòng ngừa quá liều ban đầu trước khi có kết quả aPTT/Anti-Xa), chỉnh liều theo aPTT.")
-            st.caption("👉 *Lưu ý y khoa:* Phác đồ bolus 80 UI/kg và truyền 18 UI/kg/h với các mức trần trên là phác đồ ngoài nước được chuẩn hóa (local/external VTE nomogram), không phải do hướng dẫn AHA 2026 trực tiếp quy định cụ thể.")
-
-        # --------------------------------------------------------------------------
-        # PHÁC ĐỒ KHÁNG ĐÔNG TIÊM CHO NHÓM E2 (YÊU CẦU: LINH HOẠT LMWH/UFH)
-        # --------------------------------------------------------------------------
-        elif st.session_state.final_category == "E2":
-            if st.session_state.is_pregnant:
-                st.error("🤰 **Kháng đông ưu tiên cho Thai kỳ: Kháng đông tiêm LMWH hoặc UFH (Class 1, LOE C-LD)**")
-                st.caption("Kháng đông uống DOACs và VKA chống chỉ định tuyệt đối (Class 3: Harm, LOE C-LD) trong suốt thai kỳ do nguy cơ sảy thai và quái thai.")
-            else:
-                st.success("💊 **Kháng đông tiêm khởi đầu ở Nhóm E2: Cần linh hoạt giữa UFH và LMWH**")
-                st.caption("Trong tình huống ngừng tuần hoàn hoặc sốc tim kháng trị (E2), việc lựa chọn giữa UFH và LMWH cần được quyết định linh hoạt tùy theo bối cảnh cụ thể (khả năng đảo ngược tác dụng nhanh, chức năng thận và kế hoạch can thiệp hỗ trợ tuần hoàn ECMO/phẫu thuật).")
-            
-            tab_ufh, tab_lmwh = st.tabs(["🌟 Lựa chọn UFH (Dễ kiểm soát)", "🌟 Lựa chọn LMWH (Hạn chế HIT)"])
-            
-            with tab_ufh:
-                st.write("**Heparin không phân đoạn (UFH) truyền tĩnh mạch:**")
-                st.caption("Được ưa chuộng hơn trong pha cấp cứu cực kỳ nguy kịch cần can thiệp ngoại khoa khẩn cấp, ECMO hoặc khi chức năng thận chưa xác định được ngay.")
+                st.error("- **Enoxaparin (LMWH):** Chống chỉ định tuyệt đối do CrCl < 15 mL/phút. Bắt buộc dùng **Heparin không phân đoạn (UFH)** truyền tĩnh mạch điều chỉnh theo aPTT.")
                 ufh_bolus = min(80 * weight, 10000)
                 ufh_maint = min(18 * weight, 1600)
-                st.write(f"- **Liều nạp Bolus tĩnh mạch ban đầu:** **{ufh_bolus:.0f} UI** (Áp trần tối đa 10,000 UI).")
-                st.write(f"- **Tốc độ truyền tĩnh mạch duy trì ban đầu:** **{ufh_maint:.0f} UI/giờ** (Áp trần tối đa **1,600 UI/giờ**), chỉnh liều sát theo aPTT.")
-                st.caption("👉 *Lưu ý y khoa:* Phác đồ trên dựa theo chuẩn local/external VTE nomogram, không do hướng dẫn AHA 2026 trực tiếp quy định.")
+                st.write(f"  - *Liều nạp Bolus UFH:* **{ufh_bolus:.0f} UI** bolus tĩnh mạch (chuẩn local nomogram).")
+                st.write(f"  - *Tốc độ truyền duy trì ban đầu:* **{ufh_maint:.0f} UI/giờ** (áp trần 1,600 UI/h, chuẩn local nomogram).")
+
+            st.write("🕒 **2. THỜI GIAN SỬ DỤNG KHÁNG ĐÔNG (DURATION):**")
+            st.write("- Kháng đông tiêm LMWH phải được duy trì liên tục **suốt thai kỳ** (tạm ngưng 24 giờ trước khi chủ động khởi phát chuyển dạ hoặc mổ đẻ).")
+            st.write("- **Bắt buộc kéo dài ít nhất 6 tuần sau sinh** (Class 1, LOE C-LD).")
+            st.write("- **Tổng thời gian điều trị tối thiểu phải đạt 3 tháng** (bao gồm cả trước sinh và sau sinh) (Class 1, LOE C-LD).")
+            
+            st.write("🔄 **3. KẾ HOẠCH CHUYỂN ĐỔI (TRANSITION PHASE) SAU SINH:**")
+            st.write("- **Nếu nuôi con bằng sữa mẹ:** Bệnh nhân có thể chuyển đổi từ kháng đông tiêm LMWH sang **Kháng vitamin K (Warfarin - VKA) (Class 1, LOE C-LD)** sau khi sinh vì Warfarin tương thích tốt và không bài tiết qua sữa mẹ đáng kể. Tuyệt đối không dùng DOACs.")
+            st.write("  - *Cách thức gối liều (Overlap):* Bắt đầu uống Warfarin hằng ngày đồng thời **duy trì song song LMWH** trong **ít nhất 5 ngày VÀ cho đến khi INR đạt mục tiêu 2.0 - 3.0 trong 24 giờ liên tục** (2 lần đo liên tiếp cách nhau 24h đạt đích). Khi INR đạt đích, ngừng tiêm LMWH.")
+            st.write("- **Nếu KHÔNG nuôi con bằng sữa mẹ:** Có thể chuyển sang dùng **DOACs đường uống** (Apixaban 5mg BID hoặc Rivaroxaban 20mg QD) sau sinh.")
+            st.write("  - *Cách thức chuyển sang DOAC:* Bắt đầu uống liều DOAC đầu tiên ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm (không cần gối overlap).")
+
+        elif is_breastfeeding_t2:
+            st.warning("🍼 **PHÁC ĐỒ KHÁNG ĐÔNG CHO PHỤ NỮ ĐANG CHO CON BÚ (CHỐNG CHỈ ĐỊNH DOACs - Class 1, LOE C-LD)**")
+            st.caption("Các DOACs có thể bài tiết qua sữa mẹ và thiếu dữ liệu an toàn ở trẻ sơ sinh, do đó chống chỉ định cho thời kỳ cho con bú.")
+            
+            st.write("🌟 **1. KHỞI TRỊ BAN ĐẦU VÀ KHÁNG ĐÔNG ƯU TIÊN:**")
+            st.write("Kháng đông **LMWH (Enoxaparin), UFH, hoặc Kháng vitamin K (Warfarin)** được khuyến cáo lựa chọn hơn là các thuốc DOACs (**Class 1, LOE C-LD**).")
+            
+            if crcl >= 30:
+                enox_dose = weight * 1.0
+                st.write(f"- **Liều Enoxaparin đề xuất:** **{enox_dose:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg mỗi 12 giờ).")
+            else:
+                st.write("- Chống chỉ định Enoxaparin do suy thận nặng. Ưu tiên gối Warfarin gối đầu bằng UFH truyền tĩnh mạch.")
+
+            st.write("🕒 **2. THỜI GIAN SỬ DỤNG KHÁNG ĐÔNG (DURATION):**")
+            st.write("- **Nếu PE do yếu tố nguy cơ tạm thời đảo ngược được lớn (phẫu thuật, chấn thương...):** Điều trị trong **3 tháng** đầy đủ (Class 1, LOE B-NR).")
+            st.write("- **Nếu PE tự phát hoặc có nguy cơ dai dẳng (như ung thư, APS):** Duy trì lâu dài **vô hạn định** (Class 1, LOE A) và đánh giá định kỳ nguy cơ chảy máu.")
+
+            st.write("🔄 **3. KẾ HOẠCH GỐI LIỀU VÀ CHUYỂN SANG WARFARIN (VKA) UỐNG DUY TRÌ:**")
+            st.write("Warfarin (VKA) là kháng đông đường uống duy nhất được khuyến cáo cho phụ nữ cho con bú.")
+            st.write("- *Quy trình chuyển đổi chuẩn:* Bắt đầu uống Warfarin hằng ngày đồng thời **duy trì song song kháng đông tiêm LMWH/UFH** trong **ít nhất 5 ngày VÀ cho đến khi INR đạt mục tiêu 2.0 - 3.0 trong 24 giờ liên tục (2 lần đo liên tiếp)**. Khi INR đạt đích y khoa, ngừng tiêm và duy trì Warfarin uống đơn trị liệu lâu dài.")
+
+        # --------------------------------------------------------------------------
+        # PHÁC ĐỒ ĐIỀU TRỊ CHO BỆNH NHÂN THÔNG THƯỜNG (KHÔNG CÓ THAI / CHO CON BÚ)
+        # --------------------------------------------------------------------------
+        else:
+            # --------------------------------------------------------------------------
+            # NHÓM A, B (KHÁNG ĐÔNG ĐƯỜNG UỐNG ƯU TIÊN - DOACs)
+            # --------------------------------------------------------------------------
+            if st.session_state.final_category in ["A", "B1", "B2"]:
+                st.success("💊 **Kháng đông ưu tiên: DOACs đường uống (Class 1, LOE B-R)**")
                 
-            with tab_lmwh:
-                st.write("**Heparin trọng lượng phân tử thấp (LMWH - Enoxaparin):**")
-                st.caption("Có thể cân nhắc nhờ tính tiện dụng, không đòi hỏi theo dõi xét nghiệm đông máu liên tục và nguy cơ bị giảm tiểu cầu do Heparin (HIT) thấp hơn.")
+                if st.session_state.final_category == "B1":
+                    st.warning("👉 *Lưu ý Nhóm B1 (Dưới phân thùy):* Guideline cho phép theo dõi sát lâm sàng và siêu âm tĩnh mạch chi dưới định kỳ mà chưa cần dùng kháng đông ngay nếu bệnh nhân có nguy cơ chảy máu cao, không có triệu chứng lâm sàng và KHÔNG CÓ DVT chi dưới (Class 2b, LOE B-R). Nếu có DVT đi kèm, bắt buộc dùng kháng đông tiêu chuẩn.")
+                
+                if has_aps:
+                    st.error("🩸 **HỘI CHỨNG KHÁNG PHOSPHOLIPID - APS (CHỐNG CHỈ ĐỊNH DOACs):**\nChống chỉ định dùng DOACs do tăng nguy cơ tắc mạch tái phát nghiêm trọng (Class 1, LOE A). Bắt buộc khởi đầu bằng kháng đông tiêm (LMWH/UFH) sau đó gối sang **Kháng Vitamin K (VKA - Warfarin)** duy trì lâu dài với đích **INR 2.0 - 3.0 (Class 1, LOE A)**.")
+                elif has_drug_interactions:
+                    st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH (CHỐNG CHỈ ĐỊNH DOACs):**\nThuốc đồng vận làm biến đổi nồng độ DOACs nguy hiểm. Khuyến cáo dùng LMWH dài hạn hoặc chuyển sang VKA (theo dõi sát INR).")
+                else:
+                    if has_cancer:
+                        st.info("🎗️ *Bệnh nhân Ung thư (CAT):* Khuyến cáo ưu tiên sử dụng DOACs (như Apixaban, Rivaroxaban) hơn là Kháng vitamin K (VKA) để dự phòng tái phát VTE (Class 1, LOE B-R). Các nghiên cứu cho thấy DOAC không kém hơn LMWH về mặt hiệu quả và an toàn, tuy nhiên việc lựa chọn giữa DOAC và LMWH cần cá thể hóa dựa trên loại ung thư (ví dụ: tránh dùng DOAC ở bệnh nhân ung thư biểu mô đường tiêu hóa hoặc tiết niệu chưa cắt bỏ do làm tăng nguy cơ chảy máu).")
+                    
+                    # CHUẨN HÓA LIỀU DOAC
+                    st.write("**• Apixaban:**")
+                    st.write(f"  - *Liều tấn công:* **10 mg uống x 2 lần/ngày** (10 mg BID) trong 7 ngày đầu.")
+                    st.write("  - *Liều duy trì:* **5 mg uống x 2 lần/ngày** (5 mg BID).")
+                    st.caption("⚠️ *Lưu ý y khoa:* Không áp dụng công thức giảm liều AF (giảm xuống 2.5 mg BID dựa trên tuổi, cân nặng, creatinine) trong điều trị PE cấp tính. Liều 2.5 mg BID chỉ dùng ở giai đoạn kéo dài (extended phase) sau 3-6 tháng điều trị ban đầu để phòng ngừa thứ phát (Class 1, LOE A).")
+                    
+                    # Chỉnh liều suy thận nặng dựa trên CrCl và eGFR tách biệt
+                    if crcl < 30:
+                        st.warning("🏥 **Lưu ý chức năng thận giảm nặng (eGFR hoặc CrCl < 30 mL/phút, hoặc suy thận giai đoạn cuối):**\nTheo Hướng dẫn AHA/ACC 2026, đối với bệnh nhân suy thận mạn nặng (CKD Stage 4 hoặc 5, eGFR < 30 mL/phút hoặc suy thận giai đoạn cuối lọc máu), việc lựa chọn giữa Apixaban và VKA là chưa rõ ràng (Class 2b, LOE B-NR) để phòng ngừa chảy máu nặng; các DOAC khác (như Rivaroxaban) nhìn chung cần tránh dùng.\n\n*Lưu ý y khoa:* Độ thanh thải Creatinine tính theo công thức Cockcroft-Gault (CrCl) là thông số chuẩn mực được FDA quy định để hiệu chỉnh liều lượng thuốc, trong khi eGFR được dùng để phân độ suy thận mạn.")
+                    
+                    st.write("**• Rivaroxaban:**")
+                    st.write(f"  - *Liều tấn công:* **15 mg uống x 2 lần/ngày** (15 mg BID) cùng thức ăn trong 21 ngày đầu.")
+                    st.write("  - *Liều duy trì:* **20 mg uống hằng ngày** (20 mg QD) cùng thức ăn.")
+                    st.caption("⚠️ *Lưu ý y khoa:* Không giảm liều duy trì xuống 15 mg QD cho bệnh nhân suy thận CrCl 30-49 mL/phút trong điều trị PE cấp tính ở pha cấp cứu (luôn giữ liều tấn công 15mg BID x 21 ngày và duy trì 20mg QD).")
+
+                    # THỜI GIAN SỬ DỤNG CHO NHÓM A, B THÔNG THƯỜNG
+                    st.markdown("---")
+                    st.write("🕒 **THỜI GIAN ĐIỀU TRỊ KHÁNG ĐÔNG DUY TRÌ (DURATION):**")
+                    st.write("- **Nếu PE do yếu tố nguy cơ có thể đảo ngược lớn (như phẫu thuật lớn):** Ngừng điều trị kháng đông sau **3 tháng** điều trị đầy đủ (Class 1, LOE B-NR).")
+                    st.write("- **Nếu PE tự phát hoặc có nguy cơ dai dẳng:** Tiếp tục điều trị kéo dài **vô hạn định (extended phase)** (Class 1, LOE A).")
+                    st.write("  - *Hạ liều dự phòng thứ phát:* Sau 3-6 tháng điều trị ban đầu, khuyến cáo **giảm xuống liều dự phòng: Apixaban 2.5mg BID HOẶC Rivaroxaban 10mg QD** để giảm nguy cơ chảy máu nặng (Class 1, LOE A).")
+
+            # --------------------------------------------------------------------------
+            # NHÓM C1, C2, C3, D1, D2, E1 (KHÁNG ĐÔNG TIÊM KHỞI ĐẦU: LMWH > UFH)
+            # --------------------------------------------------------------------------
+            elif st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1"]:
+                st.success("💊 **Kháng đông tiêm khởi đầu (C1 - E1): LMWH được khuyến cáo hơn UFH (Class 1, LOE B-R)**")
+                st.caption("LMWH được chứng minh làm giảm nguy cơ tái phát VTE và giảm nguy cơ chảy máu nặng, giảm biến chứng HIT tốt hơn UFH.")
+                
+                # Tính liều Enoxaparin (LMWH) - ƯU TIÊN HÀNG ĐẦU
+                st.write("🌟 **LỰA CHỌN ƯU TIÊN: Heparin trọng lượng phân tử thấp (LMWH - Enoxaparin)**")
+                
                 if crcl >= 30:
                     enox_dose = weight * 1.0
                     st.write(f"- **Liều Enoxaparin tiêu chuẩn:** **{enox_dose:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg Q12h).")
+                    if bmi >= 40 or weight > 150:
+                        st.warning(f"⚠️ *Lưu ý béo phì độ III (BMI = {bmi:.1f} hoặc cân nặng > 150 kg):* Hướng dẫn AHA/ACC 2026 cho thấy việc cân nhắc điều chỉnh giảm liều LMWH ở bệnh nhân béo phì độ III nhằm phòng ngừa nguy cơ chảy máu nặng là hợp lý (Class 2b, LOE B-NR). Tuy nhiên, liều tối ưu chưa được xác lập thống nhất và công thức giảm liều (như giảm xuống 0.8 mg/kg mỗi 12 giờ) chỉ là một phác đồ từ nghiên cứu thử nghiệm nhỏ; việc quyết định điều chỉnh liều cần cá thể hóa sát sao dựa trên bối cảnh lâm sàng thực tế.")
+                    st.caption("⚠️ *Theo dõi Anti-Xa:* Không có chỉ định theo dõi nồng độ anti-Xa thường quy ở hầu hết bệnh nhân dùng LMWH theo cân nặng thực tế (Class 3: No Benefit, LOE A).")
                 elif 15 <= crcl < 30:
                     enox_dose = weight * 1.0
-                    st.write(f"- **Liều Enoxaparin hiệu chỉnh:** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg Q24h).")
-                    st.caption("⚠️ *Lưu ý:* Đo nồng độ đỉnh anti-Xa (3-5 giờ sau liều thứ 3) là hợp lý (Class 2a, LOE C-LD) để hướng dẫn chỉnh liều.")
+                    st.write(f"- **Liều Enoxaparin hiệu chỉnh suy thận nặng (CrCl 15-29 mL/phút):** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg Q24h).")
+                    st.caption("⚠️ *Theo dõi Anti-Xa (Class 2a, LOE C-LD):* Ở bệnh nhân suy thận nặng (CrCl < 30 mL/phút) dùng LMWH, việc đo nồng độ đỉnh anti-Xa (3-5 giờ sau liều thứ 3 ở trạng thái ổn định) là hợp lý để hỗ trợ điều chỉnh liều.")
                 else:
-                    st.error("- Chống chỉ định Enoxaparin do CrCl < 15 mL/phút.")
+                    st.error("- **Enoxaparin (LMWH):** Chống chỉ định tuyệt đối do CrCl < 15 mL/phút.")
 
-        # --------------------------------------------------------------------------
-        # KẾ HOẠCH DUY TRÌ DÀI HẠN DÀNH CHO CẢ C1-E2 (KHẮC PHỤC THIẾU SÓT E1/E2)
-        # --------------------------------------------------------------------------
-        if st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]:
-            st.markdown("---")
-            st.markdown("<div style='background-color: #F8FAFC; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px;'>", unsafe_allow_html=True)
-            st.write("🔄 **Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn (AHA/ACC 2026):**")
-            
-            # 1. Hướng dẫn cho bệnh nhân MANG THAI
-            if st.session_state.is_pregnant:
-                st.error("🤰 **KẾ HOẠCH CHO THAI KỲ (CHỐNG CHỈ ĐỊNH DOACs/VKA - Class 3: Harm):**\n- **Thời gian tiêm:** Phải duy trì liên tục kháng đông tiêm **LMWH (Enoxaparin)** liều đầy đủ theo cân nặng thực tế suốt thai kỳ.\n- **Thời gian điều trị tối thiểu:** Kéo dài ít nhất **6 tuần sau sinh** và tổng thời gian điều trị tối thiểu phải đạt **3 tháng** (Class 1, LOE C-LD). Nếu sau sinh chuyển đổi sang uống, chỉ được chọn **Warfarin (VKA)** do tương thích tốt với nuôi con bằng sữa mẹ; tuyệt đối không dùng DOACs.")
-            
-            # 2. Hướng dẫn cho bệnh nhân CHO CON BÚ
-            elif is_breastfeeding_t2:
-                st.warning("🍼 **KẾ HOẠCH CHO BỆNH NHÂN CHO CON BÚ:**\n- **Kháng đông ưu tiên:** Khuyến cáo sử dụng **LMWH, UFH hoặc Kháng vitamin K (Warfarin)** thay vì DOACs (Class 1, LOE C-LD) do tính an toàn cao và không bài tiết qua sữa mẹ đáng kể.\n- **Cách thức chuyển đổi sang Warfarin (VKA):** Bắt đầu uống Warfarin (thường khởi đầu 5 mg hằng ngày) đồng thời gối (overlap) với kháng đông tiêm (LMWH hoặc UFH) trong **ít nhất 5 ngày VÀ cho đến khi INR đạt mục tiêu 2.0 - 3.0 trong 24 giờ liên tục (2 lần đo liên tiếp)**. Khi INR đạt đích, ngừng kháng đông tiêm và duy trì Warfarin đơn trị liệu.")
-            
-            # 3. Hướng dẫn cho Hội chứng kháng Phospholipid (APS)
-            elif has_aps:
-                st.error("🩸 **KẾ KHUẤT CHO BỆNH NHÂN APS (CHỐNG CHỈ ĐỊNH DOACs - Class 1, LOE A):**\n- **Cách thức chuyển đổi sang VKA:** Sau pha tiêm cấp tính ổn định, bắt đầu gối **Warfarin** hằng ngày đồng thời duy trì kháng đông tiêm (LMWH/UFH) trong **ít nhất 5 ngày VÀ cho đến khi INR đạt mục tiêu 2.0 - 3.0 trong 24 giờ liên tục**. Chỉ ngừng kháng đông tiêm khi INR đạt đích y khoa.\n- **Thời gian điều trị:** Duy trì **VKA (Warfarin) lâu dài (extended phase) vô hạn định** với đích INR 2.0 - 3.0 (Class 1, LOE A) do nguy cơ huyết khối động mạch/tĩnh mạch tái phát cực kỳ cao.")
-            
-            # 4. Hướng dẫn cho bệnh nhân Ung thư (CAT)
-            elif has_cancer:
-                st.info("🎗️ **KẾ HOẠCH CHO BỆNH NHÂN UNG THƯ TIẾN TRIỂN (Cancer-Associated Thrombosis):**\n- **Kháng đông ưu tiên:** DOACs (Apixaban, Rivaroxaban) hoặc LMWH được khuyến cáo ưu tiên lựa chọn hơn VKA (Class 1, LOE B-R) để phòng ngừa thứ phát.\n- **Thời gian điều trị:** Điều trị ban đầu từ **3 đến 6 tháng** (Class 1, LOE A) và tự động kéo dài vào **giai đoạn kéo dài (extended phase) vô hạn định** miễn là ung thư còn hoạt động hoặc bệnh nhân đang tiếp nhận điều trị ung thư (Class 1, LOE A).\n- **Cách thức chuyển sang DOAC uống:** Bắt đầu uống Apixaban (10 mg BID x 7 ngày, sau đó 5 mg BID) hoặc Rivaroxaban (15 mg BID x 21 ngày, sau đó 20 mg QD) ngay tại thời điểm liều tiêm LMWH tiếp theo chuẩn bị tiêm (không cần gối liều).")
-            
-            # 5. Hướng dẫn cho bệnh nhân có tương tác thuốc mạnh
-            elif has_drug_interactions:
-                st.warning("⚠️ **KẾ HOẠCH CHO BỆNH NHÂN CÓ TƯƠNG TÁC THUỐC MẠNH:**\n- Do các thuốc đang sử dụng làm thay đổi nồng độ DOACs nguy hiểm, khuyến cáo **tránh dùng DOACs**. Đề xuất sử dụng LMWH dài hạn hoặc gối sang Warfarin (VKA) với thời gian gối overlap ít nhất 5 ngày và INR đạt 2.0 - 3.0 mới cắt tiêm. Duy trì ít nhất 3 - 6 tháng.")
-            
-            # 6. Hướng dẫn cho bệnh nhân thông thường (Standard Case)
-            else:
-                st.success("🏠 **KẾ HOẠCH DUY TRÌ CHO BỆNH NHÂN THÔNG THƯỜNG (Không có bối cảnh đặc biệt):**\n- **Kháng đông ưu tiên:** Chuyển đổi sang **DOACs đường uống** (Apixaban 5mg BID hoặc Rivaroxaban 20mg QD) được khuyến cáo mạnh mẽ hơn VKA (Class 1, LOE B-R).\n- **Cách thức chuyển đổi từ tiêm sang uống:** Bắt đầu liều DOAC uống đầu tiên **ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm** (không cần gối/overlap liều), hoặc bắt đầu ngay lập tức khi ngừng truyền tĩnh mạch UFH.\n- **Thời gian điều trị cụ thể (Duration):**\n  1. **Nếu PE do yếu tố nguy cơ có thể đảo ngược lớn (như phẫu thuật lớn):** Khuyến cáo ngừng kháng đông sau **3 tháng** điều trị đầy đủ (Class 1, LOE B-NR) để cân bằng lợi ích - nguy cơ chảy máu.\n  2. **Nếu PE tự phát (không rõ nguyên nhân) hoặc có yếu tố nguy cơ dai dẳng:** Khuyến cáo tiếp tục điều trị kháng đông kéo dài **vô hạn định (extended phase)** (Class 1, LOE A) với việc đánh giá định kỳ nguy cơ chảy máu và lợi ích (Class 1, LOE B-NR). Khi chuyển sang giai đoạn kéo dài (sau 3-6 tháng), khuyến cáo **giảm xuống liều dự phòng thứ phát: Apixaban 2.5mg BID HOẶC Rivaroxaban 10mg hằng ngày** để giảm nguy cơ chảy máu nặng (Class 1, LOE A).")
-            st.markdown("</div>", unsafe_allow_html=True)
+                # Tính liều UFH - THAY THẾ
+                st.write("👉 **LỰA CHỌN THAY THẾ: Heparin không phân đoạn (UFH) truyền tĩnh mạch**")
+                st.caption("Chỉ định thay thế khi bệnh nhân chống chỉ định with LMWH (CrCl < 15), hoặc khi bác sĩ dự kiến sẽ can thiệp tái tưới máu ngay lập tức và cần tính đảo ngược nhanh của UFH.")
+                
+                ufh_bolus = min(80 * weight, 10000)
+                ufh_maint = min(18 * weight, 1600)  # SỬA LỖI: ÁP TRẦN 1600 UI/h
+                st.write(f"- **Liều nạp Bolus tĩnh mạch ban đầu:** **{ufh_bolus:.0f} UI** (Áp trần tối đa 10,000 UI).")
+                st.write(f"- **Tốc độ truyền tĩnh mạch duy trì ban đầu:** **{ufh_maint:.0f} UI/giờ** (Áp trần tối đa **1,600 UI/giờ** để phòng ngừa quá liều ban đầu trước khi có kết quả aPTT/Anti-Xa), chỉnh liều theo aPTT.")
+                st.caption("👉 *Lưu ý y khoa:* Phác đồ bolus 80 UI/kg và truyền 18 UI/kg/h với các mức trần trên là phác đồ ngoài nước được chuẩn hóa (local/external VTE nomogram), không phải do hướng dẫn AHA 2026 trực tiếp quy định cụ thể.")
+
+            # --------------------------------------------------------------------------
+            # PHÁC ĐỒ KHÁNG ĐÔNG TIÊM CHO NHÓM E2 (YÊU CẦU: LINH HOẠT LMWH/UFH)
+            # --------------------------------------------------------------------------
+            elif st.session_state.final_category == "E2":
+                st.success("💊 **Kháng đông tiêm khởi đầu ở Nhóm E2: Cần linh hoạt giữa UFH và LMWH**")
+                st.caption("Trong tình huống ngừng tuần hoàn hoặc sốc tim kháng trị (E2), việc lựa chọn giữa UFH và LMWH cần được quyết định linh hoạt tùy theo bối cảnh cụ thể (khả năng đảo ngược tác dụng nhanh, chức năng thận và kế hoạch can thiệp hỗ trợ tuần hoàn ECMO/phẫu thuật).")
+                
+                tab_ufh, tab_lmwh = st.tabs(["🌟 Lựa chọn UFH (Dễ kiểm soát)", "🌟 Lựa chọn LMWH (Hạn chế HIT)"])
+                
+                with tab_ufh:
+                    st.write("**Heparin không phân đoạn (UFH) truyền tĩnh mạch:**")
+                    st.caption("Được ưa chuộng hơn trong pha cấp cứu cực kỳ nguy kịch cần can thiệp ngoại khoa khẩn cấp, ECMO hoặc khi chức năng thận chưa xác định được ngay.")
+                    ufh_bolus = min(80 * weight, 10000)
+                    ufh_maint = min(18 * weight, 1600)
+                    st.write(f"- **Liều nạp Bolus tĩnh mạch ban đầu:** **{ufh_bolus:.0f} UI** (Áp trần tối đa 10,000 UI).")
+                    st.write(f"- **Tốc độ truyền tĩnh mạch duy trì ban đầu:** **{ufh_maint:.0f} UI/giờ** (Áp trần tối đa **1,600 UI/giờ**), chỉnh liều sát theo aPTT.")
+                    st.caption("👉 *Lưu ý y khoa:* Phác đồ trên dựa theo chuẩn local/external VTE nomogram, không do hướng dẫn AHA 2026 trực tiếp quy định.")
+                    
+                with tab_lmwh:
+                    st.write("**Heparin trọng lượng phân tử thấp (LMWH - Enoxaparin):**")
+                    st.caption("Có thể cân nhắc nhờ tính tiện dụng, không đòi hỏi theo dõi xét nghiệm đông máu liên tục và nguy cơ bị giảm tiểu cầu do Heparin (HIT) thấp hơn.")
+                    if crcl >= 30:
+                        enox_dose = weight * 1.0
+                        st.write(f"- **Liều Enoxaparin tiêu chuẩn:** **{enox_dose:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg Q12h).")
+                    elif 15 <= crcl < 30:
+                        enox_dose = weight * 1.0
+                        st.write(f"- **Liều Enoxaparin hiệu chỉnh:** **{enox_dose:.1f} mg tiêm dưới da mỗi 24 giờ** (1.0 mg/kg Q24h).")
+                        st.caption("⚠️ *Lưu ý:* Đo nồng độ đỉnh anti-Xa (3-5 giờ sau liều thứ 3) là hợp lý (Class 2a, LOE C-LD) để hướng dẫn chỉnh liều.")
+                    else:
+                        st.error("- Chống chỉ định Enoxaparin do CrCl < 15 mL/phút.")
+
+            # --------------------------------------------------------------------------
+            # KẾ HOẠCH DUY TRÌ DÀI HẠN CHO C1 - E2 SAU KHI TIÊM ỔN ĐỊNH
+            # --------------------------------------------------------------------------
+            if st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]:
+                st.markdown("---")
+                st.markdown("<div style='background-color: #F8FAFC; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px;'>", unsafe_allow_html=True)
+                st.write("🔄 **Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn (AHA/ACC 2026):**")
+                
+                # Check các tình huống đặc biệt để hướng dẫn chuyển đổi
+                if has_aps:
+                    st.error("🩸 **HỘI CHỨNG KHÁNG PHOSPHOLIPID (APS) (CHỐNG CHỈ ĐỊNH DOACs - Class 1, LOE A):**\n- **Thời gian tiêm gối:** Phải tiêm kháng đông đầy đủ (LMWH hoặc UFH) khởi đầu, đồng thời bắt đầu uống **Warfarin (VKA)** hằng ngày.\n- **Quy trình chuyển đổi:** Phải duy trì gối overlap cả tiêm và uống trong **ít nhất 5 ngày VÀ cho đến khi INR đạt mục tiêu 2.0 - 3.0 trong 24 giờ liên tục** (2 lần đo cách nhau 24h). Khi INR đạt đích y khoa, ngừng kháng đông tiêm.\n- **Thời gian duy trì:** Bắt buộc duy trì Warfarin lâu dài **vô hạn định** với đích INR 2.0 - 3.0 (Class 1, LOE A) để tránh huyết khối động mạch/tĩnh mạch tái phát cực kỳ nguy kịch.")
+                elif has_cancer:
+                    st.info("🎗️ **UNG THƯ TIẾN TRIỂN (Cancer-Associated Thrombosis):**\n- **Kháng đông ưu tiên:** Khuyến cáo sử dụng **DOAC (Apixaban hoặc Rivaroxaban) ưu tiên hơn VKA (Class 1, LOE B-R)**. Việc chuyển đổi từ tiêm LMWH sang DOAC đường uống thực hiện ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm (không cần gối overlap).\n- **Thời gian điều trị:** Điều trị tối thiểu từ **3 đến 6 tháng** (Class 1, LOE A), và kéo dài **vô hạn định** miễn là ung thư còn hoạt động hoặc đang tiếp nhận hóa/xạ trị (Class 1, LOE A).")
+                elif has_drug_interactions:
+                    st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH:**\n- Do tương tác làm thay đổi nồng độ DOACs nguy hiểm, khuyến cáo **tránh dùng DOACs**. Duy trì kháng đông tiêm LMWH dài hạn hoặc gối sang Warfarin (VKA) với thời gian gối overlap ít nhất 5 ngày và INR đạt 2.0 - 3.0 mới ngắt tiêm. Duy trì từ 3 - 6 tháng hoặc kéo dài tùy yếu tố nguy cơ.")
+                else:
+                    st.success("🏠 **DUY TRÌ THÔNG THƯỜNG (Standard Case - Không có bối cảnh đặc biệt):**\n- **Kháng đông ưu tiên:** Khuyến cáo chuyển đổi từ kháng đông tiêm sang **DOACs đường uống** (Apixaban hoặc Rivaroxaban) (Class 1, LOE B-R) sau khi bệnh nhân ổn định tại viện.\n- **Cách thức chuyển đổi:** Bắt đầu uống liều DOAC đầu tiên **ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm** (không cần gối overlap liều), hoặc uống ngay khi ngừng truyền UFH tĩnh mạch.\n- **Thời gian điều trị cụ thể (Duration):**\n  1. **Nếu PE do yếu tố nguy cơ có thể đảo ngược lớn (như phẫu thuật lớn):** Ngừng điều trị kháng đông sau **3 tháng** điều trị đầy đủ (Class 1, LOE B-NR) để cân bằng lợi ích - nguy cơ chảy máu.\n  2. **Nếu PE tự phát (không rõ nguyên nhân) hoặc có yếu tố nguy cơ dai dẳng:** Khuyến cáo tiếp tục điều trị kháng đông kéo dài **vô hạn định (extended phase)** (Class 1, LOE A) với việc đánh giá định kỳ nguy cơ chảy máu và lợi ích (Class 1, LOE B-NR). Khi chuyển sang giai đoạn kéo dài (sau 3-6 tháng), khuyến cáo **giảm xuống liều dự phòng thứ phát: Apixaban 2.5mg BID HOẶC Rivaroxaban 10mg hằng ngày** để giảm nguy cơ chảy máu nặng (Class 1, LOE A).")
+                st.markdown("</div>", unsafe_allow_html=True)
 
         # --------------------------------------------------------------------------
         # LIỆU PHÁP CAN THIỆP TÁI TƯỚI MÁU NÂNG CAO (CDL, SURGERY, VA-ECMO THEO TABLE 7)
@@ -1240,7 +1264,7 @@ elif st.session_state.step == 3:
             st.write("##### ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao (AHA/ACC 2026):")
             
             # Đồng bộ phác đồ Alteplase chuẩn (Bỏ lỗi tự ý chia liều unapproved)
-            st.info("💊 **Phác đồ Tiêu sợi huyết Hệ thống (Systemic Thrombolysis):**\n- **Các thuốc được FDA phê duyệt cho PE:** **Streptokinase, Urokinase, và rt-PA (Alteplase)**. Trong đó, rt-PA (alteplase) là thuốc phổ biến nhất trong thực hành lâm sàng hiện đại.\n- **Phác đồ Alteplase chuẩn:** **100 mg truyền tĩnh mạch liên tục trong 2 giờ**.\n- *Cân nhắc liều thấp (Lower-dose):* Có thể cân nhắc truyền liều thấp (ví dụ: **50 mg rt-PA truyền trong 2 giờ** hoặc các phác đồ liều thấp khác) để giảm nguy cơ chảy máu (**Class 2b, LOE C-LD**), đặc biệt ở bệnh nhân có nguy cơ xuất huyết cao (Không áp dụng công thức chia liều cố định universally theo cân nặng).\n- *Lưu ý về Tenecteplase (TNK-tPA):* Đã được nghiên cứu lâm sàng nhưng **CHƯA ĐƯỢC FDA PHÊ DUYỆT** cho chỉ định thuyên tắc phổi (off-label) và không được xem là phác đồ tương đương quy chuẩn.")
+            st.info("💊 **Phác đồ Tiêu sợi huyết Hệ thống (Systemic Thrombolysis):**\n- **Các thuốc được FDA phê duyệt cho PE:** **rt-PA (Alteplase), Streptokinase, và Urokinase**. Trong đó, rt-PA (alteplase) là thuốc phổ biến nhất trong thực hành lâm sàng hiện đại.\n- **Phác đồ Alteplase chuẩn:** **100 mg truyền tĩnh mạch liên tục trong 2 giờ**.\n- *Cân nhắc liều thấp (Lower-dose):* Có thể cân nhắc truyền liều thấp (ví dụ: **50 mg rt-PA truyền trong 2 giờ** hoặc các phác đồ liều thấp khác) để giảm nguy cơ chảy máu (**Class 2b, LOE C-LD**), đặc biệt ở bệnh nhân có nguy cơ xuất huyết cao (Không áp dụng công thức chia liều cố định universally theo cân nặng).\n- *Lưu ý về Tenecteplase (TNK-tPA):* Đã được nghiên cứu lâm sàng nhưng **CHƯA ĐƯỢC FDA PHÊ DUYỆT** cho chỉ định thuyên tắc phổi (off-label) và không được xem là phác đồ tương đương quy chuẩn.")
             
             # COPY GẦN NHƯ NGUYÊN BẢN LOGIC TABLE 7 KHÔNG DIỄN GIẢI THÊM (SỬA LỖI TABLE 7)
             st.markdown("**Khuyến cáo can thiệp nâng cao theo quy chuẩn Table 7 (AHA/ACC 2026):**", unsafe_allow_html=True)
