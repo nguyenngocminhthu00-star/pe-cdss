@@ -1666,31 +1666,73 @@ with st.expander("💊 BƯỚC 4: CHIẾN LƯỢC ĐIỀU TRỊ TỐI ƯU (GDMT 
                     st.markdown("*Chưa xác định kiểu hình ANOCA cụ thể hoặc không có chỉ định ANOCA. Vui lòng hoàn thành đánh giá ở Bước 3.*")
             else:
                 st.subheader("1. Tiêu chuẩn chỉ định Tái thông mạch vành (Revascularization)")
+                
+                # Check for selected test and result profile from Step 3
+                test_selected = st.session_state.get('selected_test_val', 'Chờ làm xét nghiệm / Chưa thực hiện')
                 is_high_risk = st.session_state.get('high_risk_flag', False)
-                if is_high_risk:
-                    st.markdown("""
-                    <div class='warning-box' style='border-left-color: #fd7e14;'>
-                        <h4 style='color: #fd7e14; margin-top: 0;'>👉 CHỈ ĐỊNH TÁI THÔNG MẠCH VÀNH ĐỂ CẢI THIỆN TIÊN LƯỢNG (Class I A)</h4>
-                        <p>Do bệnh nhân thuộc nhóm nguy cơ biến cố cao (Hẹp Thân chung trái LMS ≥50%, hẹp 3 nhánh mạch vành, hoặc hẹp đoạn gần LAD ≥70% hoặc diện tích thiếu máu rộng), can thiệp mạch vành qua da (PCI) hoặc phẫu thuật làm cầu nối chủ-vành (CABG) được chỉ định để kéo dài thời gian sống còn và ngăn ngừa biến cố tim mạch bất lợi.</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown("""
-                    <div class='info-box'>
-                        <strong>Xem xét Tái thông mạch vành để cải thiện triệu chứng (Class I A):</strong><br>
-                        Ở những bệnh nhân không thuộc nhóm nguy cơ biến cố cao, chỉ định tái thông mạch vành được đặt ra khi:<br>
-                        Triệu chứng đau thắt ngực hoặc khó thở vẫn dai dẳng, ảnh hưởng nặng đến chất lượng cuộc sống mặc dù đã điều trị nội khoa tối ưu (GDMT) với tối thiểu 2 nhóm thuốc kháng đau thắt ngực.
-                    </div>
-                    """, unsafe_allow_html=True)
-
+                
+                # Determine Obstructive vs Non-obstructive vs Wait status
+                is_untested_or_negative = False
+                is_obstructive_cad = False
+                
+                if test_selected == "Chờ làm xét nghiệm / Chưa thực hiện":
+                    is_untested_or_negative = True
+                elif test_selected == "Chụp cắt lớp vi tính động mạch vành (CCTA)":
+                    ccta_sel_res = st.session_state.get('ccta_res_radio', '')
+                    if "LOẠI TRỪ" in ccta_sel_res:
+                        is_untested_or_negative = True
+                    else: # Hẹp trung gian (but functional significant) or Có hẹp tắc nghẽn
+                        is_obstructive_cad = True
+                elif test_selected == "Thăm dò hình ảnh chức năng gắng sức (Stress Echo, Stress CMR, PET/SPECT...)":
+                    func_sel_res = st.session_state.get('func_res_radio', '')
+                    if "ÂM TÍNH" in func_sel_res:
+                        is_untested_or_negative = True
+                    else: # Dương tính
+                        is_obstructive_cad = True
+                elif test_selected == "Chụp động mạch vành xâm lấn (ICA)":
+                    ica_sel_res = st.session_state.get('ica_res_radio', '')
+                    if "LOẠI TRỪ" in ica_sel_res:
+                        is_untested_or_negative = True
+                    else:
+                        is_obstructive_cad = True
+                
+                if is_untested_or_negative:
+                    st.info("💡 **Chưa phát hiện hẹp tắc nghẽn mạch vành hoặc thăm dò chức năng gắng sức âm tính:** Chưa có chỉ định can thiệp tái thông mạch vành giải phẫu hay sinh lý ở giai đoạn này. Ưu tiên theo dõi lâm sàng định kỳ và tối ưu hóa điều trị nội khoa bảo vệ (GDMT).")
+                
+                elif is_obstructive_cad:
+                    if is_high_risk:
+                        # High risk revasc for improving prognosis (Class I A / I B depending on anatomy & LVEF)
+                        st.markdown("""
+                        <div class='warning-box' style='border-left-color: #fd7e14;'>
+                            <h4 style='color: #fd7e14; margin-top: 0;'>👉 CHỈ ĐỊNH TÁI THÔNG MẠCH VÀNH ĐỂ CẢI THIỆN TIÊN LƯỢNG (PROGNOSIS - Class I)</h4>
+                            <p>Do bệnh nhân thuộc nhóm nguy cơ biến cố cao (Hẹp Thân chung trái LMS ≥50%, hẹp 3 nhánh mạch vành, hẹp đoạn gần LAD ≥70% hoặc diện tích thiếu máu rộng), can thiệp mạch vành qua da (PCI) hoặc phẫu thuật làm cầu nối chủ-vành (CABG) được chỉ định để kéo dài thời gian sống còn và ngăn ngừa biến cố tim mạch bất lợi:</p>
+                            <ul>
+                                <li><strong>Hẹp Thân chung trái (Left Main) functionally significant VÀ LVEF > 35%:</strong> Chỉ định tái thông mạch <span class='class-badge-1'>Class I A</span> (Ưu tiên phẫu thuật cầu nối CABG khi tổn thương phức tạp).</li>
+                                <li><strong>Bệnh 3 nhánh functionally significant VÀ LVEF > 35%:</strong> Chỉ định tái thông mạch máu cơ tim <span class='class-badge-1'>Class I A</span>.</li>
+                                <li><strong>Bệnh 1-2 nhánh có hẹp đoạn gần LAD functionally significant:</strong> Chỉ định tái thông mạch máu cơ tim <span class='class-badge-1'>Class I B</span>.</li>
+                                <li><strong>Bệnh nhân có LVEF ≤ 35%:</strong> Cần tiến hành đánh giá chuyên sâu qua hội chẩn <strong>Heart Team</strong>, lượng giá cơ tim sống còn trước khi chỉ định tái thông <span class='class-badge-1'>Class I B</span>.</li>
+                            </ul>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # Low to moderate risk: GDMT first! No initial revasc!
+                        st.markdown("""
+                        <div class='warning-box' style='border-left-color: #17b978; background-color: #f3faf6;'>
+                            <h4 style='color: #17b978; margin-top: 0;'>🔴 ƯU TIÊN ĐIỀU TRỊ NỘI KHOA TỐI ƯU (GDMT) LÀ LỰA CHỌN ĐẦU TAY (Class I)</h4>
+                            <p style='font-size: 1.05rem;'>Bệnh nhân có hẹp mạch vành hoặc thiếu máu cơ tim mức độ nhẹ-vừa (nguy cơ thấp-trung bình). Theo Khuyến cáo ESC 2024:</p>
+                            <ul>
+                                <li><strong>🚫 CHƯA CÓ CHỈ ĐỊNH CAN THIỆP MẠCH VÀNH BAN ĐẦU:</strong> Không tự ý can thiệp mạch vành (PCI/CABG) sớm ở nhóm này vì không mang lại lợi ích kéo dài sự sống so với điều trị thuốc tối ưu.</li>
+                                <li><strong>⚠️ Chỉ định trì hoãn (Class I A):</strong> Chỉ xem xét can thiệp mạch vành nhằm <strong>cải thiện triệu chứng</strong> nếu triệu chứng đau ngực hoặc khó thở vẫn dai dẳng, ảnh hưởng nặng đến sinh hoạt hoạt động hàng ngày, mặc dù đã điều trị nội khoa tối đa (GDMT) với <strong>ít nhất 2 nhóm thuốc</strong> chống đau thắt ngực.</li>
+                            </ul>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
                 st.markdown("""
                 **Các lưu ý kỹ thuật quan trọng của ESC 2024 (Mạch vành tắc nghẽn):**
                 *   **Hẹp ranh giới (Intermediate stenosis):** Luôn đánh giá chức năng bằng **FFR** hoặc **iFR** trước khi quyết định can thiệp (Class I).
                 *   **Can thiệp phức tạp:** Sử dụng các phương tiện chẩn đoán hình ảnh trong lòng mạch như **IVUS** hoặc **OCT** được khuyến cáo để hướng dẫn kỹ thuật can thiệp tối ưu (Class I).
                 *   **Thảo luận nhóm tim mạch (Heart Team):** Khuyên dùng ở những ca tổn thương mạch vành đa nhánh, tổn thương thân chung phức tạp hoặc có đái tháo đường kèm theo để lựa chọn giữa PCI hay CABG (Class I).
                 """)
-
-        st.write("")
         if st.button("⬅️ Quay lại Bước 3", key="step4_prev_btn_v8"):
             set_step(3)
 
