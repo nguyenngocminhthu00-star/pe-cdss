@@ -269,9 +269,7 @@ if st.session_state.step == 1:
         else:
             st.success("Bệnh nhân không có triệu chứng nghi ngờ. Khám phát hiện tình cờ -> Thích hợp để quản lý ngoại trú (Category A)")
             
-        st.write("---")
-        st.write("##### 📌 Xác nhận kết quả chẩn đoán cuối cùng")
-        pe_confirmed_val = persistent_checkbox("Xác nhận CHẨN ĐOÁN XÁC ĐỊNH Thuyên tắc phổi (PE) trên hình ảnh học (CTPA, V/Q Scan, hoặc CUS chi dưới dương tính ở thai phụ) để mở khóa phân tầng và điều trị ở Bước 2 & 3.", key="pe_confirmed")
+
 
     with col1_2:
         st.subheader("⚡ 2. Thuật toán Loại trừ Không hình ảnh học")
@@ -309,7 +307,7 @@ if st.session_state.step == 1:
                     p5 = persistent_checkbox("5. Ho ra máu?", key="p5")
                     p6 = persistent_checkbox("6. Chấn thương hoặc phẫu thuật lớn cần gây mê trong 4 tuần qua?", key="p6")
                     p7 = persistent_checkbox("7. Tiền sử bị DVT hoặc PE?", key="p7")
-                    p8 = persistent_checkbox("8. Sử dụng Hormone/Estrogen đường uống?", key="p8")
+                    p8 = persistent_checkbox("8. Đang sử dụng estrogen (bao gồm tất cả các đường dùng: đường uống, miếng dán da, v.v.)?", key="p8")
                     
                     any_perc_positive = any([p1, p2, p3, p4, p5, p6, p7, p8])
                     
@@ -431,11 +429,20 @@ if st.session_state.step == 1:
                     st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # Nút chuyển tiếp nhanh ở cuối trang
+    # Nút chẩn đoán xác định nổi bật ở góc phải dưới
     st.markdown("---")
-    col_nav = st.columns([4, 1])
+    col_nav = st.columns([1, 1], gap="large")
+    with col_nav[0]:
+        st.markdown("""
+        <div style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 15px; border-radius: 8px;'>
+            <span style='color: #1E40AF; font-weight: 700; font-size: 1.1rem;'>📌 XÁC NHẬN CHẨN ĐOÁN LÂM SÀNG CHỦ CHỐT</span><br>
+            <span style='color: #1E293B; font-size: 0.9rem;'>Khi đã có kết quả chẩn đoán hình ảnh xác định bệnh nhân mắc PE (hoặc CUS chi dưới dương tính ở thai phụ), bác sĩ hãy tích chọn ô bên cạnh để mở khóa Giai đoạn 2 & 3.</span>
+        </div>
+        """, unsafe_allow_html=True)
     with col_nav[1]:
-        if st.button("Tiếp tục sang GĐ 2 ➡️", use_container_width=True):
+        pe_confirmed_val = persistent_checkbox("XÁC NHẬN CHẨN ĐOÁN XÁC ĐỊNH Thuyên tắc phổi (PE) trên hình ảnh học (CTPA, V/Q Scan, hoặc CUS chi dưới dương tính ở thai phụ) để mở khóa phân tầng và điều trị ở Bước 2 & 3.", key="pe_confirmed")
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+        if st.button("Tiếp tục sang GĐ 2 ➡️", use_container_width=True, type="primary" if pe_confirmed_val else "secondary"):
             st.session_state.step = 2
             st.rerun()
 
@@ -975,8 +982,12 @@ elif st.session_state.step == 3:
         st.write(f"Chỉ số BMI: **{bmi:.1f} kg/m²** | Độ thanh thải Creatinine (CrCl): **{crcl:.1f} mL/phút**")
         
         # TÌNH HUỐNG LÂM SÀNG ĐẶC BIỆT (TÁCH BIỆT BÉ BÚ & MANG THAI)
-        st.markdown("---")
-        st.write("💼 **Các tình huống lâm sàng đặc biệt:**")
+        st.markdown("""
+        <div style='background-color: #FFFBEB; border-left: 5px solid #D97706; padding: 15px; border-radius: 8px; margin-top: 20px; margin-bottom: 15px;'>
+            <span style='color: #B45309; font-weight: 700; font-size: 1.1rem;'>💼 CÁC TÌNH HUỐNG LÂM SÀNG ĐẶC BIỆT</span><br>
+            <span style='color: #92400E; font-size: 0.9rem;'>Tích chọn nếu bệnh nhân có bối cảnh đặc biệt dưới đây để tự động điều chỉnh khuyến cáo kháng đông duy trì & dài hạn:</span>
+        </div>
+        """, unsafe_allow_html=True)
         has_aps = persistent_checkbox("Bệnh nhân mắc Hội chứng kháng Phospholipid (APS) xác định?", key="has_aps")
         is_pregnant_t2 = persistent_checkbox("Bệnh nhân hiện tại đang MANG THAI?", key="is_pregnant") # Đồng bộ với Giai đoạn 1!
         is_breastfeeding_t2 = persistent_checkbox("Bệnh nhân hiện tại đang CHO CON BÚ?", key="is_breastfeeding_t2") # Tách riêng cho con bú
@@ -1066,7 +1077,14 @@ elif st.session_state.step == 3:
         # PHÁC ĐỒ ĐIỀU TRỊ CHUẨN CHO NHÓM A, B (KHÁNG ĐÔNG ĐƯỜNG UỐNG ƯU TIÊN)
         # --------------------------------------------------------------------------
         if st.session_state.final_category in ["A", "B1", "B2"]:
-            st.success("💊 **Kháng đông ưu tiên: DOACs đường uống (Class 1, LOE B-R)**")
+            if st.session_state.is_pregnant:
+                st.error("🤰 **Kháng đông ưu tiên cho Thai kỳ: Kháng đông tiêm LMWH hoặc UFH (Class 1, LOE C-LD)**")
+                st.caption("Kháng đông uống DOACs và VKA chống chỉ định tuyệt đối (Class 3: Harm, LOE C-LD) trong suốt thai kỳ do nguy cơ sảy thai và quái thai.")
+            elif is_breastfeeding_t2:
+                st.warning("🍼 **Kháng đông ưu tiên cho thời kỳ Cho con bú: LMWH, UFH hoặc Warfarin (VKA) (Class 1, LOE C-LD)**")
+                st.caption("Tránh dùng DOACs trong thời kỳ cho con bú do thiếu dữ liệu an toàn và nguy cơ bài tiết qua sữa mẹ.")
+            else:
+                st.success("💊 **Kháng đông ưu tiên: DOACs đường uống (Class 1, LOE B-R)**")
             
             if st.session_state.final_category == "B1":
                 st.warning("👉 *Lưu ý Nhóm B1 (Dưới phân thùy):* Guideline cho phép theo dõi sát lâm sàng và siêu âm tĩnh mạch chi dưới định kỳ mà chưa cần dùng kháng đông ngay nếu bệnh nhân có nguy cơ chảy máu cao, không có triệu chứng lâm sàng và KHÔNG CÓ DVT chi dưới (Class 2b, LOE B-R). Nếu có DVT đi kèm, bắt buộc dùng kháng đông tiêu chuẩn.")
@@ -1084,7 +1102,7 @@ elif st.session_state.step == 3:
                 st.warning("⚠️ **TƯƠNG TÁC THUỐC MẠNH (CHỐNG CHỈ ĐỊNH DOACs):**\nThuốc đồng vận làm biến đổi nồng độ DOACs nguy hiểm. Khuyến cáo dùng LMWH dài hạn hoặc chuyển sang VKA (theo dõi sát INR).")
             else:
                 if has_cancer:
-                    st.info("🎗️ *Bệnh nhân Ung thư (CAT):* Khuyến cáo ưu tiên dùng DOACs hoặc LMWH hơn là VKA (Class 1, LOE A).")
+                    st.info("🎗️ *Bệnh nhân Ung thư (CAT):* Khuyến cáo ưu tiên sử dụng DOACs (như Apixaban, Rivaroxaban) hơn là Kháng vitamin K (VKA) để dự phòng tái phát VTE (Class 1, LOE B-R). Các nghiên cứu cho thấy DOAC không kém hơn LMWH về mặt hiệu quả và an toàn, tuy nhiên việc lựa chọn giữa DOAC và LMWH cần cá thể hóa dựa trên loại ung thư (ví dụ: tránh dùng DOAC ở bệnh nhân ung thư biểu mô đường tiêu hóa hoặc tiết niệu chưa cắt bỏ do làm tăng nguy cơ chảy máu).")
                 
                 # CHUẨN HÓA LIỀU DOAC (BỎ LỖI GIẢM LIỀU CỦA AF!)
                 st.write("**• Apixaban:**")
@@ -1092,9 +1110,9 @@ elif st.session_state.step == 3:
                 st.write("  - *Liều duy trì:* **5 mg uống x 2 lần/ngày** (5 mg BID).")
                 st.caption("⚠️ *Lưu ý y khoa:* Không áp dụng công thức giảm liều AF (giảm xuống 2.5 mg BID dựa trên tuổi, cân nặng, creatinine) trong điều trị PE cấp tính. Liều 2.5 mg BID chỉ dùng ở giai đoạn kéo dài (extended phase) sau 3-6 tháng điều trị ban đầu để phòng ngừa thứ phát (Class 1, LOE A).")
                 
-                # Chỉnh liều suy thận nặng dựa trên eGFR / CKD Stage
+                # Chỉnh liều suy thận nặng dựa trên CrCl và eGFR tách biệt
                 if crcl < 30:
-                    st.warning("🏥 **Lưu ý chức năng thận giảm nặng (eGFR < 30 mL/phút hoặc suy thận giai đoạn cuối):**\nTheo Hướng dẫn AHA/ACC 2026, đối với bệnh nhân suy thận nặng (eGFR < 30 mL/phút) hoặc suy thận giai đoạn cuối lọc máu, việc lựa chọn giữa Apixaban và VKA là chưa rõ ràng (Class 2b, LOE B-NR) để phòng ngừa chảy máu nặng. Các DOAC khác (như Rivaroxaban) nhìn chung chống chỉ định hoặc cần tránh dùng.")
+                    st.warning("🏥 **Lưu ý chức năng thận giảm nặng (eGFR hoặc CrCl < 30 mL/phút, hoặc suy thận giai đoạn cuối):**\nTheo Hướng dẫn AHA/ACC 2026, đối với bệnh nhân suy thận mạn nặng (CKD Stage 4 hoặc 5, eGFR < 30 mL/phút hoặc suy thận giai đoạn cuối lọc máu), việc lựa chọn giữa Apixaban và VKA là chưa rõ ràng (Class 2b, LOE B-NR) để phòng ngừa chảy máu nặng; các DOAC khác (như Rivaroxaban) nhìn chung cần tránh dùng.\n\n*Lưu ý y khoa:* Độ thanh thải Creatinine tính theo công thức Cockcroft-Gault (CrCl) là thông số chuẩn mực được FDA quy định để hiệu chỉnh liều lượng thuốc, trong khi eGFR được dùng để phân độ suy thận mạn.")
                 
                 st.write("**• Rivaroxaban:**")
                 st.write(f"  - *Liều tấn công:* **15 mg uống x 2 lần/ngày** (15 mg BID) cùng thức ăn trong 21 ngày đầu.")
@@ -1117,8 +1135,7 @@ elif st.session_state.step == 3:
                 enox_dose = weight * 1.0
                 st.write(f"- **Liều Enoxaparin tiêu chuẩn:** **{enox_dose:.1f} mg tiêm dưới da mỗi 12 giờ** (1.0 mg/kg Q12h).")
                 if bmi >= 40 or weight > 150:
-                    enox_reduced = weight * 0.8
-                    st.warning(f"⚠️ *Lưu ý béo phì độ III (BMI = {bmi:.1f}):* Có thể cân nhắc điều chỉnh giảm liều xuống **{enox_reduced:.1f} mg mỗi 12 giờ** (0.8 mg/kg Q12h) để giảm nguy cơ chảy máu (Class 2b, LOE B-NR).")
+                    st.warning(f"⚠️ *Lưu ý béo phì độ III (BMI = {bmi:.1f} hoặc cân nặng > 150 kg):* Hướng dẫn AHA/ACC 2026 cho thấy việc cân nhắc điều chỉnh giảm liều LMWH ở bệnh nhân béo phì độ III nhằm phòng ngừa nguy cơ chảy máu nặng là hợp lý (Class 2b, LOE B-NR). Tuy nhiên, liều tối ưu chưa được xác lập thống nhất và công thức giảm liều (như giảm xuống 0.8 mg/kg mỗi 12 giờ) chỉ là một phác đồ từ nghiên cứu thử nghiệm nhỏ; việc quyết định điều chỉnh liều cần cá thể hóa sát sao dựa trên bối cảnh lâm sàng thực tế.")
                 st.caption("⚠️ *Theo dõi Anti-Xa:* Không có chỉ định theo dõi nồng độ anti-Xa thường quy ở hầu hết bệnh nhân dùng LMWH theo cân nặng thực tế (Class 3: No Benefit, LOE A).")
             elif 15 <= crcl < 30:
                 enox_dose = weight * 1.0
@@ -1136,6 +1153,25 @@ elif st.session_state.step == 3:
             st.write(f"- **Liều nạp Bolus tĩnh mạch ban đầu:** **{ufh_bolus:.0f} UI** (Áp trần tối đa 10,000 UI).")
             st.write(f"- **Tốc độ truyền tĩnh mạch duy trì ban đầu:** **{ufh_maint:.0f} UI/giờ** (Áp trần tối đa **1,600 UI/giờ** để phòng ngừa quá liều ban đầu trước khi có kết quả aPTT/Anti-Xa), chỉnh liều theo aPTT.")
             st.caption("👉 *Lưu ý y khoa:* Phác đồ bolus 80 UI/kg và truyền 18 UI/kg/h với các mức trần trên là phác đồ ngoài nước được chuẩn hóa (local/external VTE nomogram), không phải do hướng dẫn AHA 2026 trực tiếp quy định cụ thể.")
+            
+            # KẾ HOẠCH DUY TRÌ DÀI HẠN DÀNH CHO C1-E1
+            st.markdown("---")
+            st.markdown("<div style='background-color: #F8FAFC; border-left: 5px solid #2563EB; padding: 15px; border-radius: 8px;'>", unsafe_allow_html=True)
+            st.write("🔄 **Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn (AHA/ACC 2026):**")
+            if st.session_state.is_pregnant:
+                st.error("🤰 **LƯU Ý THAI KỲ:** Tiếp tục duy trì kháng đông tiêm **LMWH (Enoxaparin)** liều đầy đủ theo cân nặng suốt thai kỳ và kéo dài ít nhất 6 tuần sau sinh (tối thiểu 3 tháng tổng liệu trình). Tuyệt đối **không chuyển sang DOACs hoặc VKA (Class 3: Harm, LOE C-LD)** do nguy cơ sảy thai, dị tật bẩm sinh và quái thai.")
+            elif is_breastfeeding_t2:
+                st.warning("🍼 **LƯU Ý CHO CON BÚ:** Khi xuất viện chuyển sang kháng đông duy trì, **ưu tiên sử dụng LMWH, UFH hoặc VKA Warfarin hơn là DOACs (Class 1, LOE C-LD)** do DOACs có thể bài tiết qua sữa mẹ và thiếu dữ liệu an toàn cho trẻ sơ sinh.")
+            elif has_aps:
+                st.error("🩸 **LƯU Ý HỘI CHỨNG KHÁNG PHOSPHOLIPID (APS):** Chống chỉ định dùng DOACs do tăng nguy cơ tắc mạch tái phát nặng (Class 1, LOE A). Sau pha tiêm cấp tính, bắt buộc gối sang **Kháng vitamin K (VKA - Warfarin) duy trì lâu dài với đích INR 2.0 - 3.0 (Class 1, LOE A)**.")
+            elif has_drug_interactions:
+                st.warning("⚠️ **LƯU Ý TƯƠNG TÁC THUỐC MẠNH:** Tránh dùng DOACs khi xuất viện, đề xuất sử dụng LMWH dài hạn hoặc gối sang VKA (theo dõi sát INR).")
+            else:
+                if has_cancer:
+                    st.info("🎗️ **LƯU Ý UNG THƯ (CAT):** DOAC (như Apixaban, Rivaroxaban) được khuyến cáo ưu tiên lựa chọn hơn VKA (Class 1, LOE B-R). Lựa chọn giữa DOAC và LMWH cần cá thể hóa dựa trên loại ung thư (tránh DOAC ở ung thư dạ dày/niệu quản chưa phẫu thuật cắt bỏ).")
+                else:
+                    st.success("🏠 **DUY TRÌ DÀI HẠN THÔNG THƯỜNG:** Sau pha tiêm cấp tính, chuyển sang **DOACs đường uống (Apixaban 5mg BID hoặc Rivaroxaban 20mg QD) (Class 1, LOE B-R)** là lựa chọn ưu tiên cho bệnh nhân không có bối cảnh đặc biệt.")
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # --------------------------------------------------------------------------
         # PHÁC ĐỒ KHÁNG ĐÔNG TIÊM CHO NHÓM E2 (YÊU CẦU: LINH HOẠT LMWH/UFH)
@@ -1184,11 +1220,11 @@ elif st.session_state.step == 3:
             if st.session_state.final_category == "C3":
                 st.markdown("""
                 <table class='table-style'>
-                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
-                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
-                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
-                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
-                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#FEF2F2; color:#991B1B;'>Class 3: No Benefit, LOE C-EO</span></td><td>Not recommended over anticoagulation alone.</td></tr>
+                    <tr><th>Can thiệp điều trị nâng cao</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Ý nghĩa lâm sàng theo AHA/ACC 2026</th></tr>
+                    <tr><td><strong>Tiêu sợi huyết hệ thống (Systemic Lysis)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Hiệu quả lâm sàng chưa rõ ràng (uncertain/unclear).</td></tr>
+                    <tr><td><strong>CDL (Tiêu sợi huyết qua Catheter)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Hiệu quả lâm sàng chưa rõ ràng (uncertain/unclear).</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học qua da)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Hiệu quả lâm sàng chưa rõ ràng (uncertain/unclear).</td></tr>
+                    <tr><td><strong>Phẫu thuật lấy huyết khối (Surgical Embolectomy)</strong></td><td><span class='badge' style='background-color:#FEF2F2; color:#991B1B;'>Class 3: No Benefit, LOE C-EO</span></td><td>Không khuyến cáo (Không có lợi ích so với chỉ dùng kháng đông đơn thuần).</td></tr>
                 </table>
 """, unsafe_allow_html=True)
                 st.warning("👉 **Lưu ý lâm sàng:** Chỉ định tiêu sợi huyết hệ thống thường quy ngay từ đầu cho Nhóm C1-C2 là **Class 3: Harm (Class 3: Harm, LOE B-R)** do tăng nguy cơ xuất huyết nặng/xuất huyết não một cách không cần thiết.")
@@ -1196,40 +1232,40 @@ elif st.session_state.step == 3:
             elif st.session_state.final_category in ["D1", "D2"]:
                 st.markdown("""
                 <table class='table-style'>
-                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
-                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>May be considered (to prevent clinical deterioration).</td></tr>
-                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE B-NR</span></td><td>May be considered.</td></tr>
-                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE B-NR</span></td><td>May be considered.</td></tr>
-                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Efficacy is uncertain (unclear).</td></tr>
+                    <tr><th>Can thiệp điều trị nâng cao</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Ý nghĩa lâm sàng theo AHA/ACC 2026</th></tr>
+                    <tr><td><strong>Tiêu sợi huyết hệ thống (Systemic Lysis)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Có thể cân nhắc (nhằm ngăn ngừa diễn tiến lâm sàng xấu đi).</td></tr>
+                    <tr><td><strong>CDL (Tiêu sợi huyết qua Catheter)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE B-NR</span></td><td>Có thể cân nhắc lựa chọn.</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học qua da)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE B-NR</span></td><td>Có thể cân nhắc lựa chọn.</td></tr>
+                    <tr><td><strong>Phẫu thuật lấy huyết khối (Surgical Embolectomy)</strong></td><td><span class='badge' style='background-color:#FFFBEB; color:#92400E;'>Class 2b, LOE C-LD</span></td><td>Hiệu quả lâm sàng chưa rõ ràng (uncertain/unclear).</td></tr>
                 </table>
 """, unsafe_allow_html=True)
                 
             elif st.session_state.final_category == "E1":
                 st.markdown("""
                 <table class='table-style'>
-                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
-                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Reasonable to choose over anticoagulation alone.</td></tr>
-                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Reasonable to choose.</td></tr>
-                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE B-NR</span></td><td>Reasonable to choose.</td></tr>
-                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE B-NR</span></td><td>Reasonable to choose.</td></tr>
+                    <tr><th>Can thiệp điều trị nâng cao</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Ý nghĩa lâm sàng theo AHA/ACC 2026</th></tr>
+                    <tr><td><strong>Tiêu sợi huyết hệ thống (Systemic Lysis)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Hợp lý để lựa chọn thay vì chỉ sử dụng kháng đông đơn thuần.</td></tr>
+                    <tr><td><strong>CDL (Tiêu sợi huyết qua Catheter)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Hợp lý để lựa chọn.</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học qua da)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE B-NR</span></td><td>Hợp lý để lựa chọn.</td></tr>
+                    <tr><td><strong>Phẫu thuật lấy huyết khối (Surgical Embolectomy)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE B-NR</span></td><td>Hợp lý để lựa chọn.</td></tr>
                 </table>
 """, unsafe_allow_html=True)
                 
             elif st.session_state.final_category == "E2":
                 st.markdown("""
                 <table class='table-style'>
-                    <tr><th>Can thiệp</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Nội dung chi tiết</th></tr>
-                    <tr><td><strong>Systemic Lysis</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Reasonable to choose over anticoagulation alone.</td></tr>
-                    <tr><td><strong>CDL (Thòng catheter)</strong></td><td><span class='badge' style='background-color:#94A3B8; color:#1E293B;'>N/A</span></td><td>Not applicable.</td></tr>
-                    <tr><td><strong>MT (Lấy huyết khối cơ học)</strong></td><td><span class='badge' style='background-color:#94A3B8; color:#1E293B;'>N/A</span></td><td>Not applicable.</td></tr>
-                    <tr><td><strong>Surgery (Ngoại khoa)</strong></td><td><span class='badge' style='background-color:#FEF2F2; color:#991B1B;'>Class 3: No Benefit, LOE B-NR</span></td><td>Not recommended unless on mechanical circulatory support (MCS).</td></tr>
+                    <tr><th>Can thiệp điều trị nâng cao</th><th>Mức độ Khuyến cáo (COR & LOE)</th><th>Ý nghĩa lâm sàng theo AHA/ACC 2026</th></tr>
+                    <tr><td><strong>Tiêu sợi huyết hệ thống (Systemic Lysis)</strong></td><td><span class='badge' style='background-color:#F0FDF4; color:#166534;'>Class 2a, LOE C-LD</span></td><td>Hợp lý để lựa chọn thay vì chỉ sử dụng kháng đông đơn thuần.</td></tr>
+                    <tr><td><strong>CDL (Tiêu sợi huyết qua Catheter)</strong></td><td><span class='badge' style='background-color:#94A3B8; color:#1E293B;'>N/A</span></td><td>Không phù hợp (Not applicable).</td></tr>
+                    <tr><td><strong>MT (Lấy huyết khối cơ học qua da)</strong></td><td><span class='badge' style='background-color:#94A3B8; color:#1E293B;'>N/A</span></td><td>Không phù hợp (Not applicable).</td></tr>
+                    <tr><td><strong>Phẫu thuật lấy huyết khối (Surgical Embolectomy)</strong></td><td><span class='badge' style='background-color:#FEF2F2; color:#991B1B;'>Class 3: No Benefit, LOE B-NR</span></td><td>Không khuyến cáo (Không có lợi ích) trừ khi được thực hiện song song với thiết bị hỗ trợ tuần hoàn cơ học (MCS/VA-ECMO).</td></tr>
                 </table>
 """, unsafe_allow_html=True)
                 st.info("💡 **Hỗ trợ VA-ECMO trong Nhóm E2 (Sốc tim kháng trị / Ngừng tuần hoàn):** Khuyến cáo thiết lập VA-ECMO (**Class 2a, LOE B-NR**) để ổn định huyết động và hỗ trợ chức năng tim phổi hồi sức nâng cao (E-CPR).")
 
         # Hiển thị Respiratory Modifier nếu có R
         if st.session_state.resp_modifier:
-            st.error("📢 **CẢNH BÁO SUY HÔ HẤP (Respiratory Modifier R):**\nBệnh nhân có suy hô hấp nặng đi kèm. Hạn chế tối đa việc đặt nội khí quản máy thở áp lực dương lớn trừ khi bắt buộc để tránh làm sụp đổ tuần hoàn tim phải đang suy cấp. Ưu tiên sử dụng hỗ trợ oxy dòng cao (HFNC) (Class 2a, LOE C-LD) hoặc thông khí không xâm lấn (NIV).")
+            st.error("📢 **CẢNH BÁO SUY HÔ HẤP (Respiratory Modifier R):**\nBệnh nhân có suy hô hấp đi kèm. Theo Hướng dẫn AHA/ACC 2026, liệu pháp oxy dòng cao qua gọng mũi (HFNC) được khuyến cáo sử dụng ở bệnh nhân có suy hô hấp giảm oxy máu từ vừa đến nặng (Class 2a, LOE C-LD).\\n\\n*Lưu ý lâm sàng cực kỳ quan trọng:* Khuyến cáo không tự ý áp dụng thông khí áp lực dương (như NIV/CPAP hoặc thở máy xâm lấn) như một phương án ưu tiên thường quy, vì áp lực dương lồng ngực làm giảm tiền gánh và tăng hậu gánh thất phải cấp, dễ dẫn đến sụp đổ tuần hoàn tim phải cấp (NIV/thông khí áp lực dương chính là một marker lâm sàng của mức độ nguy kịch E-R).")
 
         # Nút chuyển tiếp ngược
         st.markdown("---")
