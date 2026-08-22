@@ -190,38 +190,87 @@ if st.session_state.step == 1:
         cptp_score = 0.0
         
         if is_suspected:
-            # Nhánh mang thai thích ứng YEARS
+            # ==================================================================
+            # NHÁNH TIẾP CẬN THAI KỲ (PREGNANCY-ADAPTED YEARS)
+            # ==================================================================
             if st.session_state.is_pregnant:
                 st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                st.write("🤰 **Quy trình thích ứng thai kỳ (Pregnancy-adapted YEARS):**")
+                st.write("🤰 **Tiếp cận thích ứng Thai kỳ (Pregnancy-adapted YEARS):**")
                 has_dvt_sym = persistent_checkbox("Bệnh nhân mang thai có triệu chứng sưng đau một bên chân gợi ý DVT?", key="has_dvt_sym")
                 
+                is_preg_cus_positive = False
                 if has_dvt_sym:
                     st.markdown("""
                     <div class='u-card urgency-high'>
-                        <strong>🚨 CHỈ ĐỊNH SIÊU ÂM DOOPLER TĨNH MẠCH CHI DƯỚI (CUS):</strong><br>
-                        Theo Guideline, thai phụ có triệu chứng DVT phải thực hiện siêu âm CUS trước tiên.
+                        <strong>🚨 CHỈ ĐỊNH SIÊU ÂM DOPPLER TĨNH MẠCH CHI DƯỚI (CUS) TRƯỚC TIÊN:</strong><br>
+                        Theo Guideline, thai phụ có triệu chứng DVT chi dưới phải thực hiện siêu âm CUS trước tiên để tránh tia xạ tối đa (Class 1, LOE C-LD).
                     </div>
                     """, unsafe_allow_html=True)
                     
                     cus_result = persistent_radio("Kết quả siêu âm CUS chi dưới:", [
-                        "Chưa thực hiện / Kết quả Âm tính (Không thấy huyết khối)",
+                        "Chưa thực hiện / Kết quả Âm tính",
                         "DƯƠNG TÍNH (Xác nhận có DVT chi dưới)"
                     ], key="cus_result")
                     
                     if "DƯƠNG TÍNH" in cus_result:
+                        is_preg_cus_positive = True
                         st.markdown("""
                         <div class='u-card urgency-low'>
                             <strong>>>> KẾT LUẬN CHẨN ĐOÁN: XÁC LẬP VTE/PE LÂM SÀNG (KHỞI TRỊ KHÁNG ĐÔNG NGAY)</strong><br>
-                            Có bằng chứng DVT chân trên siêu âm -> Khuyến cáo điều trị kháng đông bằng LMWH ngay lập tức (Class 1, LOE C-LD) mà không nhất thiết phải chụp CTPA hay làm D-dimer để tránh phơi nhiễm phóng xạ (VTE/PE presumed). Vui lòng tích chọn 'Xác nhận chẩn đoán xác định PE' bên dưới để mở khóa Bước 2 và Bước 3.
+                            Có bằng chứng DVT chân trên siêu âm -> Khuyến cáo điều trị kháng đông bằng LMWH ngay lập tức (Class 1, LOE C-LD) mà không nhất thiết phải chụp CTPA hay làm D-dimer để tránh phơi nhiễm phóng xạ (VTE/PE presumed).
                         </div>
                         """, unsafe_allow_html=True)
-                        # KHÔNG tự gán B2, để bác sĩ xác nhận pe_confirmed và phân tầng thủ công ở Bước 2
+                
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-            # Đánh giá Wells/Geneva tiêu chuẩn (Chỉ hiển thị khi không dùng kháng đông liều đầy đủ VÀ không phải thai phụ có CUS dương tính)
-            is_preg_cus_positive = st.session_state.is_pregnant and st.session_state.saved_inputs.get('has_dvt_sym') and "DƯƠNG TÍNH" in st.session_state.saved_inputs.get('cus_result', '')
-            if not is_anticoagulated and not is_preg_cus_positive:
+                # Vẫn hiển thị Wells/Geneva để bác sĩ tham khảo CPTP ban đầu (như yêu cầu)
+                # Chỉ hiển thị khi CUS không dương tính để giao diện tinh gọn
+                if not is_preg_cus_positive:
+                    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+                    st.write("📋 **Xác suất lâm sàng tiền nghiệm tham khảo (CPTP cho thai kỳ):**")
+                    score_type = persistent_radio("Chọn Thang điểm Đánh giá:", ["Thang điểm Wells (Khuyên dùng)", "Thang điểm Geneva Rút gọn"], key="score_type")
+                    
+                    if score_type == "Thang điểm Wells (Khuyên dùng)":
+                        st.info("Tính điểm Wells:")
+                        w1 = persistent_checkbox("Lâm sàng có triệu chứng/dấu hiệu của DVT (+3.0)", key="w1")
+                        w2 = persistent_checkbox("PE là chẩn đoán khả thi nhất hoặc có khả năng xảy ra cao nhất (+3.0)", key="w2")
+                        w3 = persistent_checkbox("Tần số tim > 100 chu kỳ/phút (+1.5)", key="w3")
+                        w4 = persistent_checkbox("Bất động >= 3 ngày liên tục hoặc mới phẫu thuật trong vòng 4 tuần trước (+1.5)", key="w4")
+                        w5 = persistent_checkbox("Tiền sử cá nhân đã từng bị DVT hoặc PE trước đây (+1.5)", key="w5")
+                        w6 = persistent_checkbox("Bệnh nhân có ho ra máu (+1.0)", key="w6")
+                        w7 = persistent_checkbox("Bệnh nhân có ung thư đang tiến triển (+1.0)", key="w7")
+                        
+                        cptp_score = (3.0 if w1 else 0.0) + (3.0 if w2 else 0.0) + (1.5 if w3 else 0.0) + (1.5 if w4 else 0.0) + (1.5 if w5 else 0.0) + (1.0 if w6 else 0.0) + (1.0 if w7 else 0.0)
+                        st.metric(label="Tổng điểm Wells", value=f"{cptp_score} điểm")
+                        
+                        if cptp_score < 2.0: cptp_category = "LOW"
+                        elif cptp_score <= 6.0: cptp_category = "INTERMEDIATE"
+                        else: cptp_category = "HIGH"
+                    else:
+                        st.info("Tính điểm Geneva Rút gọn:")
+                        g1 = persistent_checkbox("Tuổi > 65 tuổi (+1)", key="g1")
+                        g2 = persistent_checkbox("Tiền sử cá nhân bị DVT hoặc PE (+1)", key="g2")
+                        g3 = persistent_checkbox("Phẫu thuật hoặc gãy xương chi dưới trong vòng 1 tháng qua (+1)", key="g3")
+                        g4 = persistent_checkbox("Ung thư đang hoạt động/tiến triển (+1)", key="g4")
+                        g5 = persistent_checkbox("Đau một bên chi dưới (+1)", key="g5")
+                        g6 = persistent_checkbox("Ho ra máu (+1)", key="g6")
+                        g7 = persistent_checkbox("Tần số tim 75 - 94 chu kỳ/phút (+1) HOẶC >= 95 chu kỳ/phút (+1)", key="g7")
+                        g8 = persistent_checkbox("Đau khi sờ nắn tĩnh mạch sâu một bên chi dưới và phù một bên chân (+1)", key="g8")
+                        
+                        cptp_score = sum([g1, g2, g3, g4, g5, g6, g8])
+                        if g7: cptp_score += 1.0
+                        st.metric(label="Tổng điểm Geneva Rút gọn", value=f"{cptp_score} điểm")
+                        
+                        if cptp_score <= 1.0: cptp_category = "LOW"
+                        elif cptp_score <= 4.0: cptp_category = "INTERMEDIATE"
+                        else: cptp_category = "HIGH"
+                    st.markdown("</div>", unsafe_allow_html=True)
+            
+            # ==================================================================
+            # BỆNH NHÂN KHÔNG MANG THAI - DÙNG WELLS / GENEVA TIÊU CHUẨN
+            # ==================================================================
+            else:
+                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
                 score_type = persistent_radio("Chọn Thang điểm Đánh giá Xác suất lâm sàng tiền nghiệm:", ["Thang điểm Wells (Khuyên dùng)", "Thang điểm Geneva Rút gọn"], key="score_type")
                 
                 if score_type == "Thang điểm Wells (Khuyên dùng)":
@@ -237,13 +286,10 @@ if st.session_state.step == 1:
                     cptp_score = (3.0 if w1 else 0.0) + (3.0 if w2 else 0.0) + (1.5 if w3 else 0.0) + (1.5 if w4 else 0.0) + (1.5 if w5 else 0.0) + (1.0 if w6 else 0.0) + (1.0 if w7 else 0.0)
                     st.metric(label="Tổng điểm Wells", value=f"{cptp_score} điểm")
                     
-                    if cptp_score < 2.0:
-                        cptp_category = "LOW"
-                    elif cptp_score <= 6.0:
-                        cptp_category = "INTERMEDIATE"
-                    else:
-                        cptp_category = "HIGH"
-                        
+                    if cptp_score < 2.0: cptp_category = "LOW"
+                    elif cptp_score <= 6.0: cptp_category = "INTERMEDIATE"
+                    else: cptp_category = "HIGH"
+                    
                 else:
                     st.info("Tính điểm Geneva Rút gọn (Simplified Revised Geneva):")
                     g1 = persistent_checkbox("Tuổi > 65 tuổi (+1)", key="g1")
@@ -252,44 +298,25 @@ if st.session_state.step == 1:
                     g4 = persistent_checkbox("Ung thư đang hoạt động/tiến triển (+1)", key="g4")
                     g5 = persistent_checkbox("Đau một bên chi dưới (+1)", key="g5")
                     g6 = persistent_checkbox("Ho ra máu (+1)", key="g6")
-                    g7 = persistent_checkbox("Tần số tim 75 - 94 chu kỳ/phút (+1) HOẶC >= 95 chu kỳ/phút (+1)", key="g7") # Sửa wording chuẩn Geneva rút gọn cả 2 mức đều +1
+                    g7 = persistent_checkbox("Tần số tim 75 - 94 chu kỳ/phút (+1) HOẶC >= 95 chu kỳ/phút (+1)", key="g7")
                     g8 = persistent_checkbox("Đau khi sờ nắn tĩnh mạch sâu một bên chi dưới và phù một bên chân (+1)", key="g8")
                     
                     cptp_score = sum([g1, g2, g3, g4, g5, g6, g8])
-                    if g7:
-                        cptp_score += 1.0
-                    
+                    if g7: cptp_score += 1.0
                     st.metric(label="Tổng điểm Geneva Rút gọn", value=f"{cptp_score} điểm")
                     
-                    if cptp_score <= 1.0:
-                        cptp_category = "LOW"
-                    elif cptp_score <= 4.0:
-                        cptp_category = "INTERMEDIATE"
-                    else:
-                        cptp_category = "HIGH"
+                    if cptp_score <= 1.0: cptp_category = "LOW"
+                    elif cptp_score <= 4.0: cptp_category = "INTERMEDIATE"
+                    else: cptp_category = "HIGH"
+                st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.success("Bệnh nhân không có triệu chứng nghi ngờ. Khám phát hiện tình cờ -> Thích hợp để quản lý ngoại trú (Category A)")
-            
-
 
     with col1_2:
         st.subheader("⚡ 2. Thuật toán Loại trừ Không hình ảnh học")
         
         if is_suspected:
-            is_preg_cus_positive = st.session_state.is_pregnant and st.session_state.saved_inputs.get('has_dvt_sym') and "DƯƠNG TÍNH" in st.session_state.saved_inputs.get('cus_result', '')
-            if is_preg_cus_positive:
-                st.markdown("""
-                <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534; padding: 15px; border-radius: 8px;'>
-                    <strong>>>> KẾT LUẬN: CHẨN ĐOÁN THUYÊN TẮC HUYẾT KHỐI Presumed VTE</strong><br>
-                    Thai phụ có triệu chứng lâm sàng nghi ngờ và siêu âm Doppler tĩnh mạch sâu chi dưới (CUS) dương tính.<br><br>
-                    <strong>Khuyến cáo của Hướng dẫn AHA/ACC 2026 (Class 1, LOE C-LD):</strong><br>
-                    - Điều trị kháng đông bằng <strong>LMWH (Enoxaparin)</strong> liều điều trị đầy đủ ngay lập tức mà không cần làm xét nghiệm D-dimer hay chẩn đoán hình ảnh lồng ngực (CTPA hoặc V/Q Scan).<br>
-                    - Điều này giúp tránh phơi nhiễm bức xạ ion hóa không cần thiết cho cả mẹ và thai nhi.<br><br>
-                    <em>Bác sĩ hãy chuyển tiếp sang Giai đoạn 2 hoặc 3 để bắt đầu phân tầng và tính liều kháng đông chi tiết.</em>
-                </div>
-                """, unsafe_allow_html=True)
-            elif is_anticoagulated:
-                # ĐƯA RA NGOÀI ĐỂ KHÔNG BỊ CHẶN BỞI RẼ NHÁNH D-DIMER (SỬA LỖI FLOW NHÁNH KHÁNG ĐÔNG)
+            if is_anticoagulated:
                 st.markdown("""
                 <div class='u-card urgency-high'>
                     <strong>>>> KẾT LUẬN: CHỈ ĐỊNH CHỤP HÌNH ẢNH HỌC PHỔI LẬP TỨC!</strong><br>
@@ -304,7 +331,63 @@ if st.session_state.step == 1:
                 st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)** nhờ độ nhạy và độ đặc hiệu cao hơn đáng kể.")
                 st.markdown("</div>", unsafe_allow_html=True)
                 
+            elif st.session_state.is_pregnant:
+                # NHÁNH LOẠI TRỪ DÀNH RIÊNG CHO MANG THAI (PREGNANCY-ADAPTED YEARS) - HOÀN TOÀN TÁCH BIỆT!
+                is_preg_cus_positive_val = st.session_state.saved_inputs.get('has_dvt_sym') and "DƯƠNG TÍNH" in st.session_state.saved_inputs.get('cus_result', '')
+                
+                if is_preg_cus_positive_val:
+                    st.markdown("""
+                    <div class='u-card urgency-low'>
+                        <strong>✔️ CHẨN ĐOÁN ĐÃ XÁC LẬP BẰNG CUS DƯƠNG TÍNH</strong><br>
+                        Siêu âm Doppler chân phát hiện thấy huyết khối. Thai phụ đã có bằng chứng VTE lâm sàng. 
+                        Không có chỉ định thực hiện thêm xét nghiệm loại trừ D-dimer hay chẩn đoán hình ảnh phổi CTPA để tránh tia xạ tối đa (Class 1, LOE C-LD).
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+                    st.write("##### 🤰 Thuật toán YEARS thích ứng thai kỳ (Pregnancy-Adapted YEARS) (Class 2b, LOE B-NR)")
+                    st.caption("Áp dụng riêng cho phụ nữ mang thai nghi ngờ PE để tối ưu hóa việc loại trừ và giảm thiểu chỉ định chụp CTPA nhiễm xạ.")
+                    
+                    has_dvt_sym_val = st.session_state.saved_inputs.get('has_dvt_sym', False)
+                    st.write("**Đánh giá 3 tiêu chí YEARS:**")
+                    st.write(f"- 1. Có dấu hiệu lâm sàng của DVT: **" + ("Có (Được tích chọn ở cột trái)" if has_dvt_sym_val else "Không") + "**")
+                    y2 = persistent_checkbox("2. Có ho ra máu?", key="years_y2")
+                    y3 = persistent_checkbox("3. PE là chẩn đoán khả thi nhất trên lâm sàng?", key="years_y3")
+                    
+                    years_count = (1 if has_dvt_sym_val else 0) + (1 if y2 else 0) + (1 if y3 else 0)
+                    st.write(f"Số tiêu chí YEARS thỏa mãn: **{years_count}/3**")
+                    
+                    years_cutoff = 1000 if years_count == 0 else 500
+                    st.write(f"Ngưỡng cắt D-dimer theo YEARS (cố định cho thai kỳ): **{years_cutoff} ng/mL**")
+                    
+                    d_dimer_val_preg = persistent_number_input("Nhập nồng độ D-dimer thực tế đo được (ng/mL):", 0, 50000, 0, key="d_dimer_val_preg")
+                    
+                    if d_dimer_val_preg > 0:
+                        if d_dimer_val_preg < years_cutoff:
+                            st.markdown(f"""
+                            <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534;'>
+                                <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_preg}) < Ngưỡng YEARS ({years_cutoff})</strong><br>
+                                LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để không chụp CTPA cho thai phụ.
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"""
+                            <div class='u-card' style='background-color: #FEF2F2; border-left: 5px solid #DC2626; color: #991B1B;'>
+                                <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_preg}) >= Ngưỡng YEARS ({years_cutoff})</strong><br>
+                                CHỈ ĐỊNH HÌNH ẢNH HỌC PHỔI KHẨN CẤP! Khuyến cáo thực hiện <strong>CTPA liều thấp (low-dose CTPA)</strong> (Class 2a, LOE B-NR) hoặc <strong>Xạ hình phổi V/Q SPECT</strong> (Class 2a, LOE B-R).
+                            </div>
+                            """, unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    # Phần hướng dẫn thay thế CTPA nếu có chống chỉ định
+                    st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+                    st.write("🌿 **Nhánh chẩn đoán thay thế (Nếu chống chỉ định CTPA):**")
+                    st.caption("Nếu thai phụ mong muốn giảm thiểu tia xạ vú tối đa hoặc có chống chỉ định khác:")
+                    st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)**.")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    
             else:
+                # BỆNH NHÂN KHÔNG MANG THAI - DÙNG QUY TRÌNH LOẠI TRỪ TIÊU CHUẨN (PERC -> D-DIMER)
                 st.write(f"Xác suất tiền nghiệm lâm sàng (CPTP): **{cptp_category}** (Điểm: {cptp_score})")
                 
                 # Sàng lọc bằng PERC nếu lâm sàng nguy cơ thấp
@@ -326,7 +409,7 @@ if st.session_state.step == 1:
                     
                     if not any_perc_positive:
                         st.markdown("""
-                        <div class='u-card urgency-low'>
+                        <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534;'>
                             <strong>>>> KẾT QUẢ PERC: ÂM TÍNH (LOẠI TRỪ PE HOÀN TOÀN)</strong><br>
                             Bệnh nhân thỏa mãn toàn bộ 8 tiêu chí loại trừ. LOẠI TRỪ PE TẠI GIƯỜNG BỆNH! Không cần làm D-dimer, không cần chụp CTPA.
                         </div>
@@ -368,28 +451,21 @@ if st.session_state.step == 1:
                             if d_dimer_val_a > 0:
                                 if d_dimer_val_a < cutoff_a:
                                     st.markdown(f"""
-                                    <div class='u-card urgency-low'>
+                                    <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534;'>
                                         <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_a}) < Ngưỡng cắt ({cutoff_a})</strong><br>
                                         LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để KHÔNG chụp CTPA.
                                     </div>
                                     """, unsafe_allow_html=True)
-                                    if st.button("📊 Vẫn chuyển sang Phân loại & Điều trị (Giả định)", type="secondary"):
-                                        st.session_state.step = 2
-                                        st.rerun()
                                 else:
                                     st.markdown(f"""
-                                    <div class='u-card urgency-high'>
+                                    <div class='u-card' style='background-color: #FEF2F2; border-left: 5px solid #DC2626; color: #991B1B;'>
                                         <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_a}) >= Ngưỡng cắt ({cutoff_a})</strong><br>
                                         CHỈ ĐỊNH HÌNH ẢNH HỌC (CTPA) ĐỂ XÁC ĐỊNH CHẨN ĐOÁN!
                                     </div>
                                     """, unsafe_allow_html=True)
                         
                         else: # YEARS
-                            if st.session_state.is_pregnant:
-                                st.info("Chiến lược B: Thuật toán YEARS thích ứng thai kỳ (Pregnancy-Adapted YEARS) (Class 2b, LOE B-R)")
-                            else:
-                                st.info("Chiến lược B: Thuật toán YEARS tiêu chuẩn (Class 2a, LOE B-R)")
-                                
+                            st.info("Chiến lược B: Thuật toán YEARS tiêu chuẩn (Class 2a, LOE B-R)")
                             st.write("Đánh giá 3 tiêu chí YEARS:")
                             y1 = persistent_checkbox("1. Có dấu hiệu lâm sàng của DVT (sưng đau chân)?", key="years_y1")
                             y2 = persistent_checkbox("2. Có ho ra máu?", key="years_y2")
@@ -406,17 +482,14 @@ if st.session_state.step == 1:
                             if d_dimer_val_b > 0:
                                 if d_dimer_val_b < years_cutoff:
                                     st.markdown(f"""
-                                    <div class='u-card urgency-low'>
+                                    <div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534;'>
                                         <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_b}) < Ngưỡng YEARS ({years_cutoff})</strong><br>
                                         LOẠI TRỪ THUYÊN TẮC PHỔI (PE) THÀNH CÔNG! An toàn để không chụp CTPA.
                                     </div>
                                     """, unsafe_allow_html=True)
-                                    if st.button("📊 Vẫn chuyển sang Phân loại & Điều trị (Giả định)", type="secondary"):
-                                        st.session_state.step = 2
-                                        st.rerun()
                                 else:
                                     st.markdown(f"""
-                                    <div class='u-card urgency-high'>
+                                    <div class='u-card' style='background-color: #FEF2F2; border-left: 5px solid #DC2626; color: #991B1B;'>
                                         <strong>>>> KẾT LUẬN: D-dimer ({d_dimer_val_b}) >= Ngưỡng YEARS ({years_cutoff})</strong><br>
                                         CHỈ ĐỊNH HÌNH ẢNH HỌC (CTPA) ĐỂ XÁC ĐỊNH CHẨN ĐOÁN!
                                     </div>
@@ -425,7 +498,7 @@ if st.session_state.step == 1:
                         
                 elif cptp_category == "HIGH":
                     st.markdown("""
-                    <div class='u-card urgency-high'>
+                    <div class='u-card' style='background-color: #FEF2F2; border-left: 5px solid #DC2626; color: #991B1B;'>
                         <strong>>>> KẾT LUẬN: CHỈ ĐỊNH CHỤP HÌNH ẢNH HỌC PHỔI KHẨN CẤP LẬP TỨC!</strong><br>
                         Bệnh nhân có xác suất lâm sàng rất cao (Wells > 6 hoặc Geneva > 4). Tiến hành chụp CT động mạch phổi (CTPA) ngay mà không làm D-dimer.
                     </div>
@@ -434,32 +507,17 @@ if st.session_state.step == 1:
                 # Phần hướng dẫn thay thế CTPA nếu có chống chỉ định
                 st.markdown("<div class='section-card'>", unsafe_allow_html=True)
                 st.write("🌿 **Nhánh chẩn đoán thay thế (Nếu chống chỉ định CTPA):**")
-                st.caption("Nếu bệnh nhân có chống chỉ định tuyệt đối với CTPA (suy thận nặng CrCl < 30, dị ứng thuốc cản quang có iod, hoặc phụ nữ mang thai mong muốn giảm thiểu tia xạ vú tối đa):")
-                st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)** nhờ độ nhạy và độ đặc hiệu cao hơn đáng kể.")
-                
-                if st.button("📊 Chuyển sang Giai đoạn Phân loại & Điều trị sau khi có kết quả CTPA hoặc V/Q", type="primary"):
-                    st.session_state.step = 2
-                    st.rerun()
+                st.caption("Nếu bệnh nhân có chống chỉ định tuyệt đối với CTPA (suy thận nặng CrCl < 30, dị ứng thuốc cản quang có iod, v.v.):")
+                st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)**.")
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # Nút chẩn đoán xác định nổi bật ở góc phải dưới
+    # Nút điều hướng thông thoáng, không còn rào cản pe_confirmed
     st.markdown("---")
-    col_nav = st.columns([1, 1], gap="large")
-    with col_nav[0]:
-        st.markdown("""
-        <div style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 15px; border-radius: 8px;'>
-            <span style='color: #1E40AF; font-weight: 700; font-size: 1.1rem;'>📌 XÁC NHẬN CHẨN ĐOÁN LÂM SÀNG CHỦ CHỐT</span><br>
-            <span style='color: #1E293B; font-size: 0.9rem;'>Khi đã có kết quả chẩn đoán hình ảnh xác định bệnh nhân mắc PE (hoặc CUS chi dưới dương tính ở thai phụ), bác sĩ hãy tích chọn ô bên cạnh để mở khóa Giai đoạn 2 & 3.</span>
-        </div>
-        """, unsafe_allow_html=True)
+    col_nav = st.columns([4, 1])
     with col_nav[1]:
-        pe_confirmed_val = persistent_checkbox("XÁC NHẬN CHẨN ĐOÁN XÁC ĐỊNH Thuyên tắc phổi (PE) trên hình ảnh học (CTPA, V/Q Scan, hoặc CUS chi dưới dương tính ở thai phụ) để mở khóa phân tầng và điều trị ở Bước 2 & 3.", key="pe_confirmed")
-        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-        if st.button("Tiếp tục sang GĐ 2 ➡️", use_container_width=True, type="primary" if pe_confirmed_val else "secondary"):
+        if st.button("Tiếp tục sang GĐ 2 ➡️", use_container_width=True, type="primary"):
             st.session_state.step = 2
-            st.rerun()
-
-# ==============================================================================
+            st.rerun()# ==============================================================================
 # BƯỚC 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026 (RẼ NHÁNH TUẦN TỰ)
 # ==============================================================================
 elif st.session_state.step == 2:
