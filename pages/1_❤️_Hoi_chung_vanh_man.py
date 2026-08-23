@@ -3,7 +3,7 @@ import pandas as pd
 
 # Page Configuration
 st.set_page_config(
-    page_title="ESC 2024 CCS Initial Management Tool v6",
+    page_title="ESC 2024 CCS Initial Management Tool v11",
     page_icon="🫀",
     layout="wide"
 )
@@ -115,6 +115,146 @@ st.markdown("""
         font-weight: bold;
         font-size: 0.8rem;
     }
+
+    /* Progress Bar and Card Styles */
+    .progress-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 25px;
+        width: 100%;
+    }
+    .progress-card {
+        flex: 1;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .progress-card .card-num {
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin-bottom: 5px;
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .progress-card .card-label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+    
+    /* Style for Active Card (Glow effect) */
+    .card-active {
+        background: linear-gradient(135deg, #1e3d59, #17b978) !important;
+        color: #ffffff !important;
+        border: 2px solid #17b978 !important;
+        box-shadow: 0 0 20px rgba(23, 185, 120, 0.6) !important;
+        transform: translateY(-3px);
+    }
+    .card-active .card-num {
+        background-color: #ffffff !important;
+        color: #1e3d59 !important;
+    }
+    
+    /* Style for Completed Cards */
+    .card-completed {
+        background-color: #e8f8f5 !important;
+        color: #17b978 !important;
+        border: 2px solid #2ecc71 !important;
+    }
+    .card-completed .card-num {
+        background-color: #17b978 !important;
+        color: #ffffff !important;
+    }
+    
+    /* Style for Pending/Future Cards */
+    .card-pending {
+        background-color: #f1f2f6 !important;
+        color: #888888 !important;
+        border: 1px dashed #cccccc !important;
+    }
+    .card-pending .card-num {
+        background-color: #dddddd !important;
+        color: #888888 !important;
+    }
+
+    /* Styling for Active Expander */
+    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] {
+        border: 3px solid #17b978 !important; /* Prominent active green border */
+        border-radius: 12px !important;
+        box-shadow: 0 8px 24px rgba(23, 185, 120, 0.3) !important;
+        opacity: 1.0 !important;
+        transition: all 0.3s ease-in-out;
+    }
+
+    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader {
+        background-color: #1e3d59 !important; /* Deep dark blue background */
+        color: #ffffff !important; /* White text */
+        font-size: 1.8rem !important; /* Extremely large */
+        font-weight: 800 !important;
+        padding: 15px 20px !important;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader p {
+        font-size: 1.8rem !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+    }
+
+    /* Styling for Inactive/Faded Expander */
+    div:has(> .step-inactive-marker) + div.element-container div[data-testid="stExpander"] {
+        border: 1px solid #d3d3d3 !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        opacity: 0.55 !important; /* Faded out to emphasize the active step */
+        transition: all 0.3s ease-in-out;
+    }
+
+    div:has(> .step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader {
+        background-color: #f8f9fa !important; /* Light gray background */
+        color: #777777 !important; /* Muted gray text */
+        font-size: 1.2rem !important; /* Smaller text */
+        font-weight: 500 !important;
+        padding: 10px 15px !important;
+    }
+    
+    div:has(> .step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader p {
+        font-size: 1.2rem !important;
+        font-weight: 500 !important;
+        color: #777777 !important;
+    }
+
+    /* Hierarchy inside Active Expander */
+    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] h3 {
+        font-size: 1.45rem !important;
+        color: #1e3d59 !important;
+        font-weight: 700 !important;
+        border-bottom: 2px solid #17b978 !important;
+        padding-bottom: 5px !important;
+        margin-top: 25px !important;
+        margin-bottom: 15px !important;
+    }
+    
+    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] h4 {
+        font-size: 1.15rem !important;
+        color: #2c3e50 !important;
+        font-weight: 600 !important;
+        margin-top: 15px !important;
+        margin-bottom: 10px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -154,20 +294,31 @@ if 'dyslipidemia_flag' not in st.session_state:
 if 'hypertension_flag' not in st.session_state:
     st.session_state.hypertension_flag = False
 
-# Progress Bar
-step_cols = st.columns(4)
-steps_labels = [
-    "1. Đánh giá lâm sàng & CLS",
-    "2. Đánh giá chuyên sâu & RF-CL",
-    "3. Chẩn đoán & ANOCA/INOCA",
-    "4. Điều trị nội khoa & Can thiệp"
+# Progress Bar Redesigned as Glow/Active Cards
+current_step = st.session_state.step
+cards_html = "<div class='progress-container'>"
+steps_info = [
+    ("1", "Đánh giá lâm sàng & CLS"),
+    ("2", "Đánh giá chuyên sâu & RF-CL"),
+    ("3", "Chẩn đoán & ANOCA/INOCA"),
+    ("4", "Điều trị nội khoa & Can thiệp")
 ]
-for idx, col in enumerate(step_cols):
+for idx, (num, label) in enumerate(steps_info):
     step_num = idx + 1
-    if st.session_state.step >= step_num:
-        col.markdown(f"<div style='text-align: center; color: #17b978; font-weight: bold;'>🟢 {steps_labels[idx]}</div>", unsafe_allow_html=True)
+    if current_step == step_num:
+        card_class = "card-active"
+    elif current_step > step_num:
+        card_class = "card-completed"
     else:
-        col.markdown(f"<div style='text-align: center; color: #888;'>⚪ {steps_labels[idx]}</div>", unsafe_allow_html=True)
+        card_class = "card-pending"
+    cards_html += f'''
+    <div class='progress-card {card_class}'>
+        <div class='card-num'>{num}</div>
+        <div class='card-label'>{label}</div>
+    </div>
+    '''
+cards_html += "</div>"
+st.markdown(cards_html, unsafe_allow_html=True)
 
 st.divider()
 
@@ -190,7 +341,14 @@ def set_step(step_num):
 # STEP 1: CLINICAL EVALUATION, SYMPTOMS (FIG 3) & CLS RESULTS
 # ----------------------------------------------------
 step1_expanded = (st.session_state.step == 1)
-with st.expander("🩺 BƯỚC 1: ĐÁNH GIÁ LÂM SÀNG BAN ĐẦU & CẬN LÂM SÀNG CƠ BẢN", expanded=step1_expanded):
+if st.session_state.step == 1:
+    st.markdown("<div class='step-active-marker'></div>", unsafe_allow_html=True)
+    step1_label = "👉 BƯỚC 1: ĐÁNH GIÁ LÂM SÀNG BAN ĐẦU & CẬN LÂM SÀNG CƠ BẢN [ĐANG THỰC HIỆN]"
+else:
+    st.markdown("<div class='step-inactive-marker'></div>", unsafe_allow_html=True)
+    step1_label = "✅ BƯỚC 1: ĐÁNH GIÁ LÂM SÀNG BAN ĐẦU & CẬN LÂM SÀNG CƠ BẢN (Xem lại / Điều chỉnh)"
+
+with st.expander(step1_label, expanded=step1_expanded):
     st.markdown("<div class='step-header'>BƯỚC 1: Khai thác bệnh sử triệu chứng (Figure 3), Loại trừ ACS và thực hiện thăm dò cơ bản</div>", unsafe_allow_html=True)
     
     # 1. Red Flags to rule out ACS
@@ -411,7 +569,14 @@ with st.expander("🩺 BƯỚC 1: ĐÁNH GIÁ LÂM SÀNG BAN ĐẦU & CẬN LÂM
 # STEP 2: FURTHER CARDIAC EVALUATION & RF-CL CALCULATOR
 # ----------------------------------------------------
 step2_expanded = (st.session_state.step == 2)
-with st.expander("📊 BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU & ƯỚC TÍNH KHẢ NĂNG LÂM SÀNG (RF-CL)", expanded=step2_expanded):
+if st.session_state.step == 2:
+    st.markdown("<div class='step-active-marker'></div>", unsafe_allow_html=True)
+    step2_label = "👉 BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU & ƯỚC TÍNH KHẢ NĂNG LÂM SÀNG (RF-CL) [ĐANG THỰC HIỆN]"
+else:
+    st.markdown("<div class='step-inactive-marker'></div>", unsafe_allow_html=True)
+    step2_label = "BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU & ƯỚC TÍNH KHẢ NĂNG LÂM SÀNG (RF-CL) (Xem lại / Điều chỉnh)"
+
+with st.expander(step2_label, expanded=step2_expanded):
     if st.session_state.step < 2:
         st.warning("Vui lòng hoàn thành Bước 1 trước.")
     else:
@@ -684,7 +849,14 @@ with st.expander("📊 BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU & ƯỚC TÍNH KHẢ 
 # STEP 3: DIAGNOSIS SELECTION, RISK STRATIFICATION & ANOCA/INOCA FLOW
 # ----------------------------------------------------
 step3_expanded = (st.session_state.step == 3)
-with st.expander("🔍 BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN, PHÂN TẦNG NGUY CƠ BIẾN CỐ & ANOCA/INOCA", expanded=step3_expanded):
+if st.session_state.step == 3:
+    st.markdown("<div class='step-active-marker'></div>", unsafe_allow_html=True)
+    step3_label = "👉 BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN, PHÂN TẦNG NGUY CƠ BIẾN CỐ & ANOCA/INOCA [ĐANG THỰC HIỆN]"
+else:
+    st.markdown("<div class='step-inactive-marker'></div>", unsafe_allow_html=True)
+    step3_label = "BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN, PHÂN TẦNG NGUY CƠ BIẾN CỐ & ANOCA/INOCA (Xem lại)"
+
+with st.expander(step3_label, expanded=step3_expanded):
     if st.session_state.step < 3:
         st.warning("Vui lòng hoàn thành Bước 2 trước.")
     else:
@@ -1060,7 +1232,14 @@ with st.expander("🔍 BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN, PHÂN TẦNG NGUY 
 # STEP 4: OPTIMAL TREATMENT (GDMT, LIPID OPTIMIZER & REVAS)
 # ----------------------------------------------------
 step4_expanded = (st.session_state.step == 4)
-with st.expander("💊 BƯỚC 4: CHIẾN LƯỢC ĐIỀU TRỊ TỐI ƯU (GDMT & Revascularization)", expanded=step4_expanded):
+if st.session_state.step == 4:
+    st.markdown("<div class='step-active-marker'></div>", unsafe_allow_html=True)
+    step4_label = "👉 BƯỚC 4: CHIẾN LƯỢC ĐIỀU TRỊ TỐI ƯU (GDMT & Revascularization) [ĐANG THỰC HIỆN]"
+else:
+    st.markdown("<div class='step-inactive-marker'></div>", unsafe_allow_html=True)
+    step4_label = "BƯỚC 4: CHIẾN LƯỢC ĐIỀU TRỊ TỐI ƯU (GDMT & Revascularization) (Xem lại)"
+
+with st.expander(step4_label, expanded=step4_expanded):
     if st.session_state.step < 4:
         st.warning("Vui lòng hoàn thành Bước 3 trước.")
     else:
