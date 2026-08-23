@@ -372,6 +372,9 @@ if 'pft_abnormal' not in st.session_state: st.session_state.pft_abnormal = False
 if 'diabetes_flag' not in st.session_state: st.session_state.diabetes_flag = False
 if 'dyslipidemia_flag' not in st.session_state: st.session_state.dyslipidemia_flag = False
 if 'hypertension_flag' not in st.session_state: st.session_state.hypertension_flag = False
+if 'hb_val' not in st.session_state: st.session_state.hb_val = 13.0
+if 'thyroid_assessed' not in st.session_state: st.session_state.thyroid_assessed = False
+if 'likelihood_category' not in st.session_state: st.session_state.likelihood_category = None
 
 # Global ACS Emergency Banner
 if st.session_state.acute_flag:
@@ -593,7 +596,7 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
             inc_count = sum([inc_q, inc_l, inc_d, inc_tr, inc_re])
             dec_count = sum([dec_q, dec_l, dec_d, dec_tr, dec_re])
             if inc_count > dec_count:
-                symptom_analysis["summary_text"] = "👉 Triệu chứng đau ngực có đặc tính gợi ý tăng khả năng mắc bệnh mạch vành (Đau thắt ngực điển hình/Không điển hình)."
+                symptom_analysis["summary_text"] = "👉 Triệu chứng đau ngực có các đặc điểm làm tăng khả năng thiếu máu cơ tim do bệnh mạch vành. ESC 2024 ưu tiên mô tả chi tiết đặc điểm triệu chứng thay vì dùng nhãn “điển hình/không điển hình”."
             else:
                 symptom_analysis["summary_text"] = "👉 Triệu chứng đau ngực có đặc tính gợi ý giảm khả năng do tim (Nghi ngờ đau ngực không do tim)."
                 
@@ -638,7 +641,7 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
                 )
                 st.session_state.ecg_abnormal = (ecg_res != "Bình thường")
                 
-            done_biochem = st.checkbox("Hóa sinh máu cơ bản")
+            done_biochem = st.checkbox("Xét nghiệm máu cơ bản theo ESC 2024")
             if done_biochem:
                 st.session_state.lipid_unit = st.radio("Đơn vị đo lipid máu:", ["mmol/L", "mg/dL"], horizontal=True)
                 bio_col1, bio_col2 = st.columns(2)
@@ -653,31 +656,60 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
                         st.session_state.ldlc_val_mmol = ldlc_mg / 38.67
                         tg_mg = st.number_input("Triglycerides (mg/dL):", min_value=10.0, max_value=2500.0, value=float(st.session_state.tg_val_mmol * 88.57), step=10.0)
                         st.session_state.tg_val_mmol = tg_mg / 88.57
-                    
+
                     st.session_state.lpa_val = st.number_input("Lipoprotein(a) - nmol/L (nhập 0 nếu chưa làm):", min_value=0, max_value=500, value=st.session_state.get('lpa_val', 0))
+                    st.session_state.hb_val = st.number_input("Hemoglobin (g/dL):", min_value=3.0, max_value=25.0, value=float(st.session_state.hb_val), step=0.1)
+                    st.caption("ESC 2024: công thức máu (bao gồm hemoglobin) là xét nghiệm cơ bản được khuyến cáo trong đánh giá ban đầu.")
+
                 with bio_col2:
                     st.session_state.hba1c_val = st.number_input("HbA1c (%):", min_value=3.0, max_value=20.0, value=st.session_state.get('hba1c_val', 5.8), step=0.1)
                     st.session_state.egfr_val = st.number_input("Mức lọc cầu thận eGFR (mL/min/1.73m²):", min_value=5, max_value=150, value=st.session_state.egfr_val)
-                    
-                    st.session_state.diabetes_flag = (st.session_state.hba1c_val >= 6.5)
+
+                    known_dm = st.checkbox(
+                        "Bệnh nhân đã được chẩn đoán đái tháo đường trước đó",
+                        value=st.session_state.diabetes_flag,
+                        key="known_dm_ccs"
+                    )
+                    st.session_state.diabetes_flag = known_dm
+                    st.session_state.thyroid_assessed = st.checkbox(
+                        "Đã đánh giá chức năng tuyến giáp ít nhất một lần",
+                        value=st.session_state.thyroid_assessed,
+                        key="thyroid_assessed_ccs"
+                    )
+
                     st.session_state.dyslipidemia_flag = (st.session_state.ldlc_val_mmol >= 3.0 or st.session_state.tg_val_mmol >= 1.7)
-                    
-                    if st.session_state.diabetes_flag:
-                        st.warning("⚠️ Phát hiện HbA1c ≥ 6.5%: Tự động kích hoạt tiền sử đái tháo đường ở Bước 2.")
+
+                    if st.session_state.hba1c_val >= 6.5 and not known_dm:
+                        st.warning("⚠️ HbA1c đang ở ngưỡng gợi ý đái tháo đường (≥6,5%). Công cụ không tự động xác lập chẩn đoán; cần xác nhận chẩn đoán theo bối cảnh lâm sàng/tiêu chuẩn chẩn đoán phù hợp.")
                     if st.session_state.egfr_val < 60:
-                        st.error(f"⚠️ eGFR giảm ({st.session_state.egfr_val} mL/min): Bệnh nhân có suy giảm chức năng thận mạn tính.")
+                        st.error(f"⚠️ eGFR giảm ({st.session_state.egfr_val} mL/min): Có suy giảm chức năng thận; cần đối chiếu tính mạn tính và nguyên nhân.")
+                    if not st.session_state.thyroid_assessed:
+                        st.info("ℹ️ ESC 2024 khuyến cáo đánh giá chức năng tuyến giáp ít nhất một lần ở người bệnh nghi ngờ CCS.")
+
         with test_col2:
             st.write("**Thăm dò chọn lọc bổ sung:**")
-            done_cxr = st.checkbox("Chụp X-quang ngực thẳng")
+            done_cxr = st.checkbox("Chụp X-quang ngực thẳng (khi có chỉ định chọn lọc)")
             if done_cxr:
+                st.caption("ESC 2024: cân nhắc X-quang ngực khi nghi suy tim, bệnh phổi cấp, bệnh động mạch chủ hoặc nguyên nhân tim/lồng ngực ngoài mạch vành.")
                 cxr_status = st.radio("Kết quả X-quang ngực:", ["Chưa ghi nhận bất thường (Bình thường)", "Có bất thường"])
                 if cxr_status == "Có bất thường":
-                    cxr_res = st.multiselect("Bất thường ghi nhận:", ["Bóng tim to", "Sung huyết phổi", "Tràn dịch màng phổi"])
+                    cxr_res = st.multiselect("Bất thường ghi nhận:", ["Bóng tim to", "Sung huyết phổi", "Tràn dịch màng phổi", "Bất thường phổi/động mạch chủ/lồng ngực khác"])
                     st.session_state.cxr_abnormal = len(cxr_res) > 0
                 else:
                     st.session_state.cxr_abnormal = False
-                    st.success("✅ Kết quả X-quang ngực hoàn toàn bình thường.")
-                    
+                    st.success("✅ Chưa ghi nhận bất thường trên X-quang ngực.")
+
+            done_ambulatory_ecg = st.checkbox("Theo dõi ECG lưu động (Holter/ambulatory ECG) khi có chỉ định")
+            if done_ambulatory_ecg:
+                ambulatory_reason = st.multiselect(
+                    "Chỉ định phù hợp:",
+                    ["Đau ngực kèm nghi rối loạn nhịp", "Nghi đau thắt ngực do co thắt mạch vành (VSA)"]
+                )
+                if "Đau ngực kèm nghi rối loạn nhịp" in ambulatory_reason:
+                    st.info("ℹ️ ESC 2024: ambulatory ECG được khuyến cáo khi đau ngực kèm nghi rối loạn nhịp (Class I C).")
+                if "Nghi đau thắt ngực do co thắt mạch vành (VSA)" in ambulatory_reason:
+                    st.info("ℹ️ ESC 2024: ambulatory ST-segment monitoring nên được cân nhắc khi nghi VSA và có triệu chứng thường xuyên (Class IIa B).")
+
             done_pft = st.checkbox("Đo chức năng hô hấp (PFT)")
             if done_pft:
                 pft_res = st.radio("Kết quả đo PFT:", ["Bình thường", "Rối loạn thông khí tắc nghẽn (COPD/Hen)", "Rối loạn thông khí hạn chế"])
@@ -710,7 +742,9 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
                 "Rối loạn vận động vùng thất trái (Regional wall motion abnormality)",
                 "Bệnh van tim thực tổn (Hẹp/hở van mức độ vừa - nặng)",
                 "Phì đại cơ thất trái (LV Hypertrophy)",
-                "Rối loạn chức năng tâm trương thất trái"
+                "Rối loạn chức năng tâm trương thất trái",
+                "Rối loạn chức năng thất phải",
+                "Tăng áp lực động mạch phổi ước tính"
             ])
         st.session_state.lvd_flag = (lvef_val <= 40 or "Rối loạn vận động vùng thất trái (Regional wall motion abnormality)" in echo_findings)
         
@@ -858,7 +892,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         
         adj_col1, adj_col2 = st.columns(2)
         with adj_col1:
-            st.write("**Các yếu tố lâm sàng làm thay đổi khả năng mắc bệnh (Class I):**")
+            st.write("**Các dữ kiện lâm sàng dùng để điều chỉnh clinical likelihood:**")
             
             ecg_adj_default = st.session_state.ecg_abnormal
             lvd_adj_default = st.session_state.get('lvd_flag', False)
@@ -867,57 +901,31 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
             adj_lvd = st.checkbox("Siêu âm tim có rối loạn vận động vùng hoặc giảm LVEF", value=lvd_adj_default)
             adj_pad = st.checkbox("Bệnh nhân có tiền sử bệnh động mạch ngoại biên (PAD)")
             adj_calc = st.checkbox("X-quang ngực hoặc CT phổi ghi nhận vôi hóa mạch vành")
-            adj_ex_ecg = st.checkbox("Nghiệm pháp gắng sức ECG dương tính")
-            
+            adj_ex_ecg = st.checkbox("Nghiệm pháp gắng sức ECG có bất thường")
+            st.caption("ESC 2024: dữ kiện khám mạch ngoại biên, ECG, siêu âm tim và vôi hóa trên hình ảnh được dùng để điều chỉnh RF-CL (Class I C). Ở nhóm RF-CL thấp >5–15%, exercise ECG và phát hiện xơ vữa ngoài mạch vành có thể được cân nhắc để điều chỉnh (Class IIb C).")
+
             has_clinical_adjusters = (adj_ecg or adj_lvd or adj_pad or adj_calc or adj_ex_ecg)
-            
+
         with adj_col2:
-            st.write("**Phân tầng lại bằng Điểm vôi hóa mạch vành (CACS - Class IIa):**")
+            st.write("**Phân tầng lại bằng Điểm vôi hóa mạch vành (CACS):**")
             cacs_available = st.radio("Đo vôi hóa mạch vành (CACS):", ["Chưa thực hiện", "Đã có kết quả"])
-            
             cacs_val = -1
-            cacs_override_flag = False
-            cacs_modifier = 0
-            
+
             if cacs_available == "Đã có kết quả":
                 cacs_val = st.number_input("Nhập điểm vôi hóa mạch vành (Agatston):", min_value=0, max_value=5000, value=0, step=10)
                 if cacs_val == 0:
-                    cacs_override_flag = True
-                    st.success("✅ **CACS = 0 (Class IIa):** Khả năng hẹp tắc nghẽn vô cùng thấp. Phân tầng lại lâm sàng về nhóm **Rất thấp (≤5%)**.")
-                elif 1 <= cacs_val < 10:
-                    cacs_modifier = -5
-                    st.info("CACS 1-9: Vôi hóa mạch vành tối thiểu. Không làm thay đổi đáng kể nguy cơ nền.")
-                elif 10 <= cacs_val < 100:
-                    cacs_modifier = 0
-                    st.info("CACS 10-99: Vôi hóa mạch vành nhẹ. CCTA là lựa chọn chẩn đoán đầu tay.")
-                elif 100 <= cacs_val < 400:
-                    cacs_modifier = 10
-                    st.warning("CACS 100-399: Vôi hóa vừa. Tăng nhẹ khả năng lâm sàng nền (+10%).")
-                elif 400 <= cacs_val < 1000:
-                    cacs_override_flag = True
-                    st.warning("⚠️ **CACS 400-999 (Vôi hóa nặng - Class IIa):** Khả năng lâm sàng chuyển sang nhóm **Cao (High)**. Khuyên dùng **Thăm dò gắng sức chức năng** do CCTA dễ bị xảo ảnh.")
-                else: # >= 1000
-                    cacs_override_flag = True
-                    st.error("🚨 **CACS ≥ 1000 (Vôi hóa cực nặng - Class IIa):** Khả năng lâm sàng chuyển sang nhóm **Rất cao (>85%)**. Khuyên chọn **Thăm dò gắng sức chức năng** hoặc cân nhắc chụp mạch vành xâm lấn (ICA).")
+                    st.success("✅ **CACS = 0:** Không ghi nhận vôi hóa mạch vành; CACS = 0 có giá trị dự báo âm rất cao đối với CAD tắc nghẽn, nhưng không được dùng riêng lẻ để tự gán một % RF-CL mới.")
+                elif cacs_val < 100:
+                    st.info("ℹ️ Có vôi hóa mạch vành mức thấp. CACS được dùng để hỗ trợ tái phân loại khả năng lâm sàng, không tự động cộng/trừ một số % cố định.")
+                elif cacs_val < 400:
+                    st.warning("⚠️ Có gánh nặng vôi hóa mạch vành đáng kể. Cần tích hợp với RF-CL và các dữ kiện lâm sàng; không tự động cộng +10% hoặc ép sang một nhóm nguy cơ cố định.")
+                else:
+                    st.warning("⚠️ Vôi hóa mạch vành nhiều có thể làm giảm chất lượng/độ chính xác của CCTA; khi phù hợp có thể ưu tiên hình ảnh chức năng. Không tự động suy diễn CACS thành một % khả năng lâm sàng.")
 
-        # Clinical Judgment Correction (Correction bám sát Guideline: Không tự ý cộng dồn % toán học bừa bãi)
+        # ESC 2024: RF-CL là nền; dữ kiện lâm sàng được dùng để điều chỉnh bằng clinical judgement.
+        # Chỉ CACS-CL là mô hình đã được validation để tạo ra ước tính định lượng sau khi thêm CACS.
         base_lk = st.session_state.get('base_likelihood', 20)
-        adjusted_likelihood = base_lk
-        
-        # Display judgment-based warning
-        if has_clinical_adjusters:
-            st.warning("💡 **Khuyến nghị Lâm sàng (Clinical Judgment):** Bệnh nhân có yếu tố bất thường (ECG, Siêu âm tim hoặc PAD). **Khả năng lâm sàng mắc mạch vành thực tế có thể CAO HƠN** tỷ lệ phần trăm RF-CL nền.")
-            
-        if cacs_available == "Đã có kết quả":
-            if cacs_override_flag:
-                if cacs_val == 0: adjusted_likelihood = 5
-                elif cacs_val >= 1000: adjusted_likelihood = 90
-                else: adjusted_likelihood = 65
-            else:
-                adjusted_likelihood += cacs_modifier
-                
-        adjusted_likelihood = max(0, min(95, adjusted_likelihood))
-        
+
         def get_class_label(val):
             if val <= 5: return "Rất thấp (Very Low)", "#28a745"
             elif val <= 15: return "Thấp (Low)", "#17a2b8"
@@ -925,19 +933,59 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
             elif val <= 85: return "Cao (High)", "#fd7e14"
             else: return "Rất cao (Very High)", "#dc3545"
 
-        adj_label, adj_col = get_class_label(adjusted_likelihood)
-        
+        base_label, base_col = get_class_label(base_lk)
+
+        if has_clinical_adjusters:
+            st.warning("💡 **Clinical judgement:** ECG, siêu âm tim, bệnh động mạch ngoại biên, vôi hóa trên hình ảnh hoặc exercise ECG bất thường có thể làm thay đổi khả năng lâm sàng so với RF-CL nền. ESC 2024 không cung cấp công thức cộng % cố định cho các yếu tố này.")
+
+        if cacs_available == "Đã có kết quả":
+            if 5 < base_lk <= 15:
+                st.info("ℹ️ **RF-CL thấp (>5–15%):** ESC 2024 khuyến cáo nên cân nhắc CACS để tái phân loại bằng mô hình **CACS-CL đã được validation** và nhận diện thêm người bệnh có khả năng rất thấp (≤5%) (Class IIa B).")
+            else:
+                st.info("ℹ️ CACS có thể hỗ trợ điều chỉnh clinical likelihood và lựa chọn thăm dò, nhưng công cụ này không tự suy diễn CACS thành một % mới khi không có kết quả CACS-CL đã được tính/đánh giá.")
+
+        reclass_options = [
+            "Giữ nguyên nhóm RF-CL nền",
+            "Rất thấp (≤5%)",
+            "Thấp (>5–15%)",
+            "Trung bình (>15–50%)",
+            "Cao (>50–85%)",
+            "Rất cao (>85%)"
+        ]
+        reclass_choice = st.selectbox(
+            "Nhóm clinical likelihood sau khi bác sĩ tích hợp dữ kiện bổ sung / kết quả CACS-CL (nếu có):",
+            reclass_options,
+            help="Không chọn nhóm mới chỉ dựa trên phép cộng/trừ CACS. Nếu chưa có cơ sở tái phân loại định lượng, giữ nguyên RF-CL nền."
+        )
+
+        if reclass_choice == "Giữ nguyên nhóm RF-CL nền":
+            final_category = base_label
+            final_display = f"{base_lk}%"
+            final_col = base_col
+        else:
+            final_category = reclass_choice.replace("≤", "≤").replace("–", "–")
+            final_display = "Không suy diễn % chính xác"
+            category_colors = {
+                "Rất thấp (≤5%)": "#28a745",
+                "Thấp (>5–15%)": "#17a2b8",
+                "Trung bình (>15–50%)": "#ffc107",
+                "Cao (>50–85%)": "#fd7e14",
+                "Rất cao (>85%)": "#dc3545"
+            }
+            final_col = category_colors[reclass_choice]
+
         st.markdown(f"""
-        <div style='background-color: #f1f2f6; border-radius: 6px; padding: 15px; border-left: 6px solid {adj_col}; margin: 15px 0;'>
-            <h4 style='margin: 0; color: #333;'>Khả năng lâm sàng sau phân tầng lại:</h4>
-            <p style='font-size: 1.60rem; margin: 10px 0 5px 0; font-weight: bold;'>Khả năng lâm sàng mạch vành: <span style='color: {adj_col};'>{adjusted_likelihood}%</span></p>
-            <p style='margin: 0;'>Nhóm phân loại: <strong style='color: {adj_col};'>{adj_label}</strong></p>
+        <div style='background-color: #f1f2f6; border-radius: 6px; padding: 15px; border-left: 6px solid {final_col}; margin: 15px 0;'>
+            <h4 style='margin: 0; color: #333;'>Khả năng lâm sàng sau tích hợp dữ kiện:</h4>
+            <p style='font-size: 1.35rem; margin: 10px 0 5px 0; font-weight: bold;'>RF-CL nền: <span style='color: {base_col};'>{base_lk}% — {base_label}</span></p>
+            <p style='margin: 0;'>Phân loại sử dụng cho bước chọn thăm dò: <strong style='color: {final_col};'>{final_category}</strong> ({final_display})</p>
         </div>
         """, unsafe_allow_html=True)
 
         st.write("")
         if st.button("Xác nhận & Sang Bước 3 ➡️"):
-            st.session_state.likelihood_value = adjusted_likelihood
+            st.session_state.likelihood_value = base_lk
+            st.session_state.likelihood_category = final_category
             st.session_state.cacs_score_val = cacs_val if cacs_available == "Đã có kết quả" else -1
             set_step(3)
 
@@ -952,57 +1000,80 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
         st.subheader("1. Khuyến cáo lựa chọn kỹ thuật chẩn đoán đầu tay")
         
         lik = st.session_state.get('likelihood_value', 20)
+        lik_category = st.session_state.get('likelihood_category')
         cacs_score = st.session_state.get('cacs_score_val', -1)
-        st.markdown(f"Khả năng lâm sàng thực tế của bệnh nhân: **{lik}%**")
-        
-        if lik <= 5:
+
+        if not lik_category:
+            if lik <= 5:
+                lik_category = "Rất thấp (Very Low)"
+            elif lik <= 15:
+                lik_category = "Thấp (Low)"
+            elif lik <= 50:
+                lik_category = "Trung bình (Moderate)"
+            elif lik <= 85:
+                lik_category = "Cao (High)"
+            else:
+                lik_category = "Rất cao (Very High)"
+
+        st.markdown(f"RF-CL nền: **{lik}%**. Nhóm clinical likelihood sử dụng cho lựa chọn thăm dò: **{lik_category}**")
+
+        is_very_low = ("Rất thấp" in lik_category)
+        is_low = ("Thấp" in lik_category and "Rất thấp" not in lik_category)
+        is_moderate = ("Trung bình" in lik_category)
+        is_high = ("Cao" in lik_category and "Rất cao" not in lik_category)
+        is_very_high = ("Rất cao" in lik_category)
+
+        if is_very_low:
             st.markdown("""
             <div class='success-box'>
-                <strong>🟢 HOÃN CÁC THĂM DÒ CHẨN ĐOÁN SÂU HƠN <span class='class-badge-2a'>Class IIa</span></strong><br>
-                - Bệnh nhân thuộc nhóm khả năng lâm sàng rất thấp (≤5%). Tầm soát thường quy không đem lại lợi ích thực tế.<br>
-                - Nên tập trung tìm kiếm các nguyên nhân gây đau ngực ngoài tim khác.
+                <strong>🟢 CÂN NHẮC HOÃN THĂM DÒ CHẨN ĐOÁN SÂU HƠN <span class='class-badge-2a'>Class IIa B</span></strong><br>
+                - Ở người có clinical likelihood rất thấp (≤5%), nên cân nhắc trì hoãn thăm dò chẩn đoán thêm.<br>
+                - Nếu triệu chứng vẫn dai dẳng sau khi đã loại trừ nguyên nhân ngoài tim, cần đánh giá lại thay vì coi kết quả này là loại trừ tuyệt đối mọi cơ chế thiếu máu cơ tim.
             </div>
             """, unsafe_allow_html=True)
-        elif 5 < lik <= 15:
+
+        elif is_low:
             st.markdown("""
             <div class='recommendation-box'>
-                <strong>🔵 CHỤP CẮT LỚP VI TÍNH ĐỘNG MẠCH VÀNH (CCTA) <span class='class-badge-1'>Class I</span></strong><br>
-                - Chỉ định ưu tiên hàng đầu để chẩn đoán xác định và loại trừ hẹp động mạch vành cơ học ở nhóm khả năng lâm sàng thấp.<br>
-                - Giúp đánh giá chi tiết gánh nặng và cấu trúc mảng xơ vữa.
+                <strong>🔵 CCTA LÀ PHƯƠNG THỨC ƯU TIÊN ĐỂ LOẠI TRỪ CAD TẮC NGHẼN <span class='class-badge-1'>Class I B</span></strong><br>
+                - Với clinical likelihood thấp (>5–15%), CCTA là phương thức ưu tiên để loại trừ CAD tắc nghẽn.<br>
+                - Nếu chưa thực hiện CACS-CL, CACS có thể được cân nhắc để tái phân loại thêm ở nhóm này.
             </div>
             """, unsafe_allow_html=True)
-        elif 15 < lik <= 50:
+
+        elif is_moderate:
             if cacs_score >= 400:
                 st.markdown("""
                 <div class='warning-box' style='border-left-color: #fd7e14;'>
-                    <strong>🟡 THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC LÀ ƯU TIÊN <span class='class-badge-2a'>Class IIa</span></strong><br>
-                    - Do vôi hóa mạch vành rất nặng (CACS ≥ 400), độ chính xác của chụp cắt lớp CCTA bị suy giảm mạnh do xảo ảnh vôi hóa.<br>
-                    - Khuyên dùng: <strong>Stress Echo, Stress CMR, PET hoặc stress SPECT</strong> để đánh giá trực tiếp thiếu máu cơ tim sinh lý.
+                    <strong>🟡 CCTA HOẶC HÌNH ẢNH CHỨC NĂNG — LỰA CHỌN THEO ĐẶC ĐIỂM NGƯỜI BỆNH <span class='class-badge-1'>Class I B</span></strong><br>
+                    - Với clinical likelihood trung bình (>15–50%), CCTA hoặc hình ảnh chức năng đều là lựa chọn đầu tay phù hợp.<br>
+                    - Bệnh nhân có vôi hóa mạch vành nhiều: hạn chế kỹ thuật của CCTA tăng lên, vì vậy hình ảnh chức năng có thể phù hợp hơn.
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("""
                 <div class='warning-box' style='border-left-color: #fd7e14;'>
-                    <strong>🟡 CHỌN CCTA (Class I A) HOẶC THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC (Class I B)</strong><br>
-                    - Bệnh nhân thuộc nhóm trung bình (15-50%) có thể lựa chọn linh hoạt một trong hai thăm dò đầu tay:<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;* <strong>CCTA (Cắt lớp vi tính):</strong> Ưu tiên để loại trừ hẹp, bệnh nhân trẻ, ít vôi hóa.<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;* <strong>Hình ảnh chức năng gắng sức (Stress Echo, Stress CMR, SPECT, PET):</strong> Ưu tiên nếu nghi ngờ thiếu máu cơ tim diện rộng hoặc có tiền sử nhồi máu cơ tim cũ.
+                    <strong>🟡 CCTA HOẶC HÌNH ẢNH CHỨC NĂNG <span class='class-badge-1'>Class I B</span></strong><br>
+                    - CCTA được ưu tiên khi mục tiêu chính là loại trừ CAD tắc nghẽn và nhận diện CAD không tắc nghẽn.<br>
+                    - Hình ảnh chức năng (Stress Echo, Stress CMR, SPECT, PET) được ưu tiên khi cần liên hệ triệu chứng với thiếu máu cơ tim, đánh giá viability hoặc nghi bệnh vi mạch.
                 </div>
                 """, unsafe_allow_html=True)
-        elif 50 < lik <= 85:
+
+        elif is_high:
             st.markdown("""
             <div class='warning-box' style='border-left-color: #fd7e14;'>
-                <strong>🟠 ƯU TIÊN THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC <span class='class-badge-1'>Class I</span></strong><br>
-                - Bệnh nhân khả năng lâm sàng cao (>50%). Khuyên chỉ định các thăm dò chức năng không xâm lấn để đánh giá trực tiếp diện tích vùng thiếu máu cơ tim.<br>
-                - Chỉ định: <strong>Stress Echo, Stress CMR, SPECT hoặc PET</strong>.
+                <strong>🟠 ƯU TIÊN HÌNH ẢNH CHỨC NĂNG <span class='class-badge-1'>Class I B</span></strong><br>
+                - Với clinical likelihood cao (>50–85%), hình ảnh chức năng thường được ưu tiên để đánh giá thiếu máu cơ tim và hỗ trợ quyết định tái thông.<br>
+                - Lựa chọn kỹ thuật cụ thể vẫn phải dựa trên đặc điểm người bệnh, khả năng thực hiện và chuyên môn tại cơ sở.
             </div>
             """, unsafe_allow_html=True)
-        else: # > 85%
+
+        elif is_very_high:
             st.markdown("""
             <div class='warning-box'>
-                <strong>🔴 CHỤP ĐỘNG MẠCH VÀNH XÂM LẤN (ICA) TRỰC TIẾP <span class='class-badge-1'>Class I</span></strong><br>
-                - Nhóm khả năng lâm sàng rất cao (>85%), đau thắt ngực nặng kháng trị bằng thuốc, hoặc có biểu hiện suy tim cơ năng rõ rệt.<br>
-                - Tiến hành ICA trực tiếp để lập phác đồ và lên kế hoạch can thiệp tái thông mạch vành đồng thời (kèm đo FFR/iFR nếu có hẹp trung gian).
+                <strong>🔴 CÂN NHẮC/CHỈ ĐỊNH ICA KHI CLINICAL LIKELIHOOD RẤT CAO HOẶC CÓ DẤU HIỆU NGUY CƠ CAO</strong><br>
+                - ESC 2024 khuyến cáo ICA để chẩn đoán CAD tắc nghẽn ở người có pre/post-test likelihood rất cao, triệu chứng nặng kháng GDMT, đau ngực ở mức gắng sức thấp và/hoặc nguy cơ biến cố cao.<br>
+                - Nếu gặp tổn thương trung gian, cần đánh giá chức năng xâm lấn bằng FFR/iFR trước khi quyết định tái thông.
             </div>
             """, unsafe_allow_html=True)
 
@@ -1018,70 +1089,105 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
         
         st.session_state.anoca_suspected = False
         st.session_state.high_risk_flag = False
-        
+
         if selected_test == "Chụp cắt lớp vi tính động mạch vành (CCTA)":
             ccta_res = st.radio(
                 "Kết quả mạch vành trên phim CCTA:",
                 ["Không hẹp hoặc hẹp nhẹ (<50% Thân chung LMS, <50% các nhánh lớn)",
-                 "Hẹp mức độ trung bình (50-90% các nhánh chính - Tổn thương trung gian)",
-                 "Hẹp nặng rõ rệt (Obstructive CAD: ≥50% Thân chung LMS, hoặc ≥70% nhánh lớn khác, hoặc FFR-CT ≤ 0.80)"]
+                 "Hẹp mức độ trung gian (cần đánh giá thêm ý nghĩa chức năng)",
+                 "Hẹp nặng rõ rệt (ví dụ ≥50% Thân chung LMS hoặc ≥70% nhánh lớn khác)"]
             )
+
             if "Không hẹp" in ccta_res:
                 st.session_state.coronary_status = "Non-obstructive"
-            elif "trung bình" in ccta_res:
-                st.warning("⚠️ **Tổn thương trung gian (Intermediate Stenosis):** Có sự không tương hợp phổ biến giữa mức độ hẹp giải phẫu và ý nghĩa huyết động thực tế (haemodynamic significance).")
+
+            elif "trung gian" in ccta_res:
+                st.warning("⚠️ **Tổn thương trung gian:** Mức độ hẹp giải phẫu không đồng nghĩa với ý nghĩa huyết động. Cần đánh giá thêm trước khi quyết định tái thông.")
                 ccta_functional = st.radio(
-                    "Đánh giá ý nghĩa huyết động của tổn thương trung gian này:",
-                    ["Chưa đánh giá ý nghĩa sinh lý / Đang chờ",
-                     "CÓ Ý NGHĨA SINH LÝ (Đã làm FFR-CT ≤ 0.80 hoặc Stress imaging dương tính)",
-                     "KHÔNG CÓ Ý NGHĨA SINH LÝ (FFR-CT > 0.80 hoặc Stress imaging âm tính)"]
+                    "Đánh giá thêm tổn thương trung gian:",
+                    ["Chưa đánh giá / Đang chờ",
+                     "FFR-CT ≤ 0.80",
+                     "FFR-CT > 0.80",
+                     "Hình ảnh chức năng dương tính với thiếu máu cơ tim",
+                     "Hình ảnh chức năng âm tính với thiếu máu cơ tim"]
                 )
-                if "CÓ Ý NGHĨA" in ccta_functional:
+
+                if ccta_functional == "FFR-CT ≤ 0.80":
                     st.session_state.coronary_status = "Obstructive"
-                else:
+                    st.success("✅ Tổn thương trung gian trên CCTA có FFR-CT ≤0,80: có ý nghĩa chức năng.")
+                elif ccta_functional == "FFR-CT > 0.80":
                     st.session_state.coronary_status = "Non-obstructive"
+                    st.info("ℹ️ Tổn thương trung gian không cho thấy ý nghĩa huyết động theo FFR-CT.")
+                elif ccta_functional == "Hình ảnh chức năng dương tính với thiếu máu cơ tim":
+                    st.session_state.coronary_status = "Intermediate + Ischaemia"
+                    st.warning("⚠️ Có thiếu máu cơ tim trên thăm dò chức năng, nhưng kết quả này không tự nó chứng minh CAD tắc nghẽn. Cần tích hợp giải phẫu và mức độ thiếu máu để quyết định bước tiếp theo.")
+                elif ccta_functional == "Hình ảnh chức năng âm tính với thiếu máu cơ tim":
+                    st.session_state.coronary_status = "Intermediate / no inducible ischaemia"
+                    st.info("ℹ️ Tổn thương trung gian chưa cho thấy thiếu máu cơ tim cảm ứng; không tự động đồng nhất với mạch vành hoàn toàn bình thường.")
+                else:
+                    st.session_state.coronary_status = "Indeterminate"
+                    st.info("ℹ️ Chưa đủ dữ liệu để phân loại tổn thương trung gian là có hay không có ý nghĩa chức năng.")
+
             else:
                 st.session_state.coronary_status = "Obstructive"
-                
+
         elif selected_test == "Thăm dò hình ảnh chức năng gắng sức":
             func_res = st.radio(
                 "Kết quả thiếu máu cơ tim gắng sức:",
-                ["Âm tính (Không có thiếu máu cơ tim hoặc thiếu máu không đáng kể)",
-                 "Dương tính (Phát hiện vùng thiếu máu cơ tim thực thể)"]
+                ["Âm tính (không ghi nhận thiếu máu cơ tim cảm ứng đáng kể)",
+                 "Dương tính (phát hiện thiếu máu cơ tim cảm ứng)"]
             )
             if "Dương tính" in func_res:
-                st.session_state.coronary_status = "Obstructive"
+                st.session_state.coronary_status = "Ischaemia-positive / anatomy unconfirmed"
+                st.warning("⚠️ Hình ảnh chức năng dương tính xác nhận thiếu máu cơ tim cảm ứng, **không tự động xác nhận CAD tắc nghẽn**. Nếu giải phẫu mạch vành chưa biết, cần lựa chọn CCTA hoặc ICA tùy mức độ thiếu máu, clinical likelihood và nguy cơ biến cố.")
             else:
-                st.session_state.coronary_status = "Non-obstructive"
-                
+                st.session_state.coronary_status = "No inducible ischaemia / anatomy unconfirmed"
+                st.info("ℹ️ Hình ảnh chức năng âm tính không đồng nghĩa với việc đã chứng minh không có xơ vữa mạch vành; nếu triệu chứng vẫn dai dẳng, cần xem xét ANOCA/INOCA và các nguyên nhân khác theo bối cảnh.")
+
         elif selected_test == "Chụp động mạch vành xâm lấn (ICA)":
             ica_res = st.radio(
                 "Kết quả giải phẫu mạch vành trên phim ICA:",
                 ["Không hẹp hoặc hẹp nhẹ (<50% Thân chung LMS, <50% các nhánh chính)",
-                 "Hẹp mức độ trung bình (Tổn thương ranh giới 50-90%)",
-                 "Hẹp nặng rõ rệt (Obstructive CAD: ≥50% Thân chung LMS, hoặc ≥70% nhánh lớn khác, hoặc FFR ≤ 0.80 / iFR ≤ 0.89)"]
+                 "Hẹp mức độ trung gian (thường khoảng 40–90% ngoài thân chung hoặc 40–70% thân chung)",
+                 "Hẹp nặng rõ rệt"]
             )
             if "Không hẹp" in ica_res:
                 st.session_state.coronary_status = "Non-obstructive"
-            elif "trung bình" in ica_res:
-                st.warning("⚠️ **Tổn thương ranh giới (Borderline Stenosis):** Yêu cầu đánh giá chức năng bằng FFR/iFR để chẩn đoán ý nghĩa sinh lý (Class I).")
+
+            elif "trung gian" in ica_res:
+                st.warning("⚠️ **Tổn thương trung gian:** ESC 2024 khuyến cáo đánh giá chức năng bằng FFR/iFR để hướng dẫn quyết định tái thông (FFR ≤0,80 hoặc iFR ≤0,89 được xem là có ý nghĩa).")
                 ica_functional = st.radio(
-                    "Kết quả đo FFR/iFR trong buồng tim:",
+                    "Kết quả đo FFR/iFR:",
                     ["Chưa đo FFR/iFR / Đang chờ",
                      "CÓ Ý NGHĨA SINH LÝ (FFR ≤ 0.80 hoặc iFR ≤ 0.89)",
-                     "KHÔNG CÓ Ý NGHĨA SINH LÝ (FFR > 0.80 hoặc iFR > 0.89)"]
+                     "KHÔNG CÓ Ý NGHĨA SINH LÝ (FFR > 0.80 và iFR > 0.89)"]
                 )
                 if "CÓ Ý NGHĨA" in ica_functional:
                     st.session_state.coronary_status = "Obstructive"
-                else:
+                elif "KHÔNG CÓ Ý NGHĨA" in ica_functional:
                     st.session_state.coronary_status = "Non-obstructive"
+                    st.info("ℹ️ Tổn thương trung gian không có ý nghĩa chức năng; nếu triệu chứng dai dẳng, bệnh nhân vẫn có thể thuộc phổ ANOCA/INOCA.")
+                else:
+                    st.session_state.coronary_status = "Indeterminate"
+
             else:
                 st.session_state.coronary_status = "Obstructive"
+
         else:
-            st.info("💡 Đang chờ kết quả xét nghiệm. Vui lòng cập nhật để thực hiện phân tầng điều trị.")
+            st.info("💡 Đang chờ kết quả thăm dò. Vui lòng cập nhật để thực hiện phân tầng điều trị.")
             st.session_state.coronary_status = "Untested"
-            
-        st.write(f"👉 Trạng thái mạch vành hiện tại: **{st.session_state.coronary_status}**")
+
+        status_labels = {
+            "Obstructive": "CAD tắc nghẽn / tổn thương thượng tâm mạc có ý nghĩa",
+            "Non-obstructive": "Không có CAD tắc nghẽn hoặc không có tổn thương thượng tâm mạc giới hạn dòng",
+            "Indeterminate": "Chưa xác định — cần đánh giá thêm",
+            "Intermediate + Ischaemia": "Tổn thương trung gian + có thiếu máu cơ tim; chưa đồng nhất với CAD tắc nghẽn",
+            "Intermediate / no inducible ischaemia": "Tổn thương trung gian, chưa ghi nhận thiếu máu cơ tim cảm ứng",
+            "Ischaemia-positive / anatomy unconfirmed": "Có thiếu máu cơ tim cảm ứng — chưa biết giải phẫu mạch vành",
+            "No inducible ischaemia / anatomy unconfirmed": "Không ghi nhận thiếu máu cơ tim cảm ứng — chưa biết giải phẫu mạch vành",
+            "Untested": "Chưa có kết quả xác định"
+        }
+        st.write(f"👉 Trạng thái hiện tại: **{status_labels.get(st.session_state.coronary_status, st.session_state.coronary_status)}**")
 
     # Sub-step 3.3: Chẩn đoán ANOCA/INOCA
     if render_sub_header("Chẩn đoán ANOCA/INOCA", 3, "step3_sub"):
@@ -1089,16 +1195,16 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
             st.subheader("3. Đánh giá đau ngực không hẹp tắc nghẽn (ANOCA/INOCA)")
             
             has_symptoms = st.radio(
-                "Bệnh nhân có triệu chứng đau ngực hoặc khó thở dai dẳng ảnh hưởng chất lượng cuộc sống (đã loại trừ nguyên nhân ngoài tim) không?",
-                ["Có triệu chứng dai dẳng", "Không còn triệu chứng / Triệu chứng nhẹ đã ổn định"]
+                "Bệnh nhân vẫn có triệu chứng dai dẳng dù đã điều trị nội khoa, ảnh hưởng chất lượng cuộc sống và đã loại trừ nguyên nhân ngoài tim không?",
+                ["Có — dai dẳng dù điều trị và ảnh hưởng chất lượng cuộc sống", "Không — triệu chứng nhẹ/ổn định hoặc chưa đáp ứng tiêu chí trên"]
             )
-            
-            if has_symptoms == "Có triệu chứng dai dẳng":
+
+            if has_symptoms.startswith("Có"):
                 st.session_state.anoca_suspected = True
                 st.markdown("""
                 <div class='warning-box' style='border-left-color: #f1c40f; background-color: #fefdf3;'>
                     <h4 style='color: #d4ac0d; margin-top: 0;'>🧩 NGHI NGỜ LÂM SÀNG: MẮC ANOCA / INOCA</h4>
-                    <p>Giải phẫu mạch vành không có hẹp tắc nghẽn cơ học nhưng triệu chứng đau thắt ngực vẫn dai dẳng. Hướng dẫn ESC 2024 khuyến cáo thực hiện <strong>Đo chức năng mạch vành xâm lấn (ICFT - Class I B)</strong> để xác định kiểu hình.</p>
+                    <p>Giải phẫu mạch vành không có hẹp tắc nghẽn hoặc không có tổn thương thượng tâm mạc giới hạn dòng, trong khi triệu chứng vẫn dai dẳng dù điều trị và ảnh hưởng chất lượng cuộc sống. ESC 2024 khuyến cáo <strong>đo chức năng mạch vành xâm lấn (ICFT - Class I B)</strong> để xác định endotype có thể điều trị, có tính đến lựa chọn và ưu tiên của người bệnh.</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -1117,15 +1223,18 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
                 
                 # Endotype Formulation
                 st.session_state.anoca_endotype = "Chưa phân loại"
-                if icft_cfr == "Giảm (CFR < 2.5)" or icft_imr == "Tăng (IMR ≥ 25 HOẶC HMR > 2.5)":
-                    if icft_spasm == "Âm tính":
-                        st.session_state.anoca_endotype = "Đau thắt ngực vi mạch (MVA)"
-                    else:
-                        st.session_state.anoca_endotype = "Kiểu hình hỗn hợp (Mixed MVA + VSA)"
-                elif icft_spasm != "Âm tính":
-                    st.session_state.anoca_endotype = "Co thắt mạch vành (VSA)"
+                has_cmd = (icft_cfr == "Giảm (CFR < 2.5)" or icft_imr == "Tăng (IMR ≥ 25 HOẶC HMR > 2.5)")
+                epicardial_spasm = "thượng tâm mạc" in icft_spasm
+                microvascular_spasm = "vi tuần hoàn" in icft_spasm
+
+                if has_cmd and epicardial_spasm:
+                    st.session_state.anoca_endotype = "Kiểu hình hỗn hợp (MVA + VSA)"
+                elif has_cmd or microvascular_spasm:
+                    st.session_state.anoca_endotype = "Đau thắt ngực vi mạch (MVA)"
+                elif epicardial_spasm:
+                    st.session_state.anoca_endotype = "Co thắt mạch vành thượng tâm mạc (VSA)"
                 else:
-                    st.session_state.anoca_endotype = "Đau ngực ngoài tim"
+                    st.session_state.anoca_endotype = "Không xác định endotype mạch vành bằng ICFT hiện tại"
                     
                 st.success(f"🎯 **Kiểu hình ANOCA/INOCA xác định:** `{st.session_state.anoca_endotype}`. Phác đồ điều trị cá thể hóa tương ứng đã kích hoạt tại Bước 4.")
             else:
@@ -1136,38 +1245,41 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
 
     # Sub-step 3.4: Phân tầng nguy cơ
     if render_sub_header("Phân tầng nguy cơ", 4, "step3_sub"):
-        if st.session_state.get('coronary_status', "Untested") == "Obstructive":
+        if st.session_state.get('coronary_status', "Untested") != "Untested":
             st.subheader("4. Phân tầng nguy cơ biến cố tim mạch tương lai (Event-Risk)")
-            st.markdown("<p style='font-size: 0.95rem;'>Xác định các tiêu chuẩn nguy cơ biến cố rất cao diện rộng (Class I B):</p>", unsafe_allow_html=True)
-            
+            st.markdown("<p style='font-size: 0.95rem;'>Các tiêu chuẩn dưới đây là những dấu hiệu được ESC 2024 khuyến cáo sử dụng để nhận diện người bệnh nguy cơ biến cố cao (Class I B):</p>", unsafe_allow_html=True)
+
             risk_col1, risk_col2 = st.columns(2)
             with risk_col1:
                 st.write("**Các tiêu chuẩn về cấu trúc giải phẫu (Anatomical):**")
-                high_risk_anatomy = st.checkbox("CCTA/ICA: Tổn thương Thân chung Động mạch vành trái (Left Main) hẹp ≥ 50%")
-                high_risk_anatomy_2 = st.checkbox("CCTA/ICA: Hẹp nặng ≥ 70% ở cả 3 nhánh mạch vành (Three-vessel disease)")
-                high_risk_anatomy_3 = st.checkbox("CCTA/ICA: Hẹp đoạn gần động mạch liên thất trước (Proximal LAD) ≥ 70%")
+                high_risk_anatomy = st.checkbox("CCTA: Thân chung trái (Left Main) hẹp ≥ 50%")
+                high_risk_anatomy_2 = st.checkbox("CCTA: Bệnh 3 nhánh, mỗi nhánh hẹp ≥ 70%")
+                high_risk_anatomy_3 = st.checkbox("CCTA: Bệnh 2 nhánh hẹp ≥ 70%, có bao gồm đoạn gần LAD")
+                high_risk_anatomy_4 = st.checkbox("CCTA: Hẹp đoạn gần LAD ≥ 70% VÀ FFR-CT ≤ 0.80")
             with risk_col2:
                 st.write("**Các tiêu chuẩn về chức năng thiếu máu (Functional):**")
-                high_risk_func_1 = st.checkbox("Stress Echo: ≥ 3/16 phân vùng cơ tim bị giảm động hoặc vô động do gắng sức")
-                high_risk_func_2 = st.checkbox("Stress CMR: ≥ 2/16 phân vùng cơ tim thiếu máu diện rộng")
-                high_risk_func_3 = st.checkbox("Stress SPECT/PET: Vùng thiếu máu cơ tim cơ năng ≥ 10% thất trái")
-                high_risk_func_4 = st.checkbox("Exercise ECG: Điểm số gắng sức Duke (Duke Treadmill Score) < -10")
-                
-            is_high_risk = (high_risk_anatomy or high_risk_anatomy_2 or high_risk_anatomy_3 or 
-                            high_risk_func_1 or high_risk_func_2 or high_risk_func_3 or high_risk_func_4)
+                high_risk_func_1 = st.checkbox("Stress Echo: ≥ 3/16 phân vùng giảm động hoặc vô động do stress")
+                high_risk_func_2 = st.checkbox("Stress CMR: ≥ 2/16 phân vùng có perfusion defect HOẶC ≥ 3 phân vùng rối loạn vận động do dobutamine")
+                high_risk_func_3 = st.checkbox("Stress SPECT/PET: vùng thiếu máu cơ tim ≥ 10% khối cơ thất trái")
+                high_risk_func_4 = st.checkbox("Exercise ECG: Duke Treadmill Score < -10")
+
+            is_high_risk = (
+                high_risk_anatomy or high_risk_anatomy_2 or high_risk_anatomy_3 or high_risk_anatomy_4 or
+                high_risk_func_1 or high_risk_func_2 or high_risk_func_3 or high_risk_func_4
+            )
             st.session_state.high_risk_flag = is_high_risk
-            
+
             if is_high_risk:
                 st.error("""
-                **🚨 BỆNH NHÂN THUỘC NHÓM NGUY CƠ BIẾN CỐ CAO (HIGH EVENT-RISK) - Khuyến cáo Class I B:**
-                - Có bằng chứng hẹp cấu trúc nguy cơ cao hoặc vùng cơ tim thiếu máu diện rộng.
-                - Chỉ định chụp mạch vành xâm lấn (ICA) kết hợp đo FFR/iFR để lên phương án tái thông sớm cải thiện tiên lượng sống còn.
+                **🚨 NGUY CƠ BIẾN CỐ CAO (HIGH EVENT-RISK):**
+                - Có ít nhất một tiêu chuẩn nguy cơ cao theo ESC 2024.
+                - **ICA kèm đánh giá áp lực nội mạch (FFR/iFR) khi phù hợp được khuyến cáo Class I A** nhằm làm rõ nguy cơ và xác định chiến lược điều trị.
+                - Việc có tiêu chuẩn nguy cơ cao **không đồng nghĩa tự động với PCI/CABG để kéo dài sống còn**; chỉ định và phương thức tái thông còn phụ thuộc giải phẫu, ý nghĩa chức năng, LVEF, bệnh đồng mắc, nguy cơ thủ thuật và đáp ứng GDMT.
                 """)
             else:
-                st.info("💡 Hẹp mạch vành tắc nghẽn mức độ nhẹ-vừa (Nguy cơ biến cố thấp). Ưu tiên điều trị nội khoa tối ưu (GDMT) hàng đầu.")
+                st.info("💡 Chưa ghi nhận tiêu chuẩn high event-risk nào trong các mục đã chọn. Vẫn cần tích hợp tuổi, ECG, ngưỡng xuất hiện đau ngực, đái tháo đường, CKD, LVEF và toàn bộ dữ liệu lâm sàng để đánh giá nguy cơ.")
         else:
-            st.info("💡 Phần này chỉ hiển thị khi kết quả thăm dò xác định bệnh nhân **CÓ hẹp động mạch vành tắc nghẽn (Obstructive CAD)** ở tiểu mục 2.")
-
+            st.info("💡 Chưa có kết quả thăm dò để phân tầng nguy cơ biến cố bằng các tiêu chuẩn hình ảnh/chức năng.")
         # Navigation to Step 4
         st.write("")
         if st.button("Xác nhận & Sang Bước 4 ➡️"):
@@ -1193,12 +1305,23 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             * **Hoạt động thể lực:** Tập thể dục cường độ trung bình 150-300 phút hoặc cường độ mạnh 75-150 phút hàng tuần (Class I B).
             """)
             
-            st.write("**Thuốc bảo vệ tim mạch cải thiện sống còn (Class I):**")
+            st.write("**Điều trị dự phòng biến cố — áp dụng theo đúng bối cảnh lâm sàng:**")
             st.markdown("""
-            * **Kháng kết tập tiểu cầu:** *Aspirin 75-100 mg/ngày* hoặc *Clopidogrel 75 mg/ngày* được chỉ định lâu dài ở bệnh nhân có mạch vành tắc nghẽn (Class I A).
-            * **Kiểm soát huyết áp:** Mục tiêu huyết áp đích là **120-129 / 70-79 mmHg** nếu dung nạp tốt (Class I A, ưu tiên ACEi hoặc ARB).
-            * **Đồng mắc đái tháo đường:** Bắt buộc sử dụng thuốc **ức chế SGLT2 (SGLT2i)** và/hoặc **đồng vận thụ thể GLP-1 (GLP-1 RA)** (Class I A).
+            * **Kháng huyết khối dài hạn:**
+                * CCS có **tiền sử MI hoặc PCI từ xa:** Aspirin 75–100 mg/ngày lâu dài — **Class I A**; Clopidogrel 75 mg/ngày là lựa chọn thay thế an toàn và hiệu quả cho aspirin — **Class I A**.
+                * **Sau CABG:** Aspirin 75–100 mg/ngày lâu dài — **Class I A**.
+                * Không có tiền sử MI/tái thông nhưng có **CAD tắc nghẽn đáng kể:** Aspirin 75–100 mg/ngày lâu dài — **Class I B**.
+                * Lựa chọn và thời gian điều trị phải cân bằng nguy cơ thiếu máu cục bộ và nguy cơ chảy máu; không mặc định “aspirin hoặc clopidogrel Class I A” cho mọi CCS.
+            * **Huyết áp:** Mục tiêu thực hành trong CCS là **SBP 120–129 mmHg nếu dung nạp**. Không tự gán mục tiêu DBP 70–79 mmHg như một khuyến cáo CCS Class I A từ guideline này.
+            * **ACE-I/ARB:** Được khuyến cáo khi CCS kèm **tăng huyết áp, LVEF ≤40%, đái tháo đường hoặc CKD**, nếu không có chống chỉ định.
             """)
+            if st.session_state.get('diabetes_flag', False):
+                st.markdown("""
+                * **T2DM đã được xác định + CCS:** SGLT2 inhibitor có bằng chứng lợi ích tim mạch và GLP-1 receptor agonist có bằng chứng lợi ích tim mạch đều **được khuyến cáo Class I A** để giảm biến cố tim mạch, độc lập với HbA1c nền/đích.
+                """)
+            else:
+                st.caption("ℹ️ Không tự kích hoạt khuyến cáo SGLT2i/GLP-1 RA chỉ từ một giá trị HbA1c; cần xác định bệnh nhân thực sự có T2DM.")
+                st.markdown("* **Không có T2DM nhưng thừa cân/béo phì (BMI ≥27 kg/m²):** Semaglutide **nên được cân nhắc (Class IIa B)** để giảm tử vong tim mạch, MI hoặc đột quỵ ở bệnh nhân CCS phù hợp.")
             
         with tab_symptomatic:
             # Pull clinical variables
@@ -1209,6 +1332,8 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             pft_abnormal = st.session_state.get('pft_abnormal', False)
             anoca_suspected = st.session_state.get('anoca_suspected', False)
             anoca_endotype = st.session_state.get('anoca_endotype', "Chưa phân loại")
+            
+            st.info("💊 **Cắt cơn đau thắt ngực:** Nitrate tác dụng ngắn được khuyến cáo để giảm đau ngực tức thời (**Class I B**), nếu không có chống chỉ định như dùng đồng thời PDE-5 inhibitor.")
             
             # Phenotype categorization
             if anoca_suspected and "VSA" in anoca_endotype:
@@ -1259,24 +1384,25 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                 
                 if phenotype == "Co thắt mạch vành (ANOCA - VSA)":
                     st.markdown("""
-                    - **Bước 1 (Đầu tay):** <span class='class-badge-1'>Class I B</span> Sử dụng **Chẹn kênh Canxi (CCBs) liều cao** (như Amlodipine 10mg hoặc Diltiazem 120-240mg) để giãn động mạch co thắt.
-                    - **Bước 2 (Phối hợp):** <span class='class-badge-2a'>Class IIa B</span> Phối hợp thêm **Nitrates tác dụng kéo dài** nếu triệu chứng co thắt chưa kiểm soát tốt.
-                    - **🚨 CẢNH BÁO ĐỎ (Class III):** Tránh dùng thuốc Chẹn beta đơn trị vì gây hoạt hóa thụ thể alpha-adrenergic làm tăng co thắt mạch ác tính.
+                    - **Bước 1 (Đầu tay):** <span class='class-badge-1'>Class I A</span> **Chẹn kênh Canxi (CCB)** được khuyến cáo để kiểm soát triệu chứng, phòng thiếu máu cơ tim và biến chứng có thể gây tử vong ở đau thắt ngực do co thắt.
+                    - **Bước 2 (Phối hợp):** <span class='class-badge-2a'>Class IIa B</span> **Nitrates** nên được cân nhắc để phòng các cơn tái phát.
+                    - **⚠️ Lưu ý:** Chẹn beta không phải điều trị đích cho co thắt mạch vành và có thể làm nặng co thắt ở một số bệnh nhân; tuy nhiên ESC 2024 không gán một khuyến cáo “Class III tuyệt đối” cho mọi trường hợp dùng chẹn beta đơn trị trong VSA.
                     """, unsafe_allow_html=True)
                     apply_target = ["Chẹn kênh Canxi DHP (DHP-CCB)"]
                 elif phenotype == "Đau thắt ngực vi mạch (ANOCA - MVA)":
                     st.markdown("""
-                    - **Bước 1 (Đầu tay):** <span class='class-badge-2a'>Class IIa B</span> **Chẹn beta (BB)** (như Bisoprolol) làm giảm công tim và phục hồi cung lượng vi mạch.
-                    - **Bước 2 (Phối hợp):** <span class='class-badge-2a'>Class IIa B</span> Phối hợp thêm **Chẹn kênh canxi DHP (DHP-CCB)** (như Amlodipine) nếu chẹn beta đơn trị chưa đỡ.
-                    - **Bước 3 (Kháng trị):** <span class='class-badge-2b'>Class IIb B</span> Cân nhắc dùng thêm Nicorandil hoặc Ranolazine.
-                    - **Bảo vệ nội mạc:** <span class='class-badge-2a'>Class IIa B</span> Sử dụng ACEi/ARB kết hợp Statin để cải thiện chức năng nội mạc vi tuần hoàn.
+                    - **Điều trị theo endotype:** <span class='class-badge-2a'>Class IIa A</span> Ở ANOCA/INOCA có triệu chứng, nên cân nhắc điều trị dựa trên kết quả coronary functional testing để cải thiện triệu chứng và chất lượng cuộc sống.
+                    - **MVA với giảm CFR/tăng IMR:** <span class='class-badge-2a'>Class IIa B</span> Nên cân nhắc thuốc chống đau ngực hướng đến giảm thiếu máu cơ tim do tăng nhu cầu. Trong phần thảo luận ESC 2024, **beta-blocker, CCB và ranolazine** là các lựa chọn thường được sử dụng; guideline không gán Class IIa B riêng cho từng thuốc này.
+                    - **Rối loạn chức năng nội mô:** <span class='class-badge-2a'>Class IIa B</span> **ACE-I** nên được cân nhắc để kiểm soát triệu chứng.
+                    - Điều trị yếu tố nguy cơ (lipid, huyết áp, hút thuốc, đái tháo đường) vẫn cần được tối ưu theo guideline.
                     """, unsafe_allow_html=True)
                     apply_target = ["Chẹn beta (Beta-blockers - BB)", "Chẹn kênh Canxi DHP (DHP-CCB)"]
                 elif phenotype == "Rối loạn chức năng thất trái / Suy tim giảm LVEF ≤ 40%":
                     st.markdown("""
-                    - **Bước 1 (Đầu tay):** <span class='class-badge-1'>Class I A</span> **Chẹn beta (BB)** (như Bisoprolol, Metoprolol Succinate hoặc Carvedilol) liều thấp tăng dần để cải thiện sống còn.
-                    - **Bước 2 (Phối hợp):** <span class='class-badge-2a'>Class IIa B</span> Phối hợp thêm **Ivabradine** (nếu nhịp xoang ≥ 70 bpm) HOẶC **Trimetazidine MR** (Class IIa B) để bổ sung năng lượng cơ tim.
-                    - **🚨 CHỐNG CHỈ ĐỊNH (Class III):** Cấm sử dụng các thuốc chẹn canxi Non-DHP (Verapamil, Diltiazem) vì nguy cơ ức chế tim nặng làm bùng phát suy tim cấp.
+                    - **Điều trị nền:** Ưu tiên thuốc phù hợp với HFrEF và hồ sơ huyết động của người bệnh; khi dùng beta-blocker cho mục tiêu chống đau ngực, mục tiêu nhịp nghỉ thường khoảng 55–60 bpm nếu dung nạp.
+                    - **Ivabradine:** <span class='class-badge-2a'>Class IIa B</span> Nên được cân nhắc như thuốc chống đau ngực bổ sung ở bệnh nhân có **rối loạn chức năng tâm thu thất trái (LVEF <40%)** và triệu chứng chưa kiểm soát, hoặc trong điều trị ban đầu ở bệnh nhân được lựa chọn phù hợp.
+                    - **Trimetazidine:** <span class='class-badge-2b'>Class IIb B</span> Có thể được cân nhắc như thuốc bổ sung khi triệu chứng chưa kiểm soát với beta-blocker/CCB hoặc trong điều trị ban đầu ở bệnh nhân được lựa chọn phù hợp.
+                    - **Non-DHP CCB (verapamil/diltiazem):** tránh ở HFrEF do tác dụng giảm co bóp; đây là vấn đề an toàn/đặc tính thuốc, không nên gắn nhãn Class III chung nếu guideline không nêu như một Recommendation Table tương ứng.
                     """, unsafe_allow_html=True)
                     apply_target = ["Chẹn beta (Beta-blockers - BB)"]
                 elif phenotype == "Tần số tim nhanh (HR > 80 nhịp/phút)":
@@ -1286,7 +1412,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                     - **Bước 3 (Phối hợp thêm):**
                         * Phối hợp thêm **Ranolazine** HOẶC **Nitrates tác dụng kéo dài** (<span class='class-badge-2a'>Class IIa B</span>).
                         * Phối hợp thêm **Trimetazidine MR** HOẶC **Nicorandil** (<span class='class-badge-2b'>Class IIb B</span>).
-                        * **🚨 CHỐNG CHỈ ĐỊNH (Class III B):** Tuyệt đối không dùng Ivabradine cho bệnh nhân LVEF > 40% không có suy tim.
+                        * **🚨 KHÔNG KHUYẾN CÁO (Class III B):** Không dùng Ivabradine add-on cho bệnh nhân CCS có LVEF >40% và không có suy tim lâm sàng.
                     """, unsafe_allow_html=True)
                     apply_target = ["Chẹn beta (Beta-blockers - BB)", "Chẹn kênh Canxi DHP (DHP-CCB)"]
                 elif phenotype == "Tần số tim chậm (HR < 55 nhịp/phút)":
@@ -1304,7 +1430,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                         * **Chẹn beta (BB)** liều thấp chỉ khởi trị nếu nhịp nhanh VÀ kèm theo suy tim/LVEF ≤ 40% (<span class='class-badge-1'>Class I A</span>).
                         * Nếu LVEF > 40% không kèm suy tim, ưu tiên sử dụng các thuốc chống đau ngực không gây hạ áp như **Ranolazine** (<span class='class-badge-2a'>Class IIa B</span>) hoặc **Trimetazidine MR** (<span class='class-badge-2b'>Class IIb B</span>).
                     - **Bước 2 (Phối hợp):** Nếu nhịp xoang ≥ 70 bpm VÀ LVEF ≤ 40%: Có thể phối hợp thêm **Ivabradine** (<span class='class-badge-2a'>Class IIa B</span>).
-                    - **🚨 CHỐNG CHỈ ĐỊNH (Class III B):** Tuyệt đối không dùng Ivabradine cho bệnh nhân LVEF > 40% không có suy tim.
+                    - **🚨 KHÔNG KHUYẾN CÁO (Class III B):** Không dùng Ivabradine add-on cho bệnh nhân CCS có LVEF >40% và không có suy tim lâm sàng.
                     - **⚠️ Thận trọng rất cao:** Tránh dùng các thuốc giãn mạch hạ áp mạnh như CCB liều cao, LA Nitrates, Nicorandil.
                     """, unsafe_allow_html=True)
                     apply_target = ["Ranolazine"]
@@ -1315,7 +1441,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                     - **Bước 3 (Phối hợp thêm):**
                         * Phối hợp thêm **Ranolazine** HOẶC **Nitrates tác dụng kéo dài** (<span class='class-badge-2a'>Class IIa B</span>).
                         * Phối hợp thêm **Trimetazidine MR** HOẶC **Nicorandil** (<span class='class-badge-2b'>Class IIb B</span>).
-                        * **🚨 CHỐNG CHỈ ĐỊNH (Class III B):** Tuyệt đối không dùng Ivabradine cho bệnh nhân LVEF > 40% không có suy tim.
+                        * **🚨 KHÔNG KHUYẾN CÁO (Class III B):** Không dùng Ivabradine add-on cho bệnh nhân CCS có LVEF >40% và không có suy tim lâm sàng.
                     """, unsafe_allow_html=True)
                     apply_target = ["Chẹn beta (Beta-blockers - BB)", "Chẹn kênh Canxi DHP (DHP-CCB)"]
                     
@@ -1369,40 +1495,37 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                         if prescribe_bb:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Chẹn Beta (BB)", expanded=True):
                                 st.markdown("""
-                                - **❌ CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI (Class III):** Nhịp tim chậm lúc nghỉ (< 50 nhịp/phút), Block AV độ II hoặc III (trừ khi đã đặt máy tạo nhịp), Hội chứng suy nút xoang, Suy tim mất bù cấp.
+                                - **❌ Không phù hợp/chống chỉ định theo hồ sơ an toàn thuốc:** Nhịp tim chậm rõ, block AV độ II–III khi chưa có máy tạo nhịp, hội chứng suy nút xoang hoặc suy tim mất bù cấp. Đây là cảnh báo an toàn thuốc, không phải một ESC Class III chung cho toàn bộ nhóm beta-blocker.
                                 - **⚠️ Thận trọng quan trọng:** Hen phế quản nặng hoặc bệnh phổi tắc nghẽn mạn tính (COPD) có co thắt phế quản tiến triển (ưu tiên chọn chẹn beta siêu chọn lọc tim).
                                 """)
                         if prescribe_dhp_ccb:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Chẹn kênh Canxi DHP (DHP-CCB)", expanded=True):
                                 st.markdown("""
-                                - **❌ CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI (Class III):** Huyết áp thấp nặng (Huyết áp tâm thu < 90 mmHg), Hẹp khít van động mạch chủ có triệu chứng nặng.
+                                - **❌ Chống chỉ định/thận trọng theo hồ sơ an toàn thuốc:** Hạ huyết áp nặng hoặc hẹp van động mạch chủ khít có triệu chứng. Không gắn nhãn ESC Class III nếu không có Recommendation Table tương ứng.
                                 - **⚠️ Thận trọng quan trọng:** Nguy cơ gây phù ngoại biên vùng cổ chân ở liều cao (10mg).
                                 """)
                         if prescribe_non_dhp_ccb:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Chẹn kênh Canxi Non-DHP (Verapamil / Diltiazem)", expanded=True):
                                 st.markdown("""
-                                - **❌ CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI (Class III - Figure 9 Đỏ / Drug-label):**
-                                    * **Suy tim phân suất tống máu giảm LVEF ≤ 40% (HFrEF)** do tác dụng ức chế co bóp cơ tim lực (negative inotropic effect).
-                                    * Phối hợp đồng thời với **Chẹn Beta (BB)** hoặc **Ivabradine** (nguy cơ nhịp chậm cực độ, ngừng xoang, block AV nặng).
-                                    * Nhịp tim chậm lúc nghỉ (< 50 nhịp/phút).
-                                    * Hội chứng suy nút xoang hoặc Block AV độ II-III.
+                                - **❌ Tránh/không phù hợp theo hồ sơ an toàn thuốc:** HFrEF/LVEF giảm rõ, nhịp chậm đáng kể, hội chứng suy nút xoang hoặc block AV độ II–III khi chưa có máy tạo nhịp.
+                                - **⚠️ Phối hợp với beta-blocker:** không phải chống chỉ định ESC Class III tuyệt đối trong mọi tình huống; cần cá thể hóa và theo dõi chặt nhịp tim/dẫn truyền vì nguy cơ nhịp chậm và block AV.
+                                - **❌ Phối hợp với Ivabradine:** ESC 2024 **không khuyến cáo (Class III B)**.
                                 """)
                         if prescribe_la_nitrate:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Long-acting Nitrates", expanded=True):
                                 st.markdown("""
-                                - **❌ CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI (Class III - Figure 9 Đỏ):**
-                                    * **Sử dụng chung với thuốc ức chế PDE-5 (Sildenafil, Tadalafil...)** trong vòng 24 - 48 giờ trước (tương tác gây giãn mạch ác tính, tụt huyết áp đe dọa tính mạng).
-                                    * Bệnh cơ tim phì đại tắc nghẽn (HCM) - do làm tăng độ chênh áp đường ra thất trái (LVOT obstruction).
-                                - **⚠️ Thận trọng quan trọng:** Bắt buộc phải có khoảng trống không thuốc (Nitrate-free interval) từ 10-14 tiếng mỗi ngày để ngăn ngừa hiện tượng lờn thuốc.
+                                - **❌ ESC 2024 — không khuyến cáo (Class III B):**
+                                    * Dùng nitrate đồng thời với **PDE-5 inhibitor**.
+                                    * Dùng nitrate ở bệnh nhân **bệnh cơ tim phì đại (HCM)**.
+                                - **⚠️ Khi dùng nitrate tác dụng kéo dài:** nên có khoảng không nitrate/ít nitrate để giảm hiện tượng dung nạp thuốc (**Class IIa B**).
                                 """)
                         if prescribe_ivabradine:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Ivabradine", expanded=True):
                                 st.markdown("""
-                                - **❌ CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI (Class III - Figure 9 Đỏ):**
-                                    * Bệnh nhân nhịp xoang lúc nghỉ < 50 nhịp/phút.
-                                    * Phối hợp đồng thời với thuốc **Chẹn kênh Canxi Non-DHP (Verapamil / Diltiazem)**.
-                                    * Bệnh nhân **LVEF > 40% mà KHÔNG có biểu hiện suy tim** lâm sàng (Class III B - Thử nghiệm SIGNIFY).
-                                    * Bệnh nhân **Rung nhĩ (Atrial Fibrillation)** hoặc cuồng nhĩ.
+                                - **❌ ESC 2024 — không khuyến cáo (Class III B):**
+                                    * Ivabradine add-on ở bệnh nhân **CCS, LVEF >40% và không có suy tim lâm sàng**.
+                                    * Phối hợp Ivabradine với **Verapamil/Diltiazem (non-DHP CCB)** hoặc các chất ức chế CYP3A4 mạnh.
+                                - **⚠️ Theo hồ sơ an toàn thuốc:** cần nhịp xoang và phải tránh ở nhịp chậm rõ hoặc rung/cuồng nhĩ không phù hợp với cơ chế tác dụng của thuốc.
                                 """)
                         if prescribe_ranolazine:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Ranolazine", expanded=True):
@@ -1422,8 +1545,8 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                         if prescribe_nicorandil:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Nicorandil", expanded=True):
                                 st.markdown("""
-                                - **❌ CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI (Class III):** Shock tim, tụt huyết áp nặng.
-                                - **⚠️ Thận trọng quan trọng:** **Nguy cơ gây loét nghiêm trọng:** Nicorandil có thể gây ra các vết loét niêm mạc dạ dày - tá tràng, loét da, loét giác mạc khó lành. Ngừng thuốc ngay lập tức nếu phát hiện các vết loét này (Class I A).
+                                - **❌ Chống chỉ định theo hồ sơ an toàn thuốc:** Shock tim hoặc tụt huyết áp nặng.
+                                - **⚠️ Thận trọng quan trọng:** **Nguy cơ gây loét nghiêm trọng:** Nicorandil có thể gây ra các vết loét niêm mạc dạ dày - tá tràng, loét da, loét giác mạc khó lành. Ngừng thuốc nếu xuất hiện loét nghiêm trọng theo thông tin an toàn thuốc; không gán Class I A của ESC cho cảnh báo này.
                                 """)
                                 
                         # INTERACTION AND COMPATIBILITY RESULTS
@@ -1454,7 +1577,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                         if prescribe_ivabradine and prescribe_non_dhp_ccb:
                             safety_alerts.append("""
                             <div class='warning-box'>
-                                <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH PHỐI HỢP (Class III)</h5>
+                                <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ KHÔNG KHUYẾN CÁO PHỐI HỢP (Class III B)</h5>
                                 <strong>Phối hợp Ivabradine + Non-DHP CCB:</strong><br>
                                 - Làm tăng mạnh nồng độ Ivabradine trong máu qua ức chế CYP3A4, gây nhịp tim chậm nghiêm trọng đe dọa tính mạng.
                             </div>
@@ -1506,10 +1629,10 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                         # Rule 8: Vasospastic Angina with Beta-blocker monotherapy
                         if phenotype == "Co thắt mạch vành (ANOCA - VSA)" and prescribe_bb and not (prescribe_dhp_ccb or prescribe_non_dhp_ccb):
                             safety_alerts.append("""
-                            <div class='warning-box'>
-                                <h5 style='color: #c0392b; margin: 0; font-weight: bold;'>❌ CHỐNG CHỈ ĐỊNH ĐƠN TRỊ LIỆU (Class III)</h5>
-                                <strong>Chẹn beta đơn trị ở bệnh nhân Co thắt mạch (VSA):</strong><br>
-                                - Chống chỉ định tuyệt đối Chẹn beta đơn trị do có thể làm co thắt mạch dữ dội hơn qua thụ thể alpha-adrenergic không đối kháng.
+                            <div class='warning-box' style='border-left-color: #fd7e14;'>
+                                <h5 style='color: #fd7e14; margin: 0; font-weight: bold;'>⚠️ KHÔNG PHẢI ĐIỀU TRỊ ĐÍCH CHO VSA</h5>
+                                <strong>Chẹn beta đơn trị ở bệnh nhân co thắt mạch (VSA):</strong><br>
+                                - Có thể làm nặng co thắt ở một số bệnh nhân và không phải lựa chọn điều trị đích. ESC 2024 khuyến cáo CCB là điều trị hàng đầu cho VSA; không gán một Class III tuyệt đối cho mọi trường hợp chẹn beta đơn trị.
                             </div>
                             """)
                         # Rule 9: Standard Optimal combo (Class IIa B)
@@ -1539,9 +1662,9 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             | :--- | :--- | :--- | :--- | :--- |
             | **1. Chẹn Beta (BB)** | Metoprolol Succinate (Betaloc Zok), Bisoprolol (Concor), Carvedilol (Dilatrend) | 25 - 50 mg q.d. / 2.5 - 5 mg q.d. / 6.25 mg b.i.d. | 100 - 200 mg q.d. / 10 - 20 mg q.d. / 25 - 50 mg b.i.d. | Suy nút xoang, block nhĩ thất độ II, III, nhịp chậm (HR < 50), suy tim mất bù. Thận trọng với Hen/COPD. Đích nhịp tim lúc nghỉ: 55-60 nhịp/phút. |
             | **2. DHP-CCB** | Amlodipine (Amlor), Felodipine (Plendil) | 5 mg q.d. | 10 mg q.d. | Huyết áp thấp nặng (SBP < 90), hẹp khít van động mạch chủ lơn, phù ngoại biên nặng. |
-            | **3. Non-DHP CCB** | Verapamil (Isoptin), Diltiazem (Herbesser) | 120 - 240 mg/ngày / 120 - 180 mg/ngày | 360 - 480 mg/ngày / 360 mg/ngày | Chống chỉ định ở HFrEF (LVEF ≤ 40%), nhịp chậm, block nhĩ thất, suy nút xoang. Tuyệt đối không phối hợp cùng Chẹn beta hoặc Ivabradine (Class III). |
-            | **4. LA Nitrates** | Isosorbide Mononitrate (Imdur), Isosorbide Dinitrate | 30 mg q.d. / 10 mg b.i.d. | 60 - 120 mg q.d. / 40 mg t.i.d. | Chống chỉ định ở bệnh cơ tim phì đại tắc nghẽn (HCM) và dùng chung PDE-5i (Sildenafil...) (Class III). Bắt buộc có khoảng nghỉ nitrate-free 10-14h hàng ngày để tránh lờn thuốc. |
-            | **5. Ivabradine** | Ivabradine (Procoralan) | 5 mg b.i.d. (2.5mg nếu nhịp chậm) | 7.5 mg b.i.d. | Nhịp xoang < 50, rung nhĩ/cuồng nhĩ, nhồi máu cơ tim cấp. CCĐ ở LVEF > 40% không suy tim (Class III). Không dùng chung với Non-DHP CCB (Class III). |
+            | **3. Non-DHP CCB** | Verapamil (Isoptin), Diltiazem (Herbesser) | 120 - 240 mg/ngày / 120 - 180 mg/ngày | 360 - 480 mg/ngày / 360 mg/ngày | Tránh ở HFrEF/LVEF giảm rõ, nhịp chậm, block nhĩ thất, suy nút xoang. Phối hợp với Chẹn beta cần thận trọng và theo dõi dẫn truyền; phối hợp với Ivabradine không được khuyến cáo (Class III B). |
+            | **4. LA Nitrates** | Isosorbide Mononitrate (Imdur), Isosorbide Dinitrate | 30 mg q.d. / 10 mg b.i.d. | 60 - 120 mg q.d. / 40 mg t.i.d. | Không khuyến cáo ở HCM hoặc dùng đồng thời PDE-5i (Class III B). Khi dùng kéo dài, nên có khoảng không/ít nitrate để giảm dung nạp thuốc (Class IIa B). |
+            | **5. Ivabradine** | Ivabradine (Procoralan) | 5 mg b.i.d. (2.5mg nếu nhịp chậm) | 7.5 mg b.i.d. | Không khuyến cáo add-on khi CCS, LVEF >40% và không có HF (Class III B); không phối hợp với Non-DHP CCB/ức chế CYP3A4 mạnh (Class III B). Cần nhịp xoang để có tác dụng. |
             | **6. Ranolazine** | Ranolazine (Ranexa) | 375 mg b.i.d. | 500 - 1000 mg b.i.d. | Chống chỉ định ở eGFR < 30 mL/min, suy gan nặng, dùng chung chất ức chế CYP3A4 mạnh. Ưu điểm: Không ảnh hưởng nhịp tim và huyết áp. |
             | **7. Trimetazidine** | Trimetazidine MR (Vastarel MR) | 35 mg b.i.d. | 35 mg b.i.d. | Chống chỉ định ở bệnh Parkinson / rối loạn ngoại tháp, suy thận nặng (eGFR < 30 mL/min). |
             | **8. Nicorandil** | Nicorandil (Ikorel) | 10 mg b.i.d. | 20 - 30 mg b.i.d. | Shock tim, tụt huyết áp nặng. Nguy cơ gây loét đường tiêu hóa hoặc loét da nghiêm trọng (ngừng thuốc ngay nếu xuất hiện loét). |
@@ -1559,11 +1682,11 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
         
         st.markdown("""
         <div class='recommendation-box' style='padding: 10px; margin-bottom: 15px;'>
-            <strong>PHÂN LOẠI NGUY CƠ TIM MẠCH:</strong> Bệnh nhân đã được xác định mắc hội chứng vành mạn (CCS) được xem là thuộc nhóm nguy cơ tim mạch rất cao (Very High Cardiovascular Risk) theo ESC 2024.
+            <strong>PHÂN LOẠI NGUY CƠ TIM MẠCH:</strong> Bệnh nhân đã được xác định mắc hội chứng vành mạn (CCS) thuộc nhóm nguy cơ tim mạch rất cao (Very High Cardiovascular Risk). ESC/EAS Focused Update 2025 tiếp tục xếp CCS trong nhóm ASCVD đã xác định.
         </div>
         """, unsafe_allow_html=True)
         
-        recurrent_event = st.checkbox("Bệnh nhân có biến cố xơ vữa tái phát (nhồi máu cơ tim, đột quỵ...) trong vòng 2 năm qua khi đang dùng Statin liều tối đa?", key="lipid_recurrent_chk_v8")
+        recurrent_event = st.checkbox("Bệnh nhân có biến cố xơ vữa thứ hai trong vòng 2 năm khi đang dùng liệu pháp statin dung nạp tối đa?", key="lipid_recurrent_chk_v8")
         
         # Determine targets
         if recurrent_event:
@@ -1588,7 +1711,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
              "Đang dùng Statin cường độ trung bình (Atorvastatin 10-20mg, Rosuvastatin 5-10mg)",
              "Đang dùng Statin cường độ cao (Atorvastatin 40-80mg, Rosuvastatin 20-40mg) ở liều tối đa dung nạp",
              "Đang dùng phối hợp Statin tối đa + Ezetimibe 10mg",
-             "Đang dùng phối hợp 3 thuốc (Statin tối đa + Ezetimibe + Ức chế PCSK9)",
+             "Đang dùng phối hợp 3 thuốc (Statin tối đa + Ezetimibe + PCSK9 monoclonal antibody)",
              "Bệnh nhân hoàn toàn Kém dung nạp với Statin (Statin Intolerance)"]
         )
         
@@ -1598,7 +1721,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
         else:
             st.error(f"❌ **Chưa đạt mục tiêu!** LDL-C hiện tại ({ldlc_now:.2f} mmol/L) cao hơn mục tiêu điều trị đích (< {target_ldlc_mmol} mmol/L).")
             
-            st.markdown("##### 📌 Khuyến cáo can thiệp tiếp theo từ ESC 2024:")
+            st.markdown("##### 📌 Khuyến cáo hạ LDL-C theo ESC CCS 2024 + ESC/EAS Focused Update 2025:")
             if current_therapy == "Chưa điều trị bằng thuốc hạ lipid máu":
                 st.markdown(f"""
                 1. <span class='class-badge-1'>Class I A</span> Khởi trị ngay **Statin cường độ cao** (như Atorvastatin 40-80mg hoặc Rosuvastatin 20-40mg) đến liều tối đa mà bệnh nhân có thể dung nạp được.
@@ -1616,88 +1739,93 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                 """, unsafe_allow_html=True)
             elif current_therapy == "Đang dùng phối hợp Statin tối đa + Ezetimibe 10mg":
                 st.markdown(f"""
-                1. <span class='class-badge-1'>Class I A</span> Phối hợp thêm thuốc **ức chế PCSK9 (PCSK9 inhibitor)** (như Alirocumab, Evolocumab hoặc Inclisiran).
-                2. <span class='class-badge-2a'>Class IIa C</span> Hoặc cân nhắc phối hợp thêm **Bempedoic acid** 180mg hàng ngày.
+                1. <span class='class-badge-1'>Class I A</span> Nếu vẫn chưa đạt LDL-C đích, phối hợp thêm **PCSK9 monoclonal antibody có bằng chứng biến cố tim mạch** — **Alirocumab hoặc Evolocumab**.
+                2. <span class='class-badge-2a'>Class IIa C</span> **Bempedoic acid** có thể được cân nhắc thêm vào statin dung nạp tối đa, có hoặc không kèm ezetimibe, ở bệnh nhân nguy cơ cao/rất cao chưa đạt đích.
+                3. **Inclisiran:** có hiệu quả hạ LDL-C khoảng 50%, nhưng trong Focused Update 2025 các thử nghiệm kết cục tim mạch vẫn đang tiến hành; **không gắn cùng Class I A về giảm biến cố như alirocumab/evolocumab**.
                 """, unsafe_allow_html=True)
-            elif current_therapy == "Đang dùng phối hợp 3 thuốc (Statin tối đa + Ezetimibe + Ức chế PCSK9)":
+            elif current_therapy == "Đang dùng phối hợp 3 thuốc (Statin tối đa + Ezetimibe + PCSK9 monoclonal antibody)":
                 st.markdown("""
-                1. Bệnh nhân đã tối đa hóa các phác đồ hạ lipid chuẩn mà vẫn chưa đạt mục tiêu. Cân nhắc phối hợp thêm **Bempedoic acid** hoặc **chuyển đổi/tăng cường hoạt lực** của nhóm ức chế PCSK9.
-                2. Rà soát nghiêm ngặt sự tuân thủ điều trị của bệnh nhân.
-                """)
+                1. Rà soát tuân thủ, liều tối đa dung nạp và các nguyên nhân thứ phát khiến LDL-C còn cao.
+                2. <span class='class-badge-2a'>Class IIa C</span> Có thể cân nhắc thêm **Bempedoic acid** nếu vẫn chưa đạt mục tiêu và phù hợp lâm sàng.
+                3. **Inclisiran** là một lựa chọn hạ LDL-C khác, nhưng không nên mô tả là tương đương PCSK9 monoclonal antibody về bằng chứng giảm biến cố tim mạch trong Focused Update 2025.
+                """, unsafe_allow_html=True)
             else: # Statin Intolerance
                 st.markdown(f"""
-                1. <span class='class-badge-1'>Class I B</span> Kê đơn **Ezetimibe 10mg** hàng ngày làm điều trị đầu tay.
-                2. <span class='class-badge-1'>Class I B</span> Phối hợp thêm **Bempedoic acid** nếu Ezetimibe đơn trị liệu không đạt mục tiêu.
-                3. <span class='class-badge-2a'>Class IIa C</span> Cân nhắc phối hợp thêm thuốc **ức chế PCSK9** nếu chưa kiểm soát được LDL-C.
+                1. <span class='class-badge-1'>Class I A</span> Ở bệnh nhân không thể dùng statin, nên sử dụng **liệu pháp non-statin có bằng chứng lợi ích tim mạch**, đơn trị hoặc phối hợp; lựa chọn dựa vào mức LDL-C cần giảm (Ezetimibe, PCSK9 monoclonal antibody, Bempedoic acid).
+                2. <span class='class-badge-1'>Class I B</span> **Bempedoic acid** được khuyến cáo ở bệnh nhân không thể dùng statin để đạt mục tiêu LDL-C.
+                3. Theo dõi đáp ứng LDL-C sau khởi trị/tăng cường điều trị, thông thường sau **4–6 tuần**.
                 """, unsafe_allow_html=True)
 
         # Triglycerides Management
         st.markdown("#### 📈 Quản lý Triglyceride tăng cao")
-        if tg_now >= 1.7:
-            st.warning(f"Chỉ số Triglyceride hiện tại: **{tg_now:.2f} mmol/L** (tăng nhẹ đến vừa).")
-            if 1.52 <= tg_now <= 5.63:
-                st.markdown(f"""
-                * <span class='class-badge-2a'>Class IIa B</span> Khuyến cáo cân nhắc bổ sung **Icosapent Ethyl (2 x 2g/ngày)** phối hợp cùng Statin để giảm thiểu nguy cơ biến cố tim mạch tồn dư.
-                """, unsafe_allow_html=True)
-            elif tg_now > 5.63:
-                st.markdown("""
-                * ⚠️ **CẢNH BÁO NGUY CƠ VIÊM TỤY CẤP:** Hạn chế mỡ tuyệt đối, kiểm soát đường huyết chặt chẽ.
-                * Sử dụng **Fenofibrate** phối hợp hoặc **Omega-3 liều cao** để giảm TG khẩn cấp.
-                """)
+        if 1.52 <= tg_now <= 5.63:
+            st.warning(f"Triglyceride hiện tại: **{tg_now:.2f} mmol/L** ({tg_now*88.57:.0f} mg/dL).")
+            st.markdown("""
+            * <span class='class-badge-2a'>Class IIa B</span> Ở bệnh nhân **nguy cơ cao/rất cao** đang điều trị statin, **Icosapent Ethyl tinh khiết liều 2 g x 2 lần/ngày** nên được cân nhắc khi TG lúc đói 1,52–5,63 mmol/L (135–499 mg/dL) để giảm biến cố tim mạch.
+            * Không đồng nhất khuyến cáo này với các chế phẩm **omega-3 EPA+DHA** nói chung; Focused Update 2025 nêu STRENGTH không chứng minh lợi ích biến cố với hỗn hợp EPA+DHA.
+            """, unsafe_allow_html=True)
+        elif tg_now > 5.63:
+            st.warning(f"Triglyceride hiện tại **{tg_now:.2f} mmol/L** nằm ngoài khoảng 1,52–5,63 mmol/L của khuyến cáo Icosapent Ethyl để giảm biến cố tim mạch.")
+            st.markdown("""
+            * Không tự động ngoại suy khuyến cáo Icosapent Ethyl hoặc ghi chung “omega-3 liều cao” cho tình huống này.
+            * Cần đánh giá nguyên nhân và xử trí tăng triglyceride nặng theo bối cảnh lâm sàng. Riêng **familial chylomicronaemia syndrome (FCS) đã xác định** với TG >8,5 mmol/L (>750 mg/dL), **Volanesorsen 300 mg/tuần nên được cân nhắc (Class IIa B)** theo Focused Update 2025.
+            """, unsafe_allow_html=True)
         else:
-            st.success(f"Triglyceride bình thường: {tg_now:.2f} mmol/L (< 1.7 mmol/L).")
+            st.info(f"Triglyceride hiện tại: **{tg_now:.2f} mmol/L** — dưới ngưỡng 1,52 mmol/L của khuyến cáo Icosapent Ethyl trong Focused Update 2025.")
 
-        # Lp(a) management (Correct threshold: nmol/L should use 105 instead of 50)
-        if lpa_now > 105:
-            st.error(f"⚠️ **Lp(a) tăng cao: {lpa_now} nmol/L** (> 105 nmol/L hoặc > 50 mg/dL). Đây là yếu tố nguy cơ độc lập do di truyền làm tăng mạnh gánh nặng xơ vữa mạch vành tồn dư, đòi hỏi kiểm soát LDL-C nghiêm ngặt hơn.")
+        # Lp(a) management — ESC/EAS Focused Update 2025
+        if lpa_now >= 105:
+            st.error(f"⚠️ **Lp(a) = {lpa_now} nmol/L:** đạt ngưỡng **risk-enhancing factor ≥105 nmol/L (≈50 mg/dL)** theo ESC/EAS 2025; nguy cơ tăng dần theo nồng độ Lp(a), vì vậy cần tối ưu kiểm soát các yếu tố nguy cơ tim mạch có thể thay đổi.")
+        elif lpa_now >= 62:
+            st.warning(f"ℹ️ **Lp(a) = {lpa_now} nmol/L:** chưa đạt ngưỡng risk-enhancing 105 nmol/L, nhưng dữ liệu trong Focused Update 2025 cho thấy nguy cơ tim mạch đã bắt đầu tăng nhẹ từ khoảng >62 nmol/L (≈30 mg/dL). Không nên gọi là “bình thường” tuyệt đối.")
         elif lpa_now > 0:
-            st.info(f"Lp(a) trong giới hạn bình thường: {lpa_now} nmol/L.")
+            st.info(f"Lp(a) = {lpa_now} nmol/L: chưa đạt ngưỡng risk-enhancing 105 nmol/L theo ESC/EAS 2025.")
 
     # Sub-step 4.3: Can thiệp mạch vành
     if render_sub_header("Can thiệp mạch vành", 3, "step4_sub"):
         if st.session_state.get('anoca_suspected', False):
             st.markdown(f"""
             <div class='warning-box' style='border-left-color: #c0392b; background-color: #fdf2f2;'>
-                <h4 style='color: #c0392b; margin-top: 0;'>🚫 KHÔNG CÓ CHỈ ĐỊNH CAN THIỆP / TÁI THÔNG MẠCH VÀNH (PCI / CABG)</h4>
-                <p style='font-size: 1.05rem;'>Bệnh nhân đã được chẩn đoán mắc <strong>ANOCA/INOCA (Kiểu hình: {st.session_state.get('anoca_endotype', 'Chưa phân loại')})</strong>. 
-                Không có tổn thương hẹp động mạch vành tắc nghẽn giải phẫu tầng thượng tâm mạc.</p>
-                <p style='margin-bottom: 0;'><strong>Khuyến cáo:</strong> Chống chỉ định tái thông mạch cơ học do không đem lại lợi ích lâm sàng và có hại cho người bệnh. 
-                <strong>Hãy tập trung hoàn toàn vào phác đồ điều trị nội khoa cá thể hóa cho ANOCA/INOCA tại Tab 'Điều trị nội khoa' (Phần 1).</strong></p>
+                <h4 style='color: #c0392b; margin-top: 0;'>🚫 KHÔNG CÓ ĐÍCH TÁI THÔNG MẠCH THƯỢNG TÂM MẠC</h4>
+                <p style='font-size: 1.05rem;'>Bệnh nhân thuộc phổ <strong>ANOCA/INOCA (Kiểu hình: {st.session_state.get('anoca_endotype', 'Chưa phân loại')})</strong> và không có tổn thương mạch vành thượng tâm mạc giới hạn dòng phù hợp để PCI/CABG.</p>
+                <p style='margin-bottom: 0;'><strong>Hướng xử trí:</strong> tập trung vào điều trị nội khoa theo endotype, kiểm soát yếu tố nguy cơ và đánh giá lại triệu chứng. Không mô tả PCI/CABG là “chống chỉ định có hại” một cách tuyệt đối khi guideline không đưa ra kết luận như vậy.</p>
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.subheader("3. Tiêu chuẩn chỉ định Tái thông mạch vành (Revascularization)")
-            
+            st.subheader("3. Chỉ định và lựa chọn Tái thông mạch vành (Revascularization)")
+
             is_high_risk = st.session_state.get('high_risk_flag', False)
             if is_high_risk:
                 st.markdown("""
                 <div class='warning-box' style='border-left-color: #fd7e14;'>
-                    <h4 style='color: #fd7e14; margin-top: 0;'>👉 CHỈ ĐỊNH TÁI THÔNG MẠCH VÀNH ĐỂ CẢI THIỆN TIÊN LƯỢNG (PROGNOSIS - Class I)</h4>
-                    <p>Do bệnh nhân thuộc nhóm nguy cơ biến cố cao. Chỉ định tái thông để cải thiện tiên lượng sống còn phụ thuộc vào giải phẫu hẹp có ý nghĩa sinh lý và trị số LVEF bám sát ESC 2024:</p>
-                    <ul>
-                        <li><strong>Thân chung trái (Left Main) functionally significant VÀ LVEF > 35%:</strong> <span class='class-badge-1'>Class I A</span> (Ưu tiên CABG nếu giải phẫu phức tạp).</li>
-                        <li><strong>Bệnh 3 nhánh functionally significant VÀ LVEF > 35%:</strong> <span class='class-badge-1'>Class I A</span>.</li>
-                        <li><strong>Bệnh 1-2 nhánh có hẹp đoạn gần LAD functionally significant:</strong> <span class='class-badge-1'>Class I B</span>.</li>
-                        <li><strong>Bệnh nhân có LVEF ≤ 35%:</strong> <span class='class-badge-1'>Class I B</span> Cần hội chẩn chuyên sâu **Heart Team** để lựa chọn chiến lược PCI hay CABG tối ưu.</li>
-                    </ul>
+                    <h4 style='color: #fd7e14; margin-top: 0;'>🚨 HIGH EVENT-RISK → ICA + ĐÁNH GIÁ CHỨC NĂNG KHI PHÙ HỢP</h4>
+                    <p>ESC 2024 khuyến cáo <strong>ICA, bổ sung FFR/iFR khi phù hợp (Class I A)</strong> ở người bệnh nguy cơ biến cố cao để làm rõ phân tầng nguy cơ và xác định chiến lược điều trị. <strong>High event-risk không tự động đồng nghĩa phải PCI/CABG để kéo dài sống còn.</strong></p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("""
                 <div class='success-box' style='background-color: #e8f8f5; border-left-color: #2ecc71;'>
-                    <h4 style='color: #2ecc71; margin-top: 0;'>🔴 ƯU TIÊN ĐIỀU TRỊ NỘI KHOA TỐI ƯU (GDMT) LÀ LỰA CHỌN ĐẦU TAY (Class I)</h4>
-                    <p>Bệnh nhân hẹp mạch vành tắc nghẽn mức độ nhẹ-vừa (Nguy cơ biến cố thấp-trung bình):</p>
-                    <ul>
-                        <li><strong>🚫 CHƯA CÓ CHỈ ĐỊNH CAN THIỆP MẠCH VÀNH BAN ĐẦU:</strong> Không tự ý can thiệp mạch vành (PCI/CABG) sớm ở nhóm này vì không mang lại lợi ích cải thiện tiên lượng tử vong hay kéo dài sự sống so với điều trị thuốc tối ưu.</li>
-                        <li><strong>⚠️ Chỉ định can thiệp trì hoãn (Class I A):</strong> Chỉ xem xét can thiệp mạch vành nhằm <strong>cải thiện triệu chứng</strong> nếu triệu chứng đau ngực hoặc khó thở vẫn dai dẳng, ảnh hưởng nặng đến sinh hoạt hoạt động hàng ngày, mặc dù đã điều trị nội khoa tối đa (GDMT) với <strong>ít nhất 2 nhóm thuốc</strong> chống đau thắt ngực.</li>
-                    </ul>
+                    <h4 style='color: #2ecc71; margin-top: 0;'>✅ KHÔNG TỰ ĐỘNG CHỈ ĐỊNH TÁI THÔNG CHỈ DỰA TRÊN “HIGH-RISK FLAG”</h4>
+                    <p>Quyết định tái thông phải dựa trên <strong>triệu chứng, ý nghĩa chức năng của tổn thương, giải phẫu mạch vành, LVEF, đái tháo đường, nguy cơ phẫu thuật, độ phức tạp giải phẫu và khả năng tái thông hoàn toàn</strong>.</p>
                 </div>
                 """, unsafe_allow_html=True)
-                
+
+            st.markdown("""
+            #### Các tình huống tái thông mạch vành được ESC 2024 khuyến cáo
+            * **Triệu chứng dai dẳng dù GDMT + CAD tắc nghẽn có ý nghĩa chức năng:** tái thông được khuyến cáo để **cải thiện triệu chứng — Class I A**. Guideline không yêu cầu phải thất bại với “ít nhất 2 nhóm thuốc” trước khi áp dụng khuyến cáo này.
+            * **Multivessel CAD + LVEF ≤35% + đủ điều kiện phẫu thuật:** **CABG** được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện sống còn dài hạn — **Class I B**.
+            * **Left Main đáng kể, nguy cơ phẫu thuật thấp:** **CABG** được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện sống còn — **Class I A**; nhìn chung CABG là phương thức ưu tiên hơn PCI — **Class I A**. Nếu giải phẫu ít phức tạp (SYNTAX ≤22) và PCI có thể tái thông tương đương, PCI là lựa chọn thay thế được khuyến cáo — **Class I A**.
+            * **Multivessel CAD + đái tháo đường + đáp ứng GDMT chưa đủ:** **CABG** được khuyến cáo hơn điều trị nội khoa đơn thuần và hơn PCI để cải thiện triệu chứng và kết cục — **Class I A**.
+            * **Bệnh 3 nhánh, LVEF bảo tồn, không đái tháo đường, đáp ứng GDMT chưa đủ:** **CABG** được khuyến cáo — **Class I A**; PCI cũng được khuyến cáo nếu giải phẫu phức tạp thấp–trung bình và có thể đạt mức tái thông tương tự CABG — **Class I A**.
+            * **Bệnh 1–2 nhánh có đoạn gần LAD đáng kể, đáp ứng GDMT chưa đủ:** **CABG hoặc PCI** được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện triệu chứng và kết cục — **Class I A**.
+            """)
+
             st.markdown("""
             **Các lưu ý kỹ thuật quan trọng của ESC 2024:**
-            * **Hẹp ranh giới (Intermediate stenosis):** Luôn đánh giá chức năng bằng **FFR** hoặc **iFR** trước khi quyết định can thiệp (Class I).
-            * **Can thiệp phức tạp:** Sử dụng các phương tiện chẩn đoán hình ảnh trong lòng mạch như **IVUS** hoặc **OCT** để hướng dẫn kỹ thuật can thiệp tối ưu (Class I).
+            * **Tổn thương trung gian:** đánh giá mức độ có ý nghĩa chức năng bằng **FFR/iFR** trước quyết định tái thông; ngưỡng có ý nghĩa thường **FFR ≤0,80 hoặc iFR ≤0,89** — **Class I A**.
+            * **PCI tổn thương phức tạp:** hướng dẫn bằng **IVUS hoặc OCT** được khuyến cáo, đặc biệt ở thân chung, bifurcation thật và tổn thương dài — **Class I A**.
+            * **Multivessel CAD:** nên tính **SYNTAX score** để đánh giá độ phức tạp giải phẫu — **Class I B**.
+            * Khi cân nhắc CABG, **STS score** được khuyến cáo để ước tính bệnh suất trong viện và tử vong 30 ngày — **Class I B**.
             """)
 
         st.write("")
@@ -1705,4 +1833,4 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             set_step(3)
 
 st.write("")
-st.markdown("<p style='text-align: center; font-size: 0.8rem; color: #888;'>Phát triển chuyên sâu dựa trên Hướng dẫn của Hội Tim mạch Châu Âu (ESC) 2024 về quản lý Hội chứng mạch vành mạn | Thiết kế tương tác từng bước cho nhà lâm sàng</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 0.8rem; color: #888;'>Phát triển dựa trên ESC 2024 về Hội chứng mạch vành mạn và ESC/EAS Focused Update 2025 về rối loạn lipid máu | Thiết kế tương tác từng bước cho nhà lâm sàng</p>", unsafe_allow_html=True)
