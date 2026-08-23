@@ -429,9 +429,6 @@ PERSISTENT_WIDGET_DEFAULTS = {
     'lipid_recurrent_chk_v8': False,
     'lipid_current_therapy_val': "Chưa điều trị bằng thuốc hạ lipid máu",
     'revasc_persistent_symptoms': False,
-    'revasc_surgical_risk': "Chưa đánh giá / chưa rõ",
-    'revasc_syntax_group': "Chưa có / chưa tính SYNTAX",
-    'revasc_complete_pci': "Chưa đánh giá khả năng tái thông hoàn toàn bằng PCI",
 }
 for _k, _default in PERSISTENT_WIDGET_DEFAULTS.items():
     if _k not in st.session_state:
@@ -1362,25 +1359,36 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
             st.session_state.anoca_endotype = "Chưa phân loại"
 
         if st.session_state.coronary_status == "Obstructive":
-            st.write("**Mẫu giải phẫu mạch vành liên quan đến quyết định tái thông (chỉ chọn khi đã đủ dữ liệu giải phẫu/chức năng):**")
+            st.write("**Mẫu giải phẫu mạch vành liên quan đến chỉ định đánh giá tái thông (chỉ chọn khi đã đủ dữ liệu giải phẫu/chức năng):**")
             anatomy_options = [
                 "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu",
-                "Left Main đáng kể — không kèm/không rõ multivessel disease",
-                "Left Main đáng kể + multivessel disease",
-                "Bệnh 3 nhánh (three-vessel disease)",
-                "Bệnh 1–2 nhánh có liên quan đoạn gần LAD",
-                "Bệnh 1–2 nhánh không liên quan đoạn gần LAD",
-                "Multivessel disease khác (≥2 động mạch vành chính)"
+                "Hẹp đáng kể thân chung động mạch vành trái (LM) — không kèm/chưa rõ bệnh nhiều nhánh",
+                "Hẹp đáng kể thân chung động mạch vành trái (LM) + bệnh nhiều nhánh",
+                "Bệnh ba nhánh động mạch vành",
+                "Bệnh 1–2 nhánh có liên quan đoạn gần động mạch liên thất trước (LAD)",
+                "Bệnh 1–2 nhánh không liên quan đoạn gần động mạch liên thất trước (LAD)",
+                "Bệnh nhiều nhánh khác (≥2 động mạch vành chính)"
             ]
+            _old_to_new_anatomy = {
+                "Left Main đáng kể — không kèm/không rõ multivessel disease": anatomy_options[1],
+                "Left Main đáng kể + multivessel disease": anatomy_options[2],
+                "Bệnh 3 nhánh (three-vessel disease)": anatomy_options[3],
+                "Bệnh 1–2 nhánh có liên quan đoạn gần LAD": anatomy_options[4],
+                "Bệnh 1–2 nhánh không liên quan đoạn gần LAD": anatomy_options[5],
+                "Multivessel disease khác (≥2 động mạch vành chính)": anatomy_options[6],
+            }
+            _saved_anatomy = st.session_state.get('revasc_anatomy_widget', st.session_state.get('revasc_anatomy_pattern', anatomy_options[0]))
+            if _saved_anatomy in _old_to_new_anatomy:
+                _saved_anatomy = _old_to_new_anatomy[_saved_anatomy]
+                st.session_state.revasc_anatomy_widget = _saved_anatomy
+                st.session_state.revasc_anatomy_pattern = _saved_anatomy
             if st.session_state.get('revasc_anatomy_widget') not in anatomy_options:
-                st.session_state.revasc_anatomy_widget = st.session_state.get('revasc_anatomy_pattern', anatomy_options[0])
-                if st.session_state.revasc_anatomy_widget not in anatomy_options:
-                    st.session_state.revasc_anatomy_widget = anatomy_options[0]
+                st.session_state.revasc_anatomy_widget = anatomy_options[0]
             anatomy_pattern = st.selectbox(
                 "Kiểu giải phẫu chính:", anatomy_options, key="revasc_anatomy_widget"
             )
             st.session_state.revasc_anatomy_pattern = anatomy_pattern
-            st.caption("Chỉ dùng các tổn thương đáng kể/có ý nghĩa chức năng khi áp dụng các khuyến cáo tái thông ở Bước 4.")
+            st.caption("Chỉ sử dụng các tổn thương đáng kể hoặc có ý nghĩa chức năng khi áp dụng khuyến cáo tái thông ở Bước 4.")
 
     # Sub-step 3.3: Chẩn đoán ANOCA/INOCA
     if render_sub_header("Chẩn đoán ANOCA/INOCA", 3, "step3_sub"):
@@ -1466,13 +1474,13 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
 
             if is_high_risk:
                 st.error("""
-                **🚨 NGUY CƠ BIẾN CỐ CAO (HIGH EVENT-RISK):**
+                **🚨 NGUY CƠ BIẾN CỐ CAO:**
                 - Có ít nhất một tiêu chuẩn nguy cơ cao theo ESC 2024.
-                - **ICA kèm đánh giá áp lực nội mạch (FFR/iFR) khi phù hợp được khuyến cáo Class I A** nhằm làm rõ nguy cơ và xác định chiến lược điều trị.
-                - Việc có tiêu chuẩn nguy cơ cao **không đồng nghĩa tự động với PCI/CABG để kéo dài sống còn**; chỉ định và phương thức tái thông còn phụ thuộc giải phẫu, ý nghĩa chức năng, LVEF, bệnh đồng mắc, nguy cơ thủ thuật và đáp ứng GDMT.
+                - **Chụp động mạch vành xâm lấn (ICA) kèm đánh giá áp lực nội mạch (FFR/iFR) khi phù hợp được khuyến cáo Class I A** nhằm làm rõ nguy cơ và xác định chiến lược điều trị.
+                - Việc có tiêu chuẩn nguy cơ cao **không đồng nghĩa tự động với can thiệp động mạch vành qua da (PCI) hoặc phẫu thuật bắc cầu động mạch vành (CABG) để kéo dài sống còn**; chỉ định và phương thức tái thông còn phụ thuộc giải phẫu, ý nghĩa chức năng, LVEF, bệnh đồng mắc, nguy cơ thủ thuật và đáp ứng điều trị nội khoa theo khuyến cáo (GDMT).
                 """)
             else:
-                st.info("💡 Chưa ghi nhận tiêu chuẩn high event-risk nào trong các mục đã chọn. Vẫn cần tích hợp tuổi, ECG, ngưỡng xuất hiện đau ngực, đái tháo đường, CKD, LVEF và toàn bộ dữ liệu lâm sàng để đánh giá nguy cơ.")
+                st.info("💡 Chưa ghi nhận tiêu chuẩn nguy cơ biến cố cao nào trong các mục đã chọn. Vẫn cần tích hợp tuổi, ECG, ngưỡng xuất hiện đau ngực, đái tháo đường, CKD, LVEF và toàn bộ dữ liệu lâm sàng để đánh giá nguy cơ.")
         else:
             st.info("💡 Chưa có kết quả thăm dò để phân tầng nguy cơ biến cố bằng các tiêu chuẩn hình ảnh/chức năng.")
         # Navigation to Step 4
@@ -1488,7 +1496,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
     
     # Sub-step 4.1: Điều trị nội khoa
     if render_sub_header("Điều trị nội khoa", 1, "step4_sub"):
-        st.subheader("1. Thiết lập phác đồ điều trị nội khoa tối ưu (GDMT)")
+        st.subheader("1. Thiết lập điều trị nội khoa theo khuyến cáo (GDMT)")
         
         tab_prognostic, tab_symptomatic = st.tabs(["🛡️ Thuốc bảo vệ & Cải thiện tiên lượng", "💊 Thuốc giảm đau thắt ngực (Figure 9)"])
         
@@ -1588,7 +1596,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             for note in cautions:
                 st.warning("⚠️ " + note)
 
-            st.markdown("**Lối sống nền tảng:** cai thuốc lá, chế độ ăn lành mạnh và hoạt động thể lực phù hợp vẫn là thành phần của GDMT.")
+            st.markdown("**Lối sống nền tảng:** cai thuốc lá, chế độ ăn lành mạnh và hoạt động thể lực phù hợp vẫn là thành phần của điều trị nội khoa theo khuyến cáo (GDMT).")
 
         with tab_symptomatic:
             # Pull clinical variables
@@ -2048,118 +2056,95 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
         elif lpa_now > 0:
             st.info(f"Lp(a) = {lpa_now} nmol/L: chưa đạt ngưỡng risk-enhancing 105 nmol/L theo ESC/EAS 2025.")
 
-    # Sub-step 4.3: Can thiệp mạch vành
-    if render_sub_header("Can thiệp mạch vành", 3, "step4_sub"):
-        st.subheader("3. Chỉ định và lựa chọn Tái thông mạch vành (Revascularization)")
+    # Sub-step 4.3: Đánh giá nhu cầu tái thông mạch vành — phạm vi tiếp cận ban đầu
+    if render_sub_header("Tái thông mạch vành", 3, "step4_sub"):
+        st.subheader("3. Đánh giá nhu cầu tái thông mạch vành")
+        st.caption("Mục tiêu của công cụ ở giai đoạn tiếp cận ban đầu là xác định bệnh nhân có cần được chuyển đánh giá tái thông hay không. Việc lập kế hoạch chi tiết PCI/CABG, SYNTAX, STS và mức độ tái thông hoàn toàn thuộc giai đoạn chuyên sâu sau đó.")
 
         coronary_status = st.session_state.get('coronary_status', 'Untested')
         anoca_suspected = st.session_state.get('anoca_suspected', False)
         anatomy = st.session_state.get('revasc_anatomy_pattern', "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu")
         lvef_revasc = st.session_state.get('lvef_val', 55)
-        has_dm = st.session_state.get('diabetes_flag', False)
 
         if anoca_suspected or coronary_status == "Non-obstructive":
             st.markdown(f"""
             <div class='success-box' style='background-color: #e8f8f5; border-left-color: #2ecc71;'>
-                <h4 style='color: #167c5a; margin-top: 0;'>✅ KHÔNG CÓ ĐÍCH TÁI THÔNG MẠCH THƯỢNG TÂM MẠC ĐÃ XÁC ĐỊNH</h4>
-                <p style='font-size: 1.05rem;'>Trạng thái hiện tại: <strong>{'ANOCA/INOCA — ' + st.session_state.get('anoca_endotype', 'chưa phân loại') if anoca_suspected else 'không có CAD tắc nghẽn / không có tổn thương thượng tâm mạc giới hạn dòng'}</strong>.</p>
-                <p style='margin-bottom: 0;'>Tập trung điều trị nội khoa theo cơ chế/endotype và kiểm soát yếu tố nguy cơ. Không có chỉ định PCI/CABG nếu không có tổn thương thượng tâm mạc có ý nghĩa chức năng để tái thông.</p>
+                <h4 style='color: #167c5a; margin-top: 0;'>✅ CHƯA CÓ ĐÍCH TÁI THÔNG ĐỘNG MẠCH VÀNH THƯỢNG TÂM MẠC</h4>
+                <p style='font-size: 1.05rem;'>Trạng thái hiện tại: <strong>{'Đau thắt ngực/thiếu máu cơ tim không kèm tắc nghẽn động mạch vành (ANOCA/INOCA) — ' + st.session_state.get('anoca_endotype', 'chưa phân loại cơ chế') if anoca_suspected else 'không có bệnh động mạch vành tắc nghẽn hoặc không có tổn thương thượng tâm mạc giới hạn dòng'}</strong>.</p>
+                <p style='margin-bottom: 0;'>Tập trung điều trị nội khoa theo cơ chế bệnh và kiểm soát yếu tố nguy cơ. Không có chỉ định tái thông nếu chưa xác định tổn thương động mạch vành thượng tâm mạc có ý nghĩa chức năng.</p>
             </div>
             """, unsafe_allow_html=True)
 
         elif coronary_status in ["Untested", "Indeterminate", "Intermediate + Ischaemia", "Intermediate / no inducible ischaemia", "Ischaemia-positive / anatomy unconfirmed", "No inducible ischaemia / anatomy unconfirmed"]:
-            st.warning("⚠️ **Chưa đủ dữ liệu để quyết định tái thông.** Cần xác định giải phẫu mạch vành và/hoặc ý nghĩa chức năng của tổn thương trước khi chọn PCI/CABG. Tổn thương trung gian cần FFR/iFR hoặc đánh giá chức năng phù hợp.")
+            st.warning("⚠️ **Chưa đủ dữ liệu để quyết định nhu cầu tái thông.** Cần xác định giải phẫu mạch vành và/hoặc ý nghĩa chức năng của tổn thương trước. Với tổn thương trung gian, cần đánh giá chức năng bằng FFR/iFR hoặc phương pháp phù hợp theo ESC 2024.")
 
         else:
-            # Obstructive/functionally significant epicardial CAD established.
             persistent_symptoms = st.checkbox(
-                "Triệu chứng đau thắt ngực/anginal equivalent vẫn dai dẳng dù đã điều trị theo GDMT",
+                "Triệu chứng đau thắt ngực hoặc tương đương đau thắt ngực vẫn dai dẳng dù đã điều trị nội khoa theo khuyến cáo (GDMT)",
                 key="revasc_persistent_symptoms"
             )
 
             st.markdown(f"""
             <div class='info-box' style='background-color:#f7f9fa; border-left:5px solid #17b978;'>
-                <strong>Dữ liệu đang dùng để ra quyết định:</strong><br>
-                Giải phẫu: <strong>{anatomy}</strong> | LVEF: <strong>{lvef_revasc}%</strong> | Đái tháo đường: <strong>{'Có' if has_dm else 'Không'}</strong> | Triệu chứng dai dẳng dù GDMT: <strong>{'Có' if persistent_symptoms else 'Không'}</strong>
+                <strong>Dữ liệu đang dùng để định hướng:</strong><br>
+                Giải phẫu: <strong>{anatomy}</strong> | Phân suất tống máu thất trái (LVEF): <strong>{lvef_revasc}%</strong> | Triệu chứng dai dẳng dù điều trị nội khoa: <strong>{'Có' if persistent_symptoms else 'Không'}</strong>
             </div>
             """, unsafe_allow_html=True)
 
-            indications = []
-            # Outcome-driven indications from Table 22
-            if lvef_revasc > 35 and "Left Main" in anatomy:
-                indications.append(("CÓ — để cải thiện sống còn", "Functionally significant Left Main + LVEF >35%", "Class I A"))
-            if lvef_revasc > 35 and anatomy == "Bệnh 3 nhánh (three-vessel disease)":
-                indications.append(("CÓ — để cải thiện kết cục dài hạn", "Functionally significant three-vessel disease + LVEF >35%", "Class I A"))
-            if lvef_revasc > 35 and anatomy == "Bệnh 1–2 nhánh có liên quan đoạn gần LAD":
-                indications.append(("CÓ — để giảm tử vong tim mạch/MI tự phát", "Functionally significant 1–2 vessel disease involving proximal LAD + LVEF >35%", "Class I B"))
-            if lvef_revasc <= 35 and anatomy in ["Bệnh 3 nhánh (three-vessel disease)", "Multivessel disease khác (≥2 động mạch vành chính)", "Left Main đáng kể + multivessel disease"]:
-                indications.append(("CÓ THỂ CẦN — ưu tiên đánh giá Heart Team", "Multivessel CAD + LVEF ≤35%; nếu đủ điều kiện phẫu thuật, CABG được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện sống còn", "CABG Class I B"))
+            outcome_indication = None
+            outcome_detail = None
+            outcome_class = None
+            referral_priority = False
+
+            # ESC 2024 Table 22 — indications that matter at the initial-approach level.
+            if lvef_revasc > 35 and "thân chung động mạch vành trái" in anatomy:
+                outcome_indication = "CẦN ĐÁNH GIÁ TÁI THÔNG ĐỂ CẢI THIỆN TIÊN LƯỢNG"
+                outcome_detail = "Có hẹp thân chung động mạch vành trái có ý nghĩa chức năng và LVEF >35%."
+                outcome_class = "Class I A"
+                referral_priority = True
+            elif lvef_revasc > 35 and anatomy == "Bệnh ba nhánh động mạch vành":
+                outcome_indication = "CẦN ĐÁNH GIÁ TÁI THÔNG ĐỂ CẢI THIỆN TIÊN LƯỢNG"
+                outcome_detail = "Có bệnh ba nhánh động mạch vành có ý nghĩa chức năng và LVEF >35%."
+                outcome_class = "Class I A"
+                referral_priority = True
+            elif lvef_revasc > 35 and anatomy == "Bệnh 1–2 nhánh có liên quan đoạn gần động mạch liên thất trước (LAD)":
+                outcome_indication = "CẦN ĐÁNH GIÁ TÁI THÔNG ĐỂ CẢI THIỆN TIÊN LƯỢNG"
+                outcome_detail = "Có bệnh 1–2 nhánh liên quan đoạn gần động mạch liên thất trước (LAD), có ý nghĩa chức năng và LVEF >35%."
+                outcome_class = "Class I B"
+                referral_priority = True
+            elif lvef_revasc <= 35 and anatomy in [
+                "Bệnh ba nhánh động mạch vành",
+                "Bệnh nhiều nhánh khác (≥2 động mạch vành chính)",
+                "Hẹp đáng kể thân chung động mạch vành trái (LM) + bệnh nhiều nhánh",
+            ]:
+                outcome_indication = "CẦN CHUYỂN ĐÁNH GIÁ TÁI THÔNG / HỘI CHẨN TIM MẠCH ĐA CHUYÊN KHOA"
+                outcome_detail = "Có bệnh nhiều nhánh động mạch vành và LVEF ≤35%. Nếu người bệnh phù hợp phẫu thuật, phẫu thuật bắc cầu động mạch vành (CABG) được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện sống còn."
+                outcome_class = "CABG — Class I B"
+                referral_priority = True
+
+            if outcome_indication:
+                st.markdown(f"""
+                <div class='recommendation-box' style='margin-bottom:10px;'>
+                    <strong>🎯 {outcome_indication}</strong> <span style='font-weight:700;'>({outcome_class})</span><br>
+                    <strong>Lý do:</strong> {outcome_detail}
+                </div>
+                """, unsafe_allow_html=True)
+
             if persistent_symptoms:
-                indications.append(("CÓ — để cải thiện triệu chứng", "Đau ngực/anginal equivalent dai dẳng dù GDMT + obstructive CAD có ý nghĩa chức năng", "Class I A"))
+                st.markdown("""
+                <div class='recommendation-box' style='margin-bottom:10px;'>
+                    <strong>✅ CẦN ĐÁNH GIÁ TÁI THÔNG ĐỂ CẢI THIỆN TRIỆU CHỨNG (Class I A)</strong><br>
+                    <strong>Lý do:</strong> còn đau thắt ngực hoặc triệu chứng tương đương dù đã điều trị nội khoa theo khuyến cáo, trong bối cảnh bệnh động mạch vành tắc nghẽn có ý nghĩa chức năng.
+                </div>
+                """, unsafe_allow_html=True)
+                referral_priority = True
 
-            if indications:
-                st.markdown("### 🎯 Kết luận chỉ định tái thông cho ca này")
-                for title, reason, cls in indications:
-                    st.markdown(f"""
-                    <div class='recommendation-box' style='margin-bottom:10px;'>
-                        <strong>✅ {title}</strong> <span style='font-weight:700;'>({cls})</span><br>
-                        <strong>Lý do:</strong> {reason}.
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.info("ℹ️ **Chưa có một chỉ định tái thông Class I được kích hoạt từ dữ liệu hiện có.** Tiếp tục GDMT và chỉ xem xét tái thông khi giải phẫu/ý nghĩa chức năng hoặc triệu chứng tạo thành chỉ định phù hợp.")
+            if not referral_priority:
+                st.info("ℹ️ **Chưa có chỉ định tái thông Class I được kích hoạt từ dữ liệu hiện tại.** Tiếp tục điều trị nội khoa theo khuyến cáo, kiểm soát yếu tố nguy cơ và theo dõi. Đánh giá lại nếu triệu chứng vẫn dai dẳng hoặc xuất hiện dữ kiện giải phẫu/chức năng làm thay đổi chỉ định.")
 
-            # Choose modality only if anatomy can support a guideline branch.
-            if anatomy == "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu":
-                st.warning("⚠️ **Chưa thể chọn PCI hay CABG:** cần xác định mẫu giải phẫu mạch vành ở Bước 3.")
-            else:
-                st.markdown("### 🛠️ Nếu tái thông: PCI hay CABG?")
-                surgical_risk = st.selectbox(
-                    "Nguy cơ phẫu thuật:",
-                    ["Chưa đánh giá / chưa rõ", "Nguy cơ phẫu thuật thấp", "Nguy cơ phẫu thuật cao/rất cao"],
-                    key="revasc_surgical_risk"
-                )
-                syntax_group = st.selectbox(
-                    "Độ phức tạp giải phẫu (SYNTAX, khi áp dụng):",
-                    ["Chưa có / chưa tính SYNTAX", "SYNTAX ≤22", "SYNTAX 23–32", "SYNTAX >32"],
-                    key="revasc_syntax_group"
-                )
-                complete_pci = st.selectbox(
-                    "Khả năng PCI đạt mức tái thông hoàn toàn tương đương CABG:",
-                    ["Chưa đánh giá khả năng tái thông hoàn toàn bằng PCI", "Có", "Không"],
-                    key="revasc_complete_pci"
-                )
-
-                modality_messages = []
-                if "Left Main" in anatomy:
-                    if surgical_risk == "Nguy cơ phẫu thuật thấp":
-                        modality_messages.append("**CABG là phương thức ưu tiên** hơn PCI ở significant Left Main — **Class I A**.")
-                        if syntax_group == "SYNTAX ≤22" and complete_pci == "Có":
-                            modality_messages.append("**PCI là lựa chọn thay thế được khuyến cáo** nếu SYNTAX ≤22 và có thể đạt complete revascularization tương đương CABG — **Class I A**.")
-                        elif syntax_group == "SYNTAX 23–32" and complete_pci == "Có":
-                            modality_messages.append("**PCI nên được cân nhắc** nếu SYNTAX 23–32 và có thể đạt complete revascularization tương đương CABG — **Class IIa A**.")
-                    elif surgical_risk == "Nguy cơ phẫu thuật cao/rất cao" and "multivessel" in anatomy.lower():
-                        modality_messages.append("Ở Left Main + multivessel disease với nguy cơ phẫu thuật cao, **PCI có thể được cân nhắc** hơn điều trị nội khoa đơn thuần — **Class IIb B**.")
-                elif anatomy == "Multivessel disease khác (≥2 động mạch vành chính)" and has_dm and persistent_symptoms:
-                    modality_messages.append("**CABG được khuyến cáo hơn điều trị nội khoa đơn thuần và hơn PCI** ở significant multivessel disease + diabetes + đáp ứng GDMT chưa đủ — **Class I A**.")
-                elif anatomy == "Bệnh 3 nhánh (three-vessel disease)":
-                    if has_dm and persistent_symptoms:
-                        modality_messages.append("**CABG được khuyến cáo hơn điều trị nội khoa đơn thuần và hơn PCI** ở multivessel disease + diabetes + đáp ứng GDMT chưa đủ — **Class I A**.")
-                    elif (not has_dm) and lvef_revasc > 35 and persistent_symptoms:
-                        modality_messages.append("**CABG được khuyến cáo** ở significant three-vessel disease, preserved LVEF, không diabetes, đáp ứng GDMT chưa đủ — **Class I A**.")
-                        if syntax_group in ["SYNTAX ≤22", "SYNTAX 23–32"] and complete_pci == "Có":
-                            modality_messages.append("**PCI cũng được khuyến cáo** nếu độ phức tạp thấp–trung bình và có thể đạt mức tái thông tương tự CABG — **Class I A**.")
-                elif anatomy == "Bệnh 1–2 nhánh có liên quan đoạn gần LAD" and persistent_symptoms:
-                    modality_messages.append("**CABG hoặc PCI đều được khuyến cáo** hơn điều trị nội khoa đơn thuần để cải thiện triệu chứng và kết cục — **Class I A**.")
-                elif anatomy == "Bệnh 1–2 nhánh không liên quan đoạn gần LAD" and persistent_symptoms:
-                    modality_messages.append("**PCI được khuyến cáo** để cải thiện triệu chứng — **Class I B**; CABG có thể cân nhắc nếu không phù hợp PCI — **Class IIb C**.")
-
-                if modality_messages:
-                    for msg in modality_messages:
-                        st.success(msg)
-                else:
-                    st.info("ℹ️ Chưa đủ điều kiện để công cụ chọn một phương thức tái thông cụ thể từ dữ liệu hiện có. Cần tích hợp anatomy, surgical risk, SYNTAX/complexity, khả năng complete revascularization, LVEF, diabetes và mục tiêu điều trị.")
-
-                if lvef_revasc <= 35:
-                    st.warning("⚠️ LVEF ≤35%: ESC 2024 yêu cầu lựa chọn giữa revascularization và medical therapy sau đánh giá cẩn thận, ưu tiên Heart Team; nếu multivessel CAD và đủ điều kiện phẫu thuật, CABG có khuyến cáo sống còn Class I B.")
-
+            st.markdown("""
+            <div class='info-box' style='background-color:#f7f9fa; border-left:5px solid #7f8c8d;'>
+                <strong>Phạm vi của công cụ:</strong><br>
+                Công cụ dừng ở quyết định <strong>có cần chuyển đánh giá tái thông hay không</strong>. Việc lựa chọn giữa <strong>can thiệp động mạch vành qua da (PCI)</strong> và <strong>phẫu thuật bắc cầu động mạch vành (CABG)</strong>, cũng như tính điểm SYNTAX, ước tính nguy cơ phẫu thuật STS và đánh giá khả năng tái thông hoàn toàn, cần được thực hiện ở giai đoạn lập kế hoạch tái thông bởi chuyên gia/Hội đồng Tim mạch đa chuyên khoa.
+            </div>
+            """, unsafe_allow_html=True)
