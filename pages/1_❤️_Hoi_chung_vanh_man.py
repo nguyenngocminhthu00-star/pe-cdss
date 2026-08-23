@@ -380,6 +380,77 @@ if 'hb_val' not in st.session_state: st.session_state.hb_val = 13.0
 if 'thyroid_assessed' not in st.session_state: st.session_state.thyroid_assessed = False
 if 'likelihood_category' not in st.session_state: st.session_state.likelihood_category = None
 
+# Additional clinical history used by Step 4 decision support
+if 'prior_mi' not in st.session_state: st.session_state.prior_mi = False
+if 'prior_pci' not in st.session_state: st.session_state.prior_pci = False
+if 'prior_cabg' not in st.session_state: st.session_state.prior_cabg = False
+if 'oac_indication' not in st.session_state: st.session_state.oac_indication = False
+if 'revasc_anatomy_pattern' not in st.session_state: st.session_state.revasc_anatomy_pattern = "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu"
+
+# Keep clinically relevant widget values alive when their accordion section is not rendered.
+# Streamlit may otherwise clean up widget-associated state after navigation/reruns.
+PERSISTENT_WIDGET_DEFAULTS = {
+    # Step 1 — symptoms/history/basic investigations
+    'acute_s_val': False, 'unstable_s_val': False, 'resting_ecg_acute_val': False,
+    'symptom_presentation_val': "Đau/Khó chịu vùng ngực",
+    'sym_inc_q': False, 'sym_inc_l': False, 'sym_inc_d': False, 'sym_inc_tr': False, 'sym_inc_re': False,
+    'sym_dec_q': False, 'sym_dec_l': False, 'sym_dec_d': False, 'sym_dec_tr': False, 'sym_dec_re': False,
+    'dys_inc_q': False, 'dys_inc_tr': False, 'dys_inc_re': False,
+    'dys_dec_q': False, 'dys_dec_tr': False, 'dys_dec_re': False,
+    'prior_mi_chk': False, 'prior_pci_chk': False, 'prior_cabg_chk': False, 'oac_indication_chk': False,
+    'done_ecg_chk': True, 'ecg_result_val': "Bình thường", 'done_biochem_chk': False, 'lipid_unit_widget': "mmol/L",
+    'done_cxr_chk': False, 'cxr_status_val': "Chưa ghi nhận bất thường (Bình thường)", 'cxr_findings_val': [],
+    'done_ambulatory_ecg_chk': False, 'ambulatory_reason_val': [],
+    'done_pft_chk': False, 'pft_result_val': "Bình thường",
+    # Step 2 — echo/RF-CL/clinical modifiers
+    'echo_findings_val': [], 'lvef_slider_widget': st.session_state.get('lvef_val', 55), 'gender_val': "Nữ", 'age_group_val': "30-39",
+    'winther_l_val': True, 'winther_tr_val': True, 'winther_re_val': True,
+    'rf_family_val': False, 'rf_smoking_val': False, 'rf_dyslipidemia_val': False,
+    'rf_hypertension_val': False, 'rf_diabetes_val': False,
+    'adj_ecg_val': False, 'adj_lvd_val': False, 'adj_pad_val': False, 'adj_calc_val': False, 'adj_ex_ecg_val': False,
+    'ccs_cacs_available': "Chưa thực hiện", 'ccs_cacs_value': 0,
+    'reclass_choice_val': "Giữ nguyên nhóm RF-CL nền",
+    # Step 3 — tests/endotype/risk
+    'selected_test_widget': "Chờ kết quả / Chưa làm",
+    'revasc_anatomy_widget': "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu",
+    'ccta_result_widget': "Không hẹp hoặc hẹp nhẹ (<50% Thân chung LMS, <50% các nhánh lớn)",
+    'ccta_functional_widget': "Chưa đánh giá / Đang chờ",
+    'functional_result_widget': "Âm tính (không ghi nhận thiếu máu cơ tim cảm ứng đáng kể)",
+    'ica_result_widget': "Không hẹp hoặc hẹp nhẹ (<50% Thân chung LMS, <50% các nhánh chính)",
+    'ica_functional_widget': "Chưa đo FFR/iFR / Đang chờ",
+    'anoca_symptoms_widget': "Không — triệu chứng nhẹ/ổn định hoặc chưa đáp ứng tiêu chí trên",
+    'icft_cfr_widget': "Bình thường (CFR ≥ 2.5)",
+    'icft_imr_widget': "Bình thường (IMR < 25 VÀ HMR ≤ 2.5)",
+    'icft_spasm_widget': "Âm tính",
+    'high_risk_anat_lm': False, 'high_risk_anat_3v': False, 'high_risk_anat_2v_lad': False, 'high_risk_anat_lad_ffrct': False,
+    'high_risk_func_echo': False, 'high_risk_func_cmr': False, 'high_risk_func_spect': False, 'high_risk_func_duke': False,
+    # Step 4
+    'ccs_low_hr_bp_modifier': False, 'prescribing_mode_val': "💡 Khuyến nghị phác đồ (Tự động đề xuất theo Guideline)", 'selected_drugs_val': [],
+    'lipid_recurrent_chk_v8': False,
+    'lipid_current_therapy_val': "Chưa điều trị bằng thuốc hạ lipid máu",
+    'revasc_persistent_symptoms': False,
+    'revasc_surgical_risk': "Chưa đánh giá / chưa rõ",
+    'revasc_syntax_group': "Chưa có / chưa tính SYNTAX",
+    'revasc_complete_pci': "Chưa đánh giá khả năng tái thông hoàn toàn bằng PCI",
+}
+for _k, _default in PERSISTENT_WIDGET_DEFAULTS.items():
+    if _k not in st.session_state:
+        st.session_state[_k] = _default
+    else:
+        # Re-saving interrupts widget-state cleanup when the widget is temporarily hidden.
+        st.session_state[_k] = st.session_state[_k]
+
+# Also keep the original cross-step clinical variables alive.
+for _k in [
+    'hr_val', 'sbp_val', 'ldlc_val_mmol', 'tg_val_mmol', 'egfr_val', 'ecg_abnormal', 'cxr_abnormal',
+    'pft_abnormal', 'diabetes_flag', 'dyslipidemia_flag', 'hypertension_flag', 'hb_val', 'thyroid_assessed',
+    'lvef_val', 'lpa_val', 'hba1c_val', 'base_likelihood', 'likelihood_value', 'likelihood_category',
+    'cacs_score_val', 'selected_test_val', 'coronary_status', 'anoca_suspected', 'anoca_endotype', 'high_risk_flag',
+    'prior_mi', 'prior_pci', 'prior_cabg', 'oac_indication', 'revasc_anatomy_pattern'
+]:
+    if _k in st.session_state:
+        st.session_state[_k] = st.session_state[_k]
+
 # Global ACS Emergency Banner
 if st.session_state.acute_flag:
     st.markdown("""
@@ -567,8 +638,9 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
         st.subheader("2. Khảo sát đặc điểm cơn đau ngực hoặc khó thở")
         
         symptom_presentation = st.radio(
-            "Lựa chọn biểu hiện lâm sàng chủ đạo của bệnh nhân:", 
-            ["Đau/Khó chịu vùng ngực", "Khó thở khi gắng sức"]
+            "Lựa chọn biểu hiện lâm sàng chủ đạo của bệnh nhân:",
+            ["Đau/Khó chịu vùng ngực", "Khó thở khi gắng sức"],
+            key="symptom_presentation_val"
         )
         
         symptom_analysis = {"type": symptom_presentation, "auto_winther_score": 0, "summary_text": ""}
@@ -595,24 +667,37 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
                 help="Tần số tim lúc nghỉ; được dùng lại ở Bước 4 để cá thể hóa lựa chọn thuốc chống đau ngực."
             )
         st.caption("SBP và HR được lưu xuyên suốt quy trình và tự động sử dụng tại Bước 4 trong hồ sơ định hướng lựa chọn thuốc chống đau ngực.")
+
+        st.write("**Bệnh sử tim mạch ảnh hưởng trực tiếp đến điều trị dự phòng biến cố:**")
+        hx1, hx2 = st.columns(2)
+        with hx1:
+            prior_mi = st.checkbox("Tiền sử nhồi máu cơ tim (MI)", key="prior_mi_chk")
+            prior_pci = st.checkbox("Tiền sử PCI từ xa / đã qua giai đoạn DAPT ban đầu", key="prior_pci_chk")
+        with hx2:
+            prior_cabg = st.checkbox("Tiền sử CABG", key="prior_cabg_chk")
+            oac_indication = st.checkbox("Có chỉ định dùng kháng đông đường uống (OAC) dài hạn", key="oac_indication_chk")
+        st.session_state.prior_mi = prior_mi
+        st.session_state.prior_pci = prior_pci
+        st.session_state.prior_cabg = prior_cabg
+        st.session_state.oac_indication = oac_indication
         
         if symptom_presentation == "Đau/Khó chịu vùng ngực":
             st.write("**Đánh giá tính chất đau ngực:**")
             col_ang1, col_ang2 = st.columns(2)
             with col_ang1:
                 st.markdown("<span class='symptom-tag-inc'>Tăng khả năng lâm sàng</span>", unsafe_allow_html=True)
-                inc_q = st.checkbox("Tính chất: Đau bóp nghẹt, thắt, siết chặt hoặc đè nặng vùng trước tim")
-                inc_l = st.checkbox("Vị trí: Sau xương ức, lan ra cánh tay trái, cổ, hàm, vai, kích thước nắm tay")
-                inc_d = st.checkbox("Thời gian: Cơn đau kéo dài ngắn, thông thường khoảng 5-10 phút")
-                inc_tr = st.checkbox("Yếu tố kích gợi: Xuất hiện rõ rệt khi gắng sức thể lực, xúc cảm lạnh hoặc sau ăn")
-                inc_re = st.checkbox("Yếu tố giảm đau: Giảm trong 1-5 phút khi ngừng gắng sức hoặc đáp ứng nhanh với Nitrates")
+                inc_q = st.checkbox("Tính chất: Đau bóp nghẹt, thắt, siết chặt hoặc đè nặng vùng trước tim", key="sym_inc_q")
+                inc_l = st.checkbox("Vị trí: Sau xương ức, lan ra cánh tay trái, cổ, hàm, vai, kích thước nắm tay", key="sym_inc_l")
+                inc_d = st.checkbox("Thời gian: Cơn đau kéo dài ngắn, thông thường khoảng 5-10 phút", key="sym_inc_d")
+                inc_tr = st.checkbox("Yếu tố kích gợi: Xuất hiện rõ rệt khi gắng sức thể lực, xúc cảm lạnh hoặc sau ăn", key="sym_inc_tr")
+                inc_re = st.checkbox("Yếu tố giảm đau: Giảm trong 1-5 phút khi ngừng gắng sức hoặc đáp ứng nhanh với Nitrates", key="sym_inc_re")
             with col_ang2:
                 st.markdown("<span class='symptom-tag-dec'>Giảm khả năng lâm sàng</span>", unsafe_allow_html=True)
-                dec_q = st.checkbox("Tính chất: Đau rát bỏng, nhói nhọn như dao đâm, hoặc đau âm ỉ liên tục")
-                dec_l = st.checkbox("Vị trí: Đau khu trú tại một điểm rất nhỏ hoặc lệch hoàn toàn sang ngực phải")
-                dec_d = st.checkbox("Thời gian: Đau thoáng qua vài giây hoặc đau liên tục nhiều ngày")
-                dec_tr = st.checkbox("Yếu tố kích gợi: Đau tăng khi hít sâu, ho, thay đổi tư thế hoặc ấn chẩn thành ngực")
-                dec_re = st.checkbox("Yếu tố giảm: Giảm sau khi uống thuốc dạ dày, uống nước hoặc nghỉ ngơi rất chậm")
+                dec_q = st.checkbox("Tính chất: Đau rát bỏng, nhói nhọn như dao đâm, hoặc đau âm ỉ liên tục", key="sym_dec_q")
+                dec_l = st.checkbox("Vị trí: Đau khu trú tại một điểm rất nhỏ hoặc lệch hoàn toàn sang ngực phải", key="sym_dec_l")
+                dec_d = st.checkbox("Thời gian: Đau thoáng qua vài giây hoặc đau liên tục nhiều ngày", key="sym_dec_d")
+                dec_tr = st.checkbox("Yếu tố kích gợi: Đau tăng khi hít sâu, ho, thay đổi tư thế hoặc ấn chẩn thành ngực", key="sym_dec_tr")
+                dec_re = st.checkbox("Yếu tố giảm: Giảm sau khi uống thuốc dạ dày, uống nước hoặc nghỉ ngơi rất chậm", key="sym_dec_re")
                 
             # Winther score logic:
             winther_1 = int(inc_l)
@@ -632,14 +717,14 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
             col_dys1, col_dys2 = st.columns(2)
             with col_dys1:
                 st.markdown("<span class='symptom-tag-inc'>Tăng khả năng lâm sàng</span>", unsafe_allow_html=True)
-                inc_dys_q = st.checkbox("Tính chất: Cảm giác hụt hơi, không thở sâu được khi gắng sức")
-                inc_dys_tr = st.checkbox("Yếu tố kích gợi: Chỉ xuất hiện rõ khi tăng cường hoạt động thể lực")
-                inc_dys_re = st.checkbox("Yếu tố giảm: Triệu chứng hết nhanh chóng ngay sau khi dừng gắng sức")
+                inc_dys_q = st.checkbox("Tính chất: Cảm giác hụt hơi, không thở sâu được khi gắng sức", key="dys_inc_q")
+                inc_dys_tr = st.checkbox("Yếu tố kích gợi: Chỉ xuất hiện rõ khi tăng cường hoạt động thể lực", key="dys_inc_tr")
+                inc_dys_re = st.checkbox("Yếu tố giảm: Triệu chứng hết nhanh chóng ngay sau khi dừng gắng sức", key="dys_inc_re")
             with col_dys2:
                 st.markdown("<span class='symptom-tag-dec'>Giảm khả năng lâm sàng</span>", unsafe_allow_html=True)
-                dec_dys_q = st.checkbox("Tính chất: Khó thở ra, thở khò khè, rít phế quản hoặc kèm ho đờm")
-                dec_dys_tr = st.checkbox("Yếu tố kích gợi: Đột ngột xuất hiện lúc nghỉ ngơi, liên quan đến bụi/mùi")
-                dec_dys_re = st.checkbox("Yếu tố giảm: Giảm rất chậm khi nghỉ, chỉ đỡ sau dùng giãn phế quản")
+                dec_dys_q = st.checkbox("Tính chất: Khó thở ra, thở khò khè, rít phế quản hoặc kèm ho đờm", key="dys_dec_q")
+                dec_dys_tr = st.checkbox("Yếu tố kích gợi: Đột ngột xuất hiện lúc nghỉ ngơi, liên quan đến bụi/mùi", key="dys_dec_tr")
+                dec_dys_re = st.checkbox("Yếu tố giảm: Giảm rất chậm khi nghỉ, chỉ đỡ sau dùng giãn phế quản", key="dys_dec_re")
                 
             symptom_analysis["auto_winther_score"] = 2  # Default to 2 in Winther model for Dyspnoea
             
@@ -660,17 +745,19 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
         test_col1, test_col2 = st.columns(2)
         with test_col1:
             st.write("**Xét nghiệm bắt buộc thường quy:**")
-            done_ecg = st.checkbox("Điện tâm đồ 12 chuyển đạo lúc nghỉ", value=True)
+            done_ecg = st.checkbox("Điện tâm đồ 12 chuyển đạo lúc nghỉ", key="done_ecg_chk")
             if done_ecg:
                 ecg_res = st.radio(
                     "Kết quả ECG lúc nghỉ:",
-                    ["Bình thường", "Bất thường (Sóng Q bệnh lý, ST-T thay đổi động học, LBBB...)"]
+                    ["Bình thường", "Bất thường (Sóng Q bệnh lý, ST-T thay đổi động học, LBBB...)"],
+                    key="ecg_result_val"
                 )
                 st.session_state.ecg_abnormal = (ecg_res != "Bình thường")
                 
-            done_biochem = st.checkbox("Xét nghiệm máu cơ bản theo ESC 2024")
+            done_biochem = st.checkbox("Xét nghiệm máu cơ bản theo ESC 2024", key="done_biochem_chk")
             if done_biochem:
-                st.session_state.lipid_unit = st.radio("Đơn vị đo lipid máu:", ["mmol/L", "mg/dL"], horizontal=True)
+                lipid_unit_choice = st.radio("Đơn vị đo lipid máu:", ["mmol/L", "mg/dL"], horizontal=True, key="lipid_unit_widget")
+                st.session_state.lipid_unit = lipid_unit_choice
                 bio_col1, bio_col2 = st.columns(2)
                 with bio_col1:
                     if st.session_state.lipid_unit == "mmol/L":
@@ -715,31 +802,32 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
 
         with test_col2:
             st.write("**Thăm dò chọn lọc bổ sung:**")
-            done_cxr = st.checkbox("Chụp X-quang ngực thẳng (khi có chỉ định chọn lọc)")
+            done_cxr = st.checkbox("Chụp X-quang ngực thẳng (khi có chỉ định chọn lọc)", key="done_cxr_chk")
             if done_cxr:
                 st.caption("ESC 2024: cân nhắc X-quang ngực khi nghi suy tim, bệnh phổi cấp, bệnh động mạch chủ hoặc nguyên nhân tim/lồng ngực ngoài mạch vành.")
-                cxr_status = st.radio("Kết quả X-quang ngực:", ["Chưa ghi nhận bất thường (Bình thường)", "Có bất thường"])
+                cxr_status = st.radio("Kết quả X-quang ngực:", ["Chưa ghi nhận bất thường (Bình thường)", "Có bất thường"], key="cxr_status_val")
                 if cxr_status == "Có bất thường":
-                    cxr_res = st.multiselect("Bất thường ghi nhận:", ["Bóng tim to", "Sung huyết phổi", "Tràn dịch màng phổi", "Bất thường phổi/động mạch chủ/lồng ngực khác"])
+                    cxr_res = st.multiselect("Bất thường ghi nhận:", ["Bóng tim to", "Sung huyết phổi", "Tràn dịch màng phổi", "Bất thường phổi/động mạch chủ/lồng ngực khác"], key="cxr_findings_val")
                     st.session_state.cxr_abnormal = len(cxr_res) > 0
                 else:
                     st.session_state.cxr_abnormal = False
                     st.success("✅ Chưa ghi nhận bất thường trên X-quang ngực.")
 
-            done_ambulatory_ecg = st.checkbox("Theo dõi ECG lưu động (Holter/ambulatory ECG) khi có chỉ định")
+            done_ambulatory_ecg = st.checkbox("Theo dõi ECG lưu động (Holter/ambulatory ECG) khi có chỉ định", key="done_ambulatory_ecg_chk")
             if done_ambulatory_ecg:
                 ambulatory_reason = st.multiselect(
                     "Chỉ định phù hợp:",
-                    ["Đau ngực kèm nghi rối loạn nhịp", "Nghi đau thắt ngực do co thắt mạch vành (VSA)"]
+                    ["Đau ngực kèm nghi rối loạn nhịp", "Nghi đau thắt ngực do co thắt mạch vành (VSA)"],
+                    key="ambulatory_reason_val"
                 )
                 if "Đau ngực kèm nghi rối loạn nhịp" in ambulatory_reason:
                     st.info("ℹ️ ESC 2024: ambulatory ECG được khuyến cáo khi đau ngực kèm nghi rối loạn nhịp (Class I C).")
                 if "Nghi đau thắt ngực do co thắt mạch vành (VSA)" in ambulatory_reason:
                     st.info("ℹ️ ESC 2024: ambulatory ST-segment monitoring nên được cân nhắc khi nghi VSA và có triệu chứng thường xuyên (Class IIa B).")
 
-            done_pft = st.checkbox("Đo chức năng hô hấp (PFT)")
+            done_pft = st.checkbox("Đo chức năng hô hấp (PFT)", key="done_pft_chk")
             if done_pft:
-                pft_res = st.radio("Kết quả đo PFT:", ["Bình thường", "Rối loạn thông khí tắc nghẽn (COPD/Hen)", "Rối loạn thông khí hạn chế"])
+                pft_res = st.radio("Kết quả đo PFT:", ["Bình thường", "Rối loạn thông khí tắc nghẽn (COPD/Hen)", "Rối loạn thông khí hạn chế"], key="pft_result_val")
                 st.session_state.pft_abnormal = (pft_res != "Bình thường")
                 if st.session_state.pft_abnormal:
                     st.warning(f"👉 Kết quả PFT bất thường ({pft_res}): Gợi ý nguyên nhân hô hấp đi kèm.")
@@ -761,7 +849,9 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         st.subheader("1. Đánh giá siêu âm tim qua thành ngực lúc nghỉ")
         echo_col1, echo_col2 = st.columns(2)
         with echo_col1:
-            lvef_val = st.slider("Phân suất tống máu thất trái (LVEF %):", min_value=10, max_value=80, value=st.session_state.get('lvef_val', 55))
+            if "lvef_slider_widget" not in st.session_state:
+                st.session_state.lvef_slider_widget = st.session_state.get('lvef_val', 55)
+            lvef_val = st.slider("Phân suất tống máu thất trái (LVEF %):", min_value=10, max_value=80, key="lvef_slider_widget")
             st.session_state.lvef_val = lvef_val
         with echo_col2:
             echo_findings = st.multiselect("Kết quả siêu âm tim lúc nghỉ:", [
@@ -772,7 +862,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
                 "Rối loạn chức năng tâm trương thất trái",
                 "Rối loạn chức năng thất phải",
                 "Tăng áp lực động mạch phổi ước tính"
-            ])
+            ], key="echo_findings_val")
         st.session_state.lvd_flag = (lvef_val <= 40 or "Rối loạn vận động vùng thất trái (Regional wall motion abnormality)" in echo_findings)
         
         if lvef_val <= 40:
@@ -786,19 +876,23 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         
         calc_col1, calc_col2 = st.columns(2)
         with calc_col1:
-            gender = st.radio("Giới tính sinh học:", ["Nữ", "Nam"])
-            age_group = st.selectbox("Nhóm tuổi:", ["30-39", "40-49", "50-59", "60-69", "70-80"])
+            gender = st.radio("Giới tính sinh học:", ["Nữ", "Nam"], key="gender_val")
+            age_group = st.selectbox("Nhóm tuổi:", ["30-39", "40-49", "50-59", "60-69", "70-80"], key="age_group_val")
             
             # Auto link symptom type
             s_type_step1 = st.session_state.symptom_analysis.get("type", "Đau/Khó chịu vùng ngực") if "symptom_analysis" in st.session_state else "Đau/Khó chịu vùng ngực"
             s_type_idx = 0 if s_type_step1 == "Đau/Khó chịu vùng ngực" else 1
-            symptom_type = st.radio("Triệu chứng lâm sàng chính:", ["Cơn đau thắt ngực (Chest Pain)", "Khó thở khi gắng sức (Exertional Dyspnoea)"], index=s_type_idx)
+            if "step2_symptom_type_val" not in st.session_state:
+                st.session_state.step2_symptom_type_val = ["Cơn đau thắt ngực (Chest Pain)", "Khó thở khi gắng sức (Exertional Dyspnoea)"][s_type_idx]
+            else:
+                st.session_state.step2_symptom_type_val = st.session_state.step2_symptom_type_val
+            symptom_type = st.radio("Triệu chứng lâm sàng chính:", ["Cơn đau thắt ngực (Chest Pain)", "Khó thở khi gắng sức (Exertional Dyspnoea)"], key="step2_symptom_type_val")
             
             if symptom_type == "Cơn đau thắt ngực (Chest Pain)":
                 st.write("**Bảng tính điểm triệu chứng Đau ngực (Winther Score):**")
-                w_l = st.checkbox("Đau sau xương ức hoặc trước tim", value=True)
-                w_tr = st.checkbox("Khởi phát khi gắng sức hoặc xúc cảm", value=True)
-                w_re = st.checkbox("Giảm khi nghỉ hoặc dùng Nitrates trong 5 phút", value=True)
+                w_l = st.checkbox("Đau sau xương ức hoặc trước tim", key="winther_l_val")
+                w_tr = st.checkbox("Khởi phát khi gắng sức hoặc xúc cảm", key="winther_tr_val")
+                w_re = st.checkbox("Giảm khi nghỉ hoặc dùng Nitrates trong 5 phút", key="winther_re_val")
                 symptom_score = int(w_l) + int(w_tr) + int(w_re)
                 st.markdown(f"👉 **Điểm triệu chứng Đau ngực (Winther Score):** `{symptom_score} / 3 điểm`")
             else:
@@ -807,12 +901,23 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
                 
         with calc_col2:
             st.write("**Yếu tố nguy cơ tim mạch đi kèm (Yếu tố nguy cơ = 1 điểm):**")
-            rf_family = st.checkbox("Tiền sử gia đình mắc mạch vành sớm (Nam < 55, Nữ < 65) [1 điểm]")
-            rf_smoking = st.checkbox("Đang hút thuốc lá hoặc có tiền sử hút thuốc [1 điểm]")
-            rf_dyslipidemia = st.checkbox("Rối loạn lipid máu [1 điểm]", value=st.session_state.dyslipidemia_flag)
-            rf_hypertension = st.checkbox("Tăng huyết áp [1 điểm]", value=st.session_state.hypertension_flag)
-            rf_diabetes = st.checkbox("Đái tháo đường [1 điểm]", value=st.session_state.diabetes_flag)
+            rf_family = st.checkbox("Tiền sử gia đình mắc mạch vành sớm (Nam < 55, Nữ < 65) [1 điểm]", key="rf_family_val")
+            rf_smoking = st.checkbox("Đang hút thuốc lá hoặc có tiền sử hút thuốc [1 điểm]", key="rf_smoking_val")
+            if not st.session_state.get("rf_dyslipidemia_val", False) and st.session_state.dyslipidemia_flag:
+                st.session_state.rf_dyslipidemia_val = True
+            rf_dyslipidemia = st.checkbox("Rối loạn lipid máu [1 điểm]", key="rf_dyslipidemia_val")
+            if not st.session_state.get("rf_hypertension_val", False) and st.session_state.hypertension_flag:
+                st.session_state.rf_hypertension_val = True
+            rf_hypertension = st.checkbox("Tăng huyết áp [1 điểm]", key="rf_hypertension_val")
+            if not st.session_state.get("rf_diabetes_val", False) and st.session_state.diabetes_flag:
+                st.session_state.rf_diabetes_val = True
+            rf_diabetes = st.checkbox("Đái tháo đường [1 điểm]", key="rf_diabetes_val")
             
+            # Persist risk-factor diagnoses for downstream treatment recommendations.
+            st.session_state.dyslipidemia_flag = rf_dyslipidemia
+            st.session_state.hypertension_flag = rf_hypertension
+            st.session_state.diabetes_flag = rf_diabetes
+
             rf_count = int(rf_family) + int(rf_smoking) + int(rf_dyslipidemia) + int(rf_hypertension) + int(rf_diabetes)
             rf_category = "0-1" if rf_count <= 1 else ("2-3" if rf_count <= 3 else "4-5")
             st.markdown(f"👉 **Tổng điểm yếu tố nguy cơ:** `{rf_count} / 5 điểm` (Phân hạng: **{rf_category}**)")
@@ -916,9 +1021,9 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
     # Sub-step 2.3: Điều chỉnh khả năng lâm sàng
     if render_sub_header("Điều chỉnh khả năng lâm sàng", 3, "step2_sub"):
         st.subheader("3. Cá thể hóa và phân tầng lại nguy cơ (Figure 5)")
-        
-        # ESC 2024: RF-CL là ước tính nền. Các dữ kiện lâm sàng bổ sung được dùng
-        # để điều chỉnh bằng clinical judgement; không có công thức cộng/trừ % cố định.
+
+        # ESC 2024: RF-CL is the starting estimate. Clinical findings can modify clinical judgement.
+        # CACS-CL reclassification is specifically recommended to be considered in LOW RF-CL (>5–15%).
         base_lk = st.session_state.get('base_likelihood', 20)
 
         def get_class_label(val):
@@ -932,140 +1037,121 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         cacs_val = -1
         cacs_available = "Không áp dụng"
 
-        # CACS-CL reclassification is specifically surfaced for LOW RF-CL (>5–15%)
-        # as recommended in ESC 2024 (Class IIa B).
-        if 5 < base_lk <= 15:
-            adj_col1, adj_col2 = st.columns(2)
+        st.write("**Các dữ kiện lâm sàng dùng để điều chỉnh clinical likelihood:**")
+        ecg_adj_default = st.session_state.get('ecg_abnormal', False)
+        lvd_adj_default = st.session_state.get('lvd_flag', False)
+        # Auto-reflect objective findings into the first two checkboxes, while still allowing physician confirmation.
+        if ecg_adj_default:
+            st.session_state['adj_ecg_val'] = True
+        elif 'adj_ecg_val' not in st.session_state:
+            st.session_state['adj_ecg_val'] = False
         else:
-            adj_col1 = st.container()
-            adj_col2 = None
+            st.session_state['adj_ecg_val'] = st.session_state['adj_ecg_val']
+        if lvd_adj_default:
+            st.session_state['adj_lvd_val'] = True
+        elif 'adj_lvd_val' not in st.session_state:
+            st.session_state['adj_lvd_val'] = False
+        else:
+            st.session_state['adj_lvd_val'] = st.session_state['adj_lvd_val']
 
-        with adj_col1:
-            st.write("**Các dữ kiện lâm sàng dùng để điều chỉnh clinical likelihood:**")
-            
-            ecg_adj_default = st.session_state.ecg_abnormal
-            lvd_adj_default = st.session_state.get('lvd_flag', False)
-            
-            adj_ecg = st.checkbox("ECG lúc nghỉ bất thường (Sóng Q bệnh lý hoặc ST-T biến đổi)", value=ecg_adj_default)
-            adj_lvd = st.checkbox("Siêu âm tim có rối loạn vận động vùng hoặc giảm LVEF", value=lvd_adj_default)
-            adj_pad = st.checkbox("Bệnh nhân có tiền sử bệnh động mạch ngoại biên (PAD)")
-            adj_calc = st.checkbox("X-quang ngực hoặc CT phổi ghi nhận vôi hóa mạch vành")
-            adj_ex_ecg = st.checkbox("Nghiệm pháp gắng sức ECG có bất thường")
-            st.caption("ESC 2024: dữ kiện khám mạch ngoại biên, ECG, siêu âm tim và vôi hóa trên hình ảnh được dùng để điều chỉnh RF-CL (Class I C). Ở nhóm RF-CL thấp >5–15%, exercise ECG và phát hiện xơ vữa ngoài mạch vành có thể được cân nhắc để điều chỉnh (Class IIb C).")
+        adj_ecg = st.checkbox("ECG lúc nghỉ bất thường (Sóng Q bệnh lý hoặc ST-T biến đổi)", key="adj_ecg_val")
+        adj_lvd = st.checkbox("Siêu âm tim có rối loạn vận động vùng hoặc giảm LVEF", key="adj_lvd_val")
+        adj_pad = st.checkbox("Bệnh nhân có tiền sử bệnh động mạch ngoại biên (PAD)", key="adj_pad_val")
+        adj_calc = st.checkbox("X-quang ngực hoặc CT phổi ghi nhận vôi hóa mạch vành", key="adj_calc_val")
+        adj_ex_ecg = st.checkbox("Nghiệm pháp gắng sức ECG có bất thường", key="adj_ex_ecg_val")
+        st.caption("ESC 2024: các abnormal clinical findings được dùng để điều chỉnh RF-CL bằng clinical judgement; không có công thức cộng/trừ % cố định cho các yếu tố này.")
+        has_clinical_adjusters = (adj_ecg or adj_lvd or adj_pad or adj_calc or adj_ex_ecg)
 
-            has_clinical_adjusters = (adj_ecg or adj_lvd or adj_pad or adj_calc or adj_ex_ecg)
-
-        if adj_col2 is not None:
-            with adj_col2:
-                st.write("**Tái phân loại RF-CL bằng Điểm vôi hóa mạch vành (CACS):**")
-                st.info(
-                    f"🔵 **RF-CL hiện tại = {base_lk}% — nhóm LOW (>5–15%)**. "
-                    "ESC 2024: nên cân nhắc CACS để tái ước tính bằng mô hình **CACS-CL** "
-                    "và nhận diện thêm bệnh nhân có clinical likelihood rất thấp (≤5%) — **Class IIa B**."
+        # CACS module appears only in the LOW RF-CL group (>5–15%).
+        if 5 < base_lk <= 15:
+            st.write("**Tái phân loại RF-CL bằng Điểm vôi hóa mạch vành (CACS):**")
+            st.info(
+                f"🔵 **RF-CL hiện tại = {base_lk}% — nhóm LOW (>5–15%)**. "
+                "ESC 2024: nên cân nhắc CACS để tái ước tính bằng mô hình **CACS-CL** "
+                "và nhận diện thêm bệnh nhân có clinical likelihood rất thấp (≤5%) — **Class IIa B**."
+            )
+            st.image(
+                base64.b64decode(CACS_CL_FIGURE_B64),
+                caption="ESC 2024 — Figure 5: CACS-weighted clinical likelihood (CACS-CL) để tái phân loại RF-CL thấp >5–15%.",
+                use_container_width=True
+            )
+            cacs_available = st.radio(
+                "Đo vôi hóa mạch vành (CACS):",
+                ["Chưa thực hiện", "Đã có kết quả"],
+                key="ccs_cacs_available"
+            )
+            if cacs_available == "Đã có kết quả":
+                cacs_val = st.number_input(
+                    "Nhập điểm vôi hóa mạch vành (Agatston):",
+                    min_value=0, max_value=5000, step=1, key="ccs_cacs_value"
                 )
-                
-                st.image(
-                    base64.b64decode(CACS_CL_FIGURE_B64),
-                    caption="ESC 2024 — Figure 5: CACS-weighted clinical likelihood (CACS-CL) để tái phân loại RF-CL thấp >5–15%.",
-                    use_container_width=True
-                )
-                
-                cacs_available = st.radio(
-                    "Đo vôi hóa mạch vành (CACS):",
-                    ["Chưa thực hiện", "Đã có kết quả"],
-                    key="ccs_cacs_available"
-                )
-                
-                if cacs_available == "Đã có kết quả":
-                    cacs_val = st.number_input(
-                        "Nhập điểm vôi hóa mạch vành (Agatston):",
-                        min_value=0,
-                        max_value=5000,
-                        value=0,
-                        step=1,
-                        key="ccs_cacs_value"
-                    )
-                    
-                    if cacs_val == 0:
-                        st.success(
-                            "✅ **CACS = 0:** không ghi nhận vôi hóa mạch vành. ESC 2024 ghi nhận CACS = 0 "
-                            "có giá trị dự báo âm rất cao đối với CAD tắc nghẽn. Hãy dùng biểu đồ CACS-CL phía trên "
-                            "để đánh giá liệu RF-CL thấp có được tái phân loại xuống rất thấp (≤5%) hay không."
-                        )
-                    elif cacs_val <= 9:
-                        st.info("ℹ️ **CACS 1–9:** dùng đường tương ứng trên biểu đồ CACS-CL để tái phân loại; không tự cộng/trừ một % cố định.")
-                    elif cacs_val <= 99:
-                        st.info("ℹ️ **CACS 10–99:** dùng đường tương ứng trên biểu đồ CACS-CL để tái phân loại; không tự cộng/trừ một % cố định.")
-                    elif cacs_val <= 399:
-                        st.warning("⚠️ **CACS 100–399:** gánh nặng vôi hóa cao hơn; tích hợp với RF-CL và dữ kiện lâm sàng bằng CACS-CL/clinical judgement.")
-                    elif cacs_val <= 999:
-                        st.warning("⚠️ **CACS 400–999:** gánh nặng vôi hóa nhiều; dùng biểu đồ CACS-CL để hỗ trợ tái phân loại và lựa chọn thăm dò tiếp theo.")
-                    else:
-                        st.warning("⚠️ **CACS ≥1000:** gánh nặng vôi hóa rất nhiều; dùng biểu đồ CACS-CL để hỗ trợ tái phân loại và lựa chọn thăm dò tiếp theo.")
-                    
-                    st.caption(
-                        "Không nội suy hoặc tự tạo công thức từ biểu đồ để sinh ra một % mới. "
-                        "ESC 2024 nhấn mạnh CACS-CL là mô hình đã được validation; các điều chỉnh khác của RF-CL dựa trên clinical judgement."
-                    )
+                if cacs_val == 0:
+                    st.success("✅ **CACS = 0:** dùng đường CACS 0 trên Figure 5 để xác định liệu RF-CL thấp có được tái phân loại xuống rất thấp (≤5%) hay không.")
+                elif cacs_val <= 9:
+                    st.info("ℹ️ **CACS 1–9:** dùng đường tương ứng trên Figure 5/CACS-CL để tái phân loại; không tự cộng/trừ một % cố định.")
+                elif cacs_val <= 99:
+                    st.info("ℹ️ **CACS 10–99:** dùng đường tương ứng trên Figure 5/CACS-CL để tái phân loại; không tự cộng/trừ một % cố định.")
+                elif cacs_val <= 399:
+                    st.warning("⚠️ **CACS 100–399:** tích hợp với RF-CL bằng CACS-CL và clinical judgement để chọn thăm dò tiếp theo.")
+                elif cacs_val <= 999:
+                    st.warning("⚠️ **CACS 400–999:** gánh nặng vôi hóa nhiều; dùng CACS-CL/clinical judgement để lựa chọn thăm dò tiếp theo.")
+                else:
+                    st.warning("⚠️ **CACS ≥1000:** gánh nặng vôi hóa rất nhiều; dùng CACS-CL/clinical judgement để lựa chọn thăm dò tiếp theo.")
+                st.caption("Không nội suy hoặc tự tạo công thức từ biểu đồ để sinh ra một % mới.")
 
         if has_clinical_adjusters:
-            st.warning(
-                "💡 **Clinical judgement:** ECG, siêu âm tim, bệnh động mạch ngoại biên, vôi hóa trên hình ảnh "
-                "hoặc exercise ECG bất thường có thể làm thay đổi clinical likelihood so với RF-CL nền. "
-                "ESC 2024 không cung cấp công thức cộng % cố định cho các yếu tố này."
+            st.warning("💡 **Clinical judgement:** có dữ kiện bất thường có thể làm thay đổi clinical likelihood so với RF-CL nền. ESC 2024 không cung cấp công thức cộng % cố định cho các yếu tố này.")
+
+        # By default keep the RF-CL category. Only ask the physician to reclassify when there is
+        # a real reason to do so: abnormal clinical modifiers and/or CACS result in LOW RF-CL.
+        final_category = base_label
+        final_display = f"{base_lk}%"
+        final_col = base_col
+        need_reclass_confirmation = has_clinical_adjusters or (5 < base_lk <= 15 and cacs_available == "Đã có kết quả")
+
+        if need_reclass_confirmation:
+            reclass_options = [
+                "Giữ nguyên nhóm RF-CL nền",
+                "Rất thấp (≤5%)",
+                "Thấp (>5–15%)",
+                "Trung bình (>15–50%)",
+                "Cao (>50–85%)",
+                "Rất cao (>85%)"
+            ]
+            reclass_choice = st.selectbox(
+                "Nhóm clinical likelihood sau khi bác sĩ tích hợp dữ kiện bổ sung"
+                + (" / CACS-CL" if 5 < base_lk <= 15 else "")
+                + ":",
+                reclass_options,
+                key="reclass_choice_val",
+                help="Chỉ chọn lại nhóm khi dữ kiện lâm sàng/CACS thực sự làm thay đổi đánh giá. Không tự cộng/trừ thành một % mới."
             )
-
-        reclass_options = [
-            "Giữ nguyên nhóm RF-CL nền",
-            "Rất thấp (≤5%)",
-            "Thấp (>5–15%)",
-            "Trung bình (>15–50%)",
-            "Cao (>50–85%)",
-            "Rất cao (>85%)"
-        ]
-        
-        reclass_help = (
-            "Chọn nhóm sau khi bác sĩ tích hợp dữ kiện lâm sàng bổ sung. "
-            "Nếu RF-CL >5–15% và có CACS, dùng CACS-CL/Figure 5 để hỗ trợ tái phân loại. "
-            "Không tự cộng/trừ CACS thành một %."
-        )
-        reclass_choice = st.selectbox(
-            "Nhóm clinical likelihood sau khi bác sĩ tích hợp dữ kiện bổ sung"
-            + (" / CACS-CL" if 5 < base_lk <= 15 else "")
-            + ":",
-            reclass_options,
-            help=reclass_help
-        )
-
-        if reclass_choice == "Giữ nguyên nhóm RF-CL nền":
-            final_category = base_label
-            final_display = f"{base_lk}%"
-            final_col = base_col
+            if reclass_choice != "Giữ nguyên nhóm RF-CL nền":
+                final_category = reclass_choice
+                final_display = "Không suy diễn % chính xác"
+                final_col = {
+                    "Rất thấp (≤5%)": "#28a745", "Thấp (>5–15%)": "#17a2b8",
+                    "Trung bình (>15–50%)": "#ffc107", "Cao (>50–85%)": "#fd7e14", "Rất cao (>85%)": "#dc3545"
+                }[reclass_choice]
         else:
-            final_category = reclass_choice
-            final_display = "Không suy diễn % chính xác"
-            category_colors = {
-                "Rất thấp (≤5%)": "#28a745",
-                "Thấp (>5–15%)": "#17a2b8",
-                "Trung bình (>15–50%)": "#ffc107",
-                "Cao (>50–85%)": "#fd7e14",
-                "Rất cao (>85%)": "#dc3545"
-            }
-            final_col = category_colors[reclass_choice]
+            # Hide the redundant reclassification box when there is nothing to integrate.
+            st.caption("Không có dữ kiện bổ sung cần tái phân loại: công cụ giữ nguyên nhóm RF-CL nền cho bước lựa chọn thăm dò.")
 
         st.markdown(f"""
         <div style='background-color: #f1f2f6; border-radius: 6px; padding: 15px; border-left: 6px solid {final_col}; margin: 15px 0;'>
-            <h4 style='margin: 0; color: #333;'>Khả năng lâm sàng sau tích hợp dữ kiện:</h4>
+            <h4 style='margin: 0; color: #333;'>Khả năng lâm sàng sử dụng cho bước tiếp theo:</h4>
             <p style='font-size: 1.35rem; margin: 10px 0 5px 0; font-weight: bold;'>RF-CL nền: <span style='color: {base_col};'>{base_lk}% — {base_label}</span></p>
             <p style='margin: 0;'>Phân loại sử dụng cho bước chọn thăm dò: <strong style='color: {final_col};'>{final_category}</strong> ({final_display})</p>
         </div>
         """, unsafe_allow_html=True)
 
+        # Persist even if the physician navigates by clicking another accordion header.
+        st.session_state.likelihood_value = base_lk
+        st.session_state.likelihood_category = final_category
+        st.session_state.cacs_score_val = cacs_val if (5 < base_lk <= 15 and cacs_available == "Đã có kết quả") else -1
+
         st.write("")
         if st.button("Xác nhận & Sang Bước 3 ➡️"):
-            st.session_state.likelihood_value = base_lk
-            st.session_state.likelihood_category = final_category
-            st.session_state.cacs_score_val = cacs_val if (5 < base_lk <= 15 and cacs_available == "Đã có kết quả") else -1
             set_step(3)
 
 
@@ -1162,19 +1248,18 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
         
         selected_test = st.radio(
             "Phương pháp chẩn đoán hình ảnh thực tế đã thực hiện:",
-            ["Chờ kết quả / Chưa làm", "Chụp cắt lớp vi tính động mạch vành (CCTA)", "Thăm dò hình ảnh chức năng gắng sức", "Chụp động mạch vành xâm lấn (ICA)"]
+            ["Chờ kết quả / Chưa làm", "Chụp cắt lớp vi tính động mạch vành (CCTA)", "Thăm dò hình ảnh chức năng gắng sức", "Chụp động mạch vành xâm lấn (ICA)"],
+            key="selected_test_widget"
         )
         st.session_state.selected_test_val = selected_test
         
-        st.session_state.anoca_suspected = False
-        st.session_state.high_risk_flag = False
-
         if selected_test == "Chụp cắt lớp vi tính động mạch vành (CCTA)":
             ccta_res = st.radio(
                 "Kết quả mạch vành trên phim CCTA:",
                 ["Không hẹp hoặc hẹp nhẹ (<50% Thân chung LMS, <50% các nhánh lớn)",
                  "Hẹp mức độ trung gian (cần đánh giá thêm ý nghĩa chức năng)",
-                 "Hẹp nặng rõ rệt (ví dụ ≥50% Thân chung LMS hoặc ≥70% nhánh lớn khác)"]
+                 "Hẹp nặng rõ rệt (ví dụ ≥50% Thân chung LMS hoặc ≥70% nhánh lớn khác)"],
+                key="ccta_result_widget"
             )
 
             if "Không hẹp" in ccta_res:
@@ -1188,7 +1273,8 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
                      "FFR-CT ≤ 0.80",
                      "FFR-CT > 0.80",
                      "Hình ảnh chức năng dương tính với thiếu máu cơ tim",
-                     "Hình ảnh chức năng âm tính với thiếu máu cơ tim"]
+                     "Hình ảnh chức năng âm tính với thiếu máu cơ tim"],
+                    key="ccta_functional_widget"
                 )
 
                 if ccta_functional == "FFR-CT ≤ 0.80":
@@ -1214,7 +1300,8 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
             func_res = st.radio(
                 "Kết quả thiếu máu cơ tim gắng sức:",
                 ["Âm tính (không ghi nhận thiếu máu cơ tim cảm ứng đáng kể)",
-                 "Dương tính (phát hiện thiếu máu cơ tim cảm ứng)"]
+                 "Dương tính (phát hiện thiếu máu cơ tim cảm ứng)"],
+                key="functional_result_widget"
             )
             if "Dương tính" in func_res:
                 st.session_state.coronary_status = "Ischaemia-positive / anatomy unconfirmed"
@@ -1228,7 +1315,8 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
                 "Kết quả giải phẫu mạch vành trên phim ICA:",
                 ["Không hẹp hoặc hẹp nhẹ (<50% Thân chung LMS, <50% các nhánh chính)",
                  "Hẹp mức độ trung gian (thường khoảng 40–90% ngoài thân chung hoặc 40–70% thân chung)",
-                 "Hẹp nặng rõ rệt"]
+                 "Hẹp nặng rõ rệt"],
+                key="ica_result_widget"
             )
             if "Không hẹp" in ica_res:
                 st.session_state.coronary_status = "Non-obstructive"
@@ -1239,7 +1327,8 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
                     "Kết quả đo FFR/iFR:",
                     ["Chưa đo FFR/iFR / Đang chờ",
                      "CÓ Ý NGHĨA SINH LÝ (FFR ≤ 0.80 hoặc iFR ≤ 0.89)",
-                     "KHÔNG CÓ Ý NGHĨA SINH LÝ (FFR > 0.80 và iFR > 0.89)"]
+                     "KHÔNG CÓ Ý NGHĨA SINH LÝ (FFR > 0.80 và iFR > 0.89)"],
+                    key="ica_functional_widget"
                 )
                 if "CÓ Ý NGHĨA" in ica_functional:
                     st.session_state.coronary_status = "Obstructive"
@@ -1268,6 +1357,31 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
         }
         st.write(f"👉 Trạng thái hiện tại: **{status_labels.get(st.session_state.coronary_status, st.session_state.coronary_status)}**")
 
+        if st.session_state.coronary_status != "Non-obstructive":
+            st.session_state.anoca_suspected = False
+            st.session_state.anoca_endotype = "Chưa phân loại"
+
+        if st.session_state.coronary_status == "Obstructive":
+            st.write("**Mẫu giải phẫu mạch vành liên quan đến quyết định tái thông (chỉ chọn khi đã đủ dữ liệu giải phẫu/chức năng):**")
+            anatomy_options = [
+                "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu",
+                "Left Main đáng kể — không kèm/không rõ multivessel disease",
+                "Left Main đáng kể + multivessel disease",
+                "Bệnh 3 nhánh (three-vessel disease)",
+                "Bệnh 1–2 nhánh có liên quan đoạn gần LAD",
+                "Bệnh 1–2 nhánh không liên quan đoạn gần LAD",
+                "Multivessel disease khác (≥2 động mạch vành chính)"
+            ]
+            if st.session_state.get('revasc_anatomy_widget') not in anatomy_options:
+                st.session_state.revasc_anatomy_widget = st.session_state.get('revasc_anatomy_pattern', anatomy_options[0])
+                if st.session_state.revasc_anatomy_widget not in anatomy_options:
+                    st.session_state.revasc_anatomy_widget = anatomy_options[0]
+            anatomy_pattern = st.selectbox(
+                "Kiểu giải phẫu chính:", anatomy_options, key="revasc_anatomy_widget"
+            )
+            st.session_state.revasc_anatomy_pattern = anatomy_pattern
+            st.caption("Chỉ dùng các tổn thương đáng kể/có ý nghĩa chức năng khi áp dụng các khuyến cáo tái thông ở Bước 4.")
+
     # Sub-step 3.3: Chẩn đoán ANOCA/INOCA
     if render_sub_header("Chẩn đoán ANOCA/INOCA", 3, "step3_sub"):
         if st.session_state.get('coronary_status', "Untested") == "Non-obstructive":
@@ -1275,7 +1389,8 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
             
             has_symptoms = st.radio(
                 "Bệnh nhân vẫn có triệu chứng dai dẳng dù đã điều trị nội khoa, ảnh hưởng chất lượng cuộc sống và đã loại trừ nguyên nhân ngoài tim không?",
-                ["Có — dai dẳng dù điều trị và ảnh hưởng chất lượng cuộc sống", "Không — triệu chứng nhẹ/ổn định hoặc chưa đáp ứng tiêu chí trên"]
+                ["Có — dai dẳng dù điều trị và ảnh hưởng chất lượng cuộc sống", "Không — triệu chứng nhẹ/ổn định hoặc chưa đáp ứng tiêu chí trên"],
+                key="anoca_symptoms_widget"
             )
 
             if has_symptoms.startswith("Có"):
@@ -1290,14 +1405,15 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
                 st.write("**Nhập kết quả đo chức năng mạch vành xâm lấn (ICFT) bám sát tiêu chuẩn ESC 2024:**")
                 col_i1, col_i2 = st.columns(2)
                 with col_i1:
-                    icft_cfr = st.selectbox("1. Lưu lượng dự trữ mạch vành (CFR):", ["Bình thường (CFR ≥ 2.5)", "Giảm (CFR < 2.5)"])
-                    icft_imr = st.selectbox("2. Kháng trở vi tuần hoàn (IMR/HMR):", ["Bình thường (IMR < 25 VÀ HMR ≤ 2.5)", "Tăng (IMR ≥ 25 HOẶC HMR > 2.5)"])
+                    icft_cfr = st.selectbox("1. Lưu lượng dự trữ mạch vành (CFR):", ["Bình thường (CFR ≥ 2.5)", "Giảm (CFR < 2.5)"], key="icft_cfr_widget")
+                    icft_imr = st.selectbox("2. Kháng trở vi tuần hoàn (IMR/HMR):", ["Bình thường (IMR < 25 VÀ HMR ≤ 2.5)", "Tăng (IMR ≥ 25 HOẶC HMR > 2.5)"], key="icft_imr_widget")
                 with col_i2:
                     icft_spasm = st.selectbox(
                         "3. Nghiệm pháp kích thích Acetylcholine (ACh):",
                         ["Âm tính", 
                          "Dương tính co thắt thượng tâm mạc (Hẹp kính mạch ≥ 90% kèm tái phát đau ngực và ST biến đổi)", 
-                         "Dương tính co thắt vi tuần hoàn (ST biến đổi và tái phát đau ngực nhưng không co thắt nhánh mạch lớn)"]
+                         "Dương tính co thắt vi tuần hoàn (ST biến đổi và tái phát đau ngực nhưng không co thắt nhánh mạch lớn)"],
+                        key="icft_spasm_widget"
                     )
                 
                 # Endotype Formulation
@@ -1331,16 +1447,16 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
             risk_col1, risk_col2 = st.columns(2)
             with risk_col1:
                 st.write("**Các tiêu chuẩn về cấu trúc giải phẫu (Anatomical):**")
-                high_risk_anatomy = st.checkbox("CCTA: Thân chung trái (Left Main) hẹp ≥ 50%")
-                high_risk_anatomy_2 = st.checkbox("CCTA: Bệnh 3 nhánh, mỗi nhánh hẹp ≥ 70%")
-                high_risk_anatomy_3 = st.checkbox("CCTA: Bệnh 2 nhánh hẹp ≥ 70%, có bao gồm đoạn gần LAD")
-                high_risk_anatomy_4 = st.checkbox("CCTA: Hẹp đoạn gần LAD ≥ 70% VÀ FFR-CT ≤ 0.80")
+                high_risk_anatomy = st.checkbox("CCTA: Thân chung trái (Left Main) hẹp ≥ 50%", key="high_risk_anat_lm")
+                high_risk_anatomy_2 = st.checkbox("CCTA: Bệnh 3 nhánh, mỗi nhánh hẹp ≥ 70%", key="high_risk_anat_3v")
+                high_risk_anatomy_3 = st.checkbox("CCTA: Bệnh 2 nhánh hẹp ≥ 70%, có bao gồm đoạn gần LAD", key="high_risk_anat_2v_lad")
+                high_risk_anatomy_4 = st.checkbox("CCTA: Hẹp đoạn gần LAD ≥ 70% VÀ FFR-CT ≤ 0.80", key="high_risk_anat_lad_ffrct")
             with risk_col2:
                 st.write("**Các tiêu chuẩn về chức năng thiếu máu (Functional):**")
-                high_risk_func_1 = st.checkbox("Stress Echo: ≥ 3/16 phân vùng giảm động hoặc vô động do stress")
-                high_risk_func_2 = st.checkbox("Stress CMR: ≥ 2/16 phân vùng có perfusion defect HOẶC ≥ 3 phân vùng rối loạn vận động do dobutamine")
-                high_risk_func_3 = st.checkbox("Stress SPECT/PET: vùng thiếu máu cơ tim ≥ 10% khối cơ thất trái")
-                high_risk_func_4 = st.checkbox("Exercise ECG: Duke Treadmill Score < -10")
+                high_risk_func_1 = st.checkbox("Stress Echo: ≥ 3/16 phân vùng giảm động hoặc vô động do stress", key="high_risk_func_echo")
+                high_risk_func_2 = st.checkbox("Stress CMR: ≥ 2/16 phân vùng có perfusion defect HOẶC ≥ 3 phân vùng rối loạn vận động do dobutamine", key="high_risk_func_cmr")
+                high_risk_func_3 = st.checkbox("Stress SPECT/PET: vùng thiếu máu cơ tim ≥ 10% khối cơ thất trái", key="high_risk_func_spect")
+                high_risk_func_4 = st.checkbox("Exercise ECG: Duke Treadmill Score < -10", key="high_risk_func_duke")
 
             is_high_risk = (
                 high_risk_anatomy or high_risk_anatomy_2 or high_risk_anatomy_3 or high_risk_anatomy_4 or
@@ -1377,31 +1493,103 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
         tab_prognostic, tab_symptomatic = st.tabs(["🛡️ Thuốc bảo vệ & Cải thiện tiên lượng", "💊 Thuốc giảm đau thắt ngực (Figure 9)"])
         
         with tab_prognostic:
-            st.write("**Thay đổi lối sống lành mạnh (Class I):**")
-            st.markdown("""
-            * **Cai thuốc lá tuyệt đối:** Hỗ trợ tư vấn cai thuốc, tránh phơi nhiễm khói thuốc lá thụ động (Class I A).
-            * **Chế độ ăn Địa Trung Hải:** Hạn chế chất béo bão hòa < 10% năng lượng, tăng cường rau xanh, ngũ cốc nguyên hạt. Giới hạn rượu bia.
-            * **Hoạt động thể lực:** Tập thể dục cường độ trung bình 150-300 phút hoặc cường độ mạnh 75-150 phút hàng tuần (Class I B).
-            """)
-            
-            st.write("**Điều trị dự phòng biến cố — áp dụng theo đúng bối cảnh lâm sàng:**")
-            st.markdown("""
-            * **Kháng huyết khối dài hạn:**
-                * CCS có **tiền sử MI hoặc PCI từ xa:** Aspirin 75–100 mg/ngày lâu dài — **Class I A**; Clopidogrel 75 mg/ngày là lựa chọn thay thế an toàn và hiệu quả cho aspirin — **Class I A**.
-                * **Sau CABG:** Aspirin 75–100 mg/ngày lâu dài — **Class I A**.
-                * Không có tiền sử MI/tái thông nhưng có **CAD tắc nghẽn đáng kể:** Aspirin 75–100 mg/ngày lâu dài — **Class I B**.
-                * Lựa chọn và thời gian điều trị phải cân bằng nguy cơ thiếu máu cục bộ và nguy cơ chảy máu; không mặc định “aspirin hoặc clopidogrel Class I A” cho mọi CCS.
-            * **Huyết áp:** Mục tiêu thực hành trong CCS là **SBP 120–129 mmHg nếu dung nạp**. Không tự gán mục tiêu DBP 70–79 mmHg như một khuyến cáo CCS Class I A từ guideline này.
-            * **ACE-I/ARB:** Được khuyến cáo khi CCS kèm **tăng huyết áp, LVEF ≤40%, đái tháo đường hoặc CKD**, nếu không có chống chỉ định.
-            """)
-            if st.session_state.get('diabetes_flag', False):
-                st.markdown("""
-                * **T2DM đã được xác định + CCS:** SGLT2 inhibitor có bằng chứng lợi ích tim mạch và GLP-1 receptor agonist có bằng chứng lợi ích tim mạch đều **được khuyến cáo Class I A** để giảm biến cố tim mạch, độc lập với HbA1c nền/đích.
-                """)
+            st.subheader("🛡️ Điều trị bảo vệ & cải thiện tiên lượng cho bệnh nhân này")
+            st.caption("Công cụ chỉ hiển thị các khuyến cáo được kích hoạt bởi dữ liệu đã nhập ở Bước 1–3; không liệt kê toàn bộ guideline.")
+
+            coronary_status_prog = st.session_state.get('coronary_status', 'Untested')
+            prior_mi = st.session_state.get('prior_mi', False)
+            prior_pci = st.session_state.get('prior_pci', False)
+            prior_cabg = st.session_state.get('prior_cabg', False)
+            oac_indication = st.session_state.get('oac_indication', False)
+            has_dm = st.session_state.get('diabetes_flag', False)
+            has_htn = st.session_state.get('hypertension_flag', False)
+            lvef_prog = st.session_state.get('lvef_val', 55)
+            egfr_prog = st.session_state.get('egfr_val', 90)
+            has_ckd = egfr_prog < 60
+
+            recommendations = []
+            cautions = []
+
+            # Antithrombotic recommendation, individualized to history/anatomy/OAC status.
+            if oac_indication:
+                recommendations.append((
+                    "Kháng đông đường uống dài hạn",
+                    "Nếu có chỉ định OAC dài hạn, ESC 2024 khuyến cáo VKA liều điều trị cho AF hoặc ưu tiên DOAC nếu không chống chỉ định; không tự động cộng thêm aspirin dài hạn chỉ vì CCS.",
+                    "Class I B"
+                ))
+                if prior_pci:
+                    cautions.append("Có tiền sử PCI + chỉ định OAC: chiến lược kháng huyết khối còn phụ thuộc thời điểm PCI và nguy cơ thiếu máu/chảy máu; cần áp dụng nhánh OAC + PCI thay vì SAPT thông thường.")
             else:
-                st.caption("ℹ️ Không tự kích hoạt khuyến cáo SGLT2i/GLP-1 RA chỉ từ một giá trị HbA1c; cần xác định bệnh nhân thực sự có T2DM.")
-                st.markdown("* **Không có T2DM nhưng thừa cân/béo phì (BMI ≥27 kg/m²):** Semaglutide **nên được cân nhắc (Class IIa B)** để giảm tử vong tim mạch, MI hoặc đột quỵ ở bệnh nhân CCS phù hợp.")
-            
+                if prior_mi or prior_pci:
+                    recommendations.append((
+                        "Aspirin 75–100 mg/ngày lâu dài",
+                        "Tiền sử MI hoặc PCI từ xa. Clopidogrel 75 mg/ngày là lựa chọn thay thế an toàn và hiệu quả cho aspirin monotherapy.",
+                        "Class I A"
+                    ))
+                elif prior_cabg:
+                    recommendations.append((
+                        "Aspirin 75–100 mg/ngày lâu dài",
+                        "Tiền sử CABG.",
+                        "Class I A"
+                    ))
+                elif coronary_status_prog == "Obstructive":
+                    recommendations.append((
+                        "Aspirin 75–100 mg/ngày lâu dài",
+                        "Không ghi nhận MI/tái thông trước đó nhưng đã có significant obstructive CAD.",
+                        "Class I B"
+                    ))
+
+            # RAAS blockade only when a guideline trigger is present.
+            raas_reasons = []
+            if has_htn: raas_reasons.append("tăng huyết áp")
+            if lvef_prog <= 40: raas_reasons.append("LVEF ≤40% / suy chức năng thất trái")
+            if has_dm: raas_reasons.append("đái tháo đường")
+            if raas_reasons:
+                if has_ckd:
+                    raas_reasons.append("CKD/eGFR <60 cũng hiện diện")
+                recommendations.append((
+                    "ACE-I (hoặc ARB nếu không dung nạp)",
+                    "CCS kèm " + ", ".join(raas_reasons) + ".",
+                    "Class I A"
+                ))
+            elif has_ckd:
+                cautions.append("Có eGFR <60/CKD: ESC 2024 nêu RAAS inhibition có vai trò ở nhóm này, nhưng công cụ không tự gắn Class I A chỉ từ CKD đơn độc trong bảng khuyến cáo CCS.")
+
+            if has_dm:
+                recommendations.append((
+                    "SGLT2 inhibitor có bằng chứng lợi ích tim mạch",
+                    "Bệnh nhân có T2DM + CCS; khuyến cáo độc lập với HbA1c nền/đích.",
+                    "Class I A"
+                ))
+                recommendations.append((
+                    "GLP-1 receptor agonist có bằng chứng lợi ích tim mạch",
+                    "Bệnh nhân có T2DM + CCS; khuyến cáo độc lập với HbA1c nền/đích.",
+                    "Class I A"
+                ))
+
+            # LDL-lowering is handled in the dedicated lipid tab using actual LDL/current therapy.
+            recommendations.append((
+                "Điều trị hạ LDL-C theo module lipid bên dưới",
+                "CCS là ASCVD đã xác định; mục tiêu LDL-C và tăng cường statin/ezetimibe/PCSK9/bempedoic acid được cá thể hóa theo LDL-C và phác đồ hiện tại ở mục ‘Tối ưu hóa lipid máu’.",
+                "ESC CCS 2024 + ESC/EAS 2025"
+            ))
+
+            if recommendations:
+                for drug, reason, cls in recommendations:
+                    st.markdown(f"""
+                    <div class='recommendation-box' style='margin-bottom: 10px;'>
+                        <strong>✅ {drug}</strong> <span style='font-weight:700;'>({cls})</span><br>
+                        <span><strong>Lý do áp dụng cho ca này:</strong> {reason}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("ℹ️ Chưa có đủ dữ liệu để kích hoạt một khuyến cáo thuốc dự phòng biến cố cụ thể ngoài kiểm soát yếu tố nguy cơ và lipid.")
+
+            for note in cautions:
+                st.warning("⚠️ " + note)
+
+            st.markdown("**Lối sống nền tảng:** cai thuốc lá, chế độ ăn lành mạnh và hoạt động thể lực phù hợp vẫn là thành phần của GDMT.")
+
         with tab_symptomatic:
             # Pull clinical variables
             hr_val = st.session_state.get('hr_val', 75)
@@ -1790,7 +1978,8 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
              "Đang dùng Statin cường độ cao (Atorvastatin 40-80mg, Rosuvastatin 20-40mg) ở liều tối đa dung nạp",
              "Đang dùng phối hợp Statin tối đa + Ezetimibe 10mg",
              "Đang dùng phối hợp 3 thuốc (Statin tối đa + Ezetimibe + PCSK9 monoclonal antibody)",
-             "Bệnh nhân hoàn toàn Kém dung nạp với Statin (Statin Intolerance)"]
+             "Bệnh nhân hoàn toàn Kém dung nạp với Statin (Statin Intolerance)"],
+            key="lipid_current_therapy_val"
         )
         
         is_at_target = ldlc_now < target_ldlc_mmol
@@ -1861,54 +2050,116 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
 
     # Sub-step 4.3: Can thiệp mạch vành
     if render_sub_header("Can thiệp mạch vành", 3, "step4_sub"):
-        if st.session_state.get('anoca_suspected', False):
+        st.subheader("3. Chỉ định và lựa chọn Tái thông mạch vành (Revascularization)")
+
+        coronary_status = st.session_state.get('coronary_status', 'Untested')
+        anoca_suspected = st.session_state.get('anoca_suspected', False)
+        anatomy = st.session_state.get('revasc_anatomy_pattern', "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu")
+        lvef_revasc = st.session_state.get('lvef_val', 55)
+        has_dm = st.session_state.get('diabetes_flag', False)
+
+        if anoca_suspected or coronary_status == "Non-obstructive":
             st.markdown(f"""
-            <div class='warning-box' style='border-left-color: #c0392b; background-color: #fdf2f2;'>
-                <h4 style='color: #c0392b; margin-top: 0;'>🚫 KHÔNG CÓ ĐÍCH TÁI THÔNG MẠCH THƯỢNG TÂM MẠC</h4>
-                <p style='font-size: 1.05rem;'>Bệnh nhân thuộc phổ <strong>ANOCA/INOCA (Kiểu hình: {st.session_state.get('anoca_endotype', 'Chưa phân loại')})</strong> và không có tổn thương mạch vành thượng tâm mạc giới hạn dòng phù hợp để PCI/CABG.</p>
-                <p style='margin-bottom: 0;'><strong>Hướng xử trí:</strong> tập trung vào điều trị nội khoa theo endotype, kiểm soát yếu tố nguy cơ và đánh giá lại triệu chứng. Không mô tả PCI/CABG là “chống chỉ định có hại” một cách tuyệt đối khi guideline không đưa ra kết luận như vậy.</p>
+            <div class='success-box' style='background-color: #e8f8f5; border-left-color: #2ecc71;'>
+                <h4 style='color: #167c5a; margin-top: 0;'>✅ KHÔNG CÓ ĐÍCH TÁI THÔNG MẠCH THƯỢNG TÂM MẠC ĐÃ XÁC ĐỊNH</h4>
+                <p style='font-size: 1.05rem;'>Trạng thái hiện tại: <strong>{'ANOCA/INOCA — ' + st.session_state.get('anoca_endotype', 'chưa phân loại') if anoca_suspected else 'không có CAD tắc nghẽn / không có tổn thương thượng tâm mạc giới hạn dòng'}</strong>.</p>
+                <p style='margin-bottom: 0;'>Tập trung điều trị nội khoa theo cơ chế/endotype và kiểm soát yếu tố nguy cơ. Không có chỉ định PCI/CABG nếu không có tổn thương thượng tâm mạc có ý nghĩa chức năng để tái thông.</p>
             </div>
             """, unsafe_allow_html=True)
+
+        elif coronary_status in ["Untested", "Indeterminate", "Intermediate + Ischaemia", "Intermediate / no inducible ischaemia", "Ischaemia-positive / anatomy unconfirmed", "No inducible ischaemia / anatomy unconfirmed"]:
+            st.warning("⚠️ **Chưa đủ dữ liệu để quyết định tái thông.** Cần xác định giải phẫu mạch vành và/hoặc ý nghĩa chức năng của tổn thương trước khi chọn PCI/CABG. Tổn thương trung gian cần FFR/iFR hoặc đánh giá chức năng phù hợp.")
+
         else:
-            st.subheader("3. Chỉ định và lựa chọn Tái thông mạch vành (Revascularization)")
+            # Obstructive/functionally significant epicardial CAD established.
+            persistent_symptoms = st.checkbox(
+                "Triệu chứng đau thắt ngực/anginal equivalent vẫn dai dẳng dù đã điều trị theo GDMT",
+                key="revasc_persistent_symptoms"
+            )
 
-            is_high_risk = st.session_state.get('high_risk_flag', False)
-            if is_high_risk:
-                st.markdown("""
-                <div class='warning-box' style='border-left-color: #fd7e14;'>
-                    <h4 style='color: #fd7e14; margin-top: 0;'>🚨 HIGH EVENT-RISK → ICA + ĐÁNH GIÁ CHỨC NĂNG KHI PHÙ HỢP</h4>
-                    <p>ESC 2024 khuyến cáo <strong>ICA, bổ sung FFR/iFR khi phù hợp (Class I A)</strong> ở người bệnh nguy cơ biến cố cao để làm rõ phân tầng nguy cơ và xác định chiến lược điều trị. <strong>High event-risk không tự động đồng nghĩa phải PCI/CABG để kéo dài sống còn.</strong></p>
-                </div>
-                """, unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class='info-box' style='background-color:#f7f9fa; border-left:5px solid #17b978;'>
+                <strong>Dữ liệu đang dùng để ra quyết định:</strong><br>
+                Giải phẫu: <strong>{anatomy}</strong> | LVEF: <strong>{lvef_revasc}%</strong> | Đái tháo đường: <strong>{'Có' if has_dm else 'Không'}</strong> | Triệu chứng dai dẳng dù GDMT: <strong>{'Có' if persistent_symptoms else 'Không'}</strong>
+            </div>
+            """, unsafe_allow_html=True)
+
+            indications = []
+            # Outcome-driven indications from Table 22
+            if lvef_revasc > 35 and "Left Main" in anatomy:
+                indications.append(("CÓ — để cải thiện sống còn", "Functionally significant Left Main + LVEF >35%", "Class I A"))
+            if lvef_revasc > 35 and anatomy == "Bệnh 3 nhánh (three-vessel disease)":
+                indications.append(("CÓ — để cải thiện kết cục dài hạn", "Functionally significant three-vessel disease + LVEF >35%", "Class I A"))
+            if lvef_revasc > 35 and anatomy == "Bệnh 1–2 nhánh có liên quan đoạn gần LAD":
+                indications.append(("CÓ — để giảm tử vong tim mạch/MI tự phát", "Functionally significant 1–2 vessel disease involving proximal LAD + LVEF >35%", "Class I B"))
+            if lvef_revasc <= 35 and anatomy in ["Bệnh 3 nhánh (three-vessel disease)", "Multivessel disease khác (≥2 động mạch vành chính)", "Left Main đáng kể + multivessel disease"]:
+                indications.append(("CÓ THỂ CẦN — ưu tiên đánh giá Heart Team", "Multivessel CAD + LVEF ≤35%; nếu đủ điều kiện phẫu thuật, CABG được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện sống còn", "CABG Class I B"))
+            if persistent_symptoms:
+                indications.append(("CÓ — để cải thiện triệu chứng", "Đau ngực/anginal equivalent dai dẳng dù GDMT + obstructive CAD có ý nghĩa chức năng", "Class I A"))
+
+            if indications:
+                st.markdown("### 🎯 Kết luận chỉ định tái thông cho ca này")
+                for title, reason, cls in indications:
+                    st.markdown(f"""
+                    <div class='recommendation-box' style='margin-bottom:10px;'>
+                        <strong>✅ {title}</strong> <span style='font-weight:700;'>({cls})</span><br>
+                        <strong>Lý do:</strong> {reason}.
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
-                st.markdown("""
-                <div class='success-box' style='background-color: #e8f8f5; border-left-color: #2ecc71;'>
-                    <h4 style='color: #2ecc71; margin-top: 0;'>✅ KHÔNG TỰ ĐỘNG CHỈ ĐỊNH TÁI THÔNG CHỈ DỰA TRÊN “HIGH-RISK FLAG”</h4>
-                    <p>Quyết định tái thông phải dựa trên <strong>triệu chứng, ý nghĩa chức năng của tổn thương, giải phẫu mạch vành, LVEF, đái tháo đường, nguy cơ phẫu thuật, độ phức tạp giải phẫu và khả năng tái thông hoàn toàn</strong>.</p>
-                </div>
-                """, unsafe_allow_html=True)
+                st.info("ℹ️ **Chưa có một chỉ định tái thông Class I được kích hoạt từ dữ liệu hiện có.** Tiếp tục GDMT và chỉ xem xét tái thông khi giải phẫu/ý nghĩa chức năng hoặc triệu chứng tạo thành chỉ định phù hợp.")
 
-            st.markdown("""
-            #### Các tình huống tái thông mạch vành được ESC 2024 khuyến cáo
-            * **Triệu chứng dai dẳng dù GDMT + CAD tắc nghẽn có ý nghĩa chức năng:** tái thông được khuyến cáo để **cải thiện triệu chứng — Class I A**. Guideline không yêu cầu phải thất bại với “ít nhất 2 nhóm thuốc” trước khi áp dụng khuyến cáo này.
-            * **Multivessel CAD + LVEF ≤35% + đủ điều kiện phẫu thuật:** **CABG** được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện sống còn dài hạn — **Class I B**.
-            * **Left Main đáng kể, nguy cơ phẫu thuật thấp:** **CABG** được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện sống còn — **Class I A**; nhìn chung CABG là phương thức ưu tiên hơn PCI — **Class I A**. Nếu giải phẫu ít phức tạp (SYNTAX ≤22) và PCI có thể tái thông tương đương, PCI là lựa chọn thay thế được khuyến cáo — **Class I A**.
-            * **Multivessel CAD + đái tháo đường + đáp ứng GDMT chưa đủ:** **CABG** được khuyến cáo hơn điều trị nội khoa đơn thuần và hơn PCI để cải thiện triệu chứng và kết cục — **Class I A**.
-            * **Bệnh 3 nhánh, LVEF bảo tồn, không đái tháo đường, đáp ứng GDMT chưa đủ:** **CABG** được khuyến cáo — **Class I A**; PCI cũng được khuyến cáo nếu giải phẫu phức tạp thấp–trung bình và có thể đạt mức tái thông tương tự CABG — **Class I A**.
-            * **Bệnh 1–2 nhánh có đoạn gần LAD đáng kể, đáp ứng GDMT chưa đủ:** **CABG hoặc PCI** được khuyến cáo hơn điều trị nội khoa đơn thuần để cải thiện triệu chứng và kết cục — **Class I A**.
-            """)
+            # Choose modality only if anatomy can support a guideline branch.
+            if anatomy == "Chưa đủ dữ liệu / chưa xác định kiểu giải phẫu":
+                st.warning("⚠️ **Chưa thể chọn PCI hay CABG:** cần xác định mẫu giải phẫu mạch vành ở Bước 3.")
+            else:
+                st.markdown("### 🛠️ Nếu tái thông: PCI hay CABG?")
+                surgical_risk = st.selectbox(
+                    "Nguy cơ phẫu thuật:",
+                    ["Chưa đánh giá / chưa rõ", "Nguy cơ phẫu thuật thấp", "Nguy cơ phẫu thuật cao/rất cao"],
+                    key="revasc_surgical_risk"
+                )
+                syntax_group = st.selectbox(
+                    "Độ phức tạp giải phẫu (SYNTAX, khi áp dụng):",
+                    ["Chưa có / chưa tính SYNTAX", "SYNTAX ≤22", "SYNTAX 23–32", "SYNTAX >32"],
+                    key="revasc_syntax_group"
+                )
+                complete_pci = st.selectbox(
+                    "Khả năng PCI đạt mức tái thông hoàn toàn tương đương CABG:",
+                    ["Chưa đánh giá khả năng tái thông hoàn toàn bằng PCI", "Có", "Không"],
+                    key="revasc_complete_pci"
+                )
 
-            st.markdown("""
-            **Các lưu ý kỹ thuật quan trọng của ESC 2024:**
-            * **Tổn thương trung gian:** đánh giá mức độ có ý nghĩa chức năng bằng **FFR/iFR** trước quyết định tái thông; ngưỡng có ý nghĩa thường **FFR ≤0,80 hoặc iFR ≤0,89** — **Class I A**.
-            * **PCI tổn thương phức tạp:** hướng dẫn bằng **IVUS hoặc OCT** được khuyến cáo, đặc biệt ở thân chung, bifurcation thật và tổn thương dài — **Class I A**.
-            * **Multivessel CAD:** nên tính **SYNTAX score** để đánh giá độ phức tạp giải phẫu — **Class I B**.
-            * Khi cân nhắc CABG, **STS score** được khuyến cáo để ước tính bệnh suất trong viện và tử vong 30 ngày — **Class I B**.
-            """)
+                modality_messages = []
+                if "Left Main" in anatomy:
+                    if surgical_risk == "Nguy cơ phẫu thuật thấp":
+                        modality_messages.append("**CABG là phương thức ưu tiên** hơn PCI ở significant Left Main — **Class I A**.")
+                        if syntax_group == "SYNTAX ≤22" and complete_pci == "Có":
+                            modality_messages.append("**PCI là lựa chọn thay thế được khuyến cáo** nếu SYNTAX ≤22 và có thể đạt complete revascularization tương đương CABG — **Class I A**.")
+                        elif syntax_group == "SYNTAX 23–32" and complete_pci == "Có":
+                            modality_messages.append("**PCI nên được cân nhắc** nếu SYNTAX 23–32 và có thể đạt complete revascularization tương đương CABG — **Class IIa A**.")
+                    elif surgical_risk == "Nguy cơ phẫu thuật cao/rất cao" and "multivessel" in anatomy.lower():
+                        modality_messages.append("Ở Left Main + multivessel disease với nguy cơ phẫu thuật cao, **PCI có thể được cân nhắc** hơn điều trị nội khoa đơn thuần — **Class IIb B**.")
+                elif anatomy == "Multivessel disease khác (≥2 động mạch vành chính)" and has_dm and persistent_symptoms:
+                    modality_messages.append("**CABG được khuyến cáo hơn điều trị nội khoa đơn thuần và hơn PCI** ở significant multivessel disease + diabetes + đáp ứng GDMT chưa đủ — **Class I A**.")
+                elif anatomy == "Bệnh 3 nhánh (three-vessel disease)":
+                    if has_dm and persistent_symptoms:
+                        modality_messages.append("**CABG được khuyến cáo hơn điều trị nội khoa đơn thuần và hơn PCI** ở multivessel disease + diabetes + đáp ứng GDMT chưa đủ — **Class I A**.")
+                    elif (not has_dm) and lvef_revasc > 35 and persistent_symptoms:
+                        modality_messages.append("**CABG được khuyến cáo** ở significant three-vessel disease, preserved LVEF, không diabetes, đáp ứng GDMT chưa đủ — **Class I A**.")
+                        if syntax_group in ["SYNTAX ≤22", "SYNTAX 23–32"] and complete_pci == "Có":
+                            modality_messages.append("**PCI cũng được khuyến cáo** nếu độ phức tạp thấp–trung bình và có thể đạt mức tái thông tương tự CABG — **Class I A**.")
+                elif anatomy == "Bệnh 1–2 nhánh có liên quan đoạn gần LAD" and persistent_symptoms:
+                    modality_messages.append("**CABG hoặc PCI đều được khuyến cáo** hơn điều trị nội khoa đơn thuần để cải thiện triệu chứng và kết cục — **Class I A**.")
+                elif anatomy == "Bệnh 1–2 nhánh không liên quan đoạn gần LAD" and persistent_symptoms:
+                    modality_messages.append("**PCI được khuyến cáo** để cải thiện triệu chứng — **Class I B**; CABG có thể cân nhắc nếu không phù hợp PCI — **Class IIb C**.")
 
-        st.write("")
-        if st.button("⬅️ Quay lại Bước 3"):
-            set_step(3)
+                if modality_messages:
+                    for msg in modality_messages:
+                        st.success(msg)
+                else:
+                    st.info("ℹ️ Chưa đủ điều kiện để công cụ chọn một phương thức tái thông cụ thể từ dữ liệu hiện có. Cần tích hợp anatomy, surgical risk, SYNTAX/complexity, khả năng complete revascularization, LVEF, diabetes và mục tiêu điều trị.")
 
-st.write("")
-st.markdown("<p style='text-align: center; font-size: 0.8rem; color: #888;'>Phát triển dựa trên ESC 2024 về Hội chứng mạch vành mạn và ESC/EAS Focused Update 2025 về rối loạn lipid máu | Thiết kế tương tác từng bước cho nhà lâm sàng</p>", unsafe_allow_html=True)
+                if lvef_revasc <= 35:
+                    st.warning("⚠️ LVEF ≤35%: ESC 2024 yêu cầu lựa chọn giữa revascularization và medical therapy sau đánh giá cẩn thận, ưu tiên Heart Team; nếu multivessel CAD và đủ điều kiện phẫu thuật, CABG có khuyến cáo sống còn Class I B.")
+
