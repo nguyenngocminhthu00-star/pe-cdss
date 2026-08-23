@@ -68,6 +68,16 @@ st.markdown("""
         letter-spacing: 0 !important;
     }
 
+    /* Header separator: visually separates the page identity from the clinical workflow */
+    .header-divider {
+        width: 100% !important;
+        height: 1px !important;
+        background: #d5dee8 !important;
+        border: 0 !important;
+        margin: 12px 0 20px 0 !important;
+        padding: 0 !important;
+    }
+
     /* Native markdown heading hierarchy below the 4 main Step headings */
     h1:not(.main-title) {
         font-size: 1.45rem !important;
@@ -338,6 +348,7 @@ st.markdown("""
 
 st.markdown("<h1 class='main-title'>🫀 TIẾP CẬN BAN ĐẦU HỘI CHỨNG MẠCH VÀNH MẠN (CCS)</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng (CDSS) tương tác đa tầng theo Hướng dẫn ESC 2024</div>", unsafe_allow_html=True)
+st.markdown("<div class='header-divider'></div>", unsafe_allow_html=True)
 
 # Session State Initialization
 if 'step' not in st.session_state: st.session_state.step = 1
