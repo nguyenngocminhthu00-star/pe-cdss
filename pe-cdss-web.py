@@ -1341,47 +1341,6 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
         has_cancer = persistent_checkbox("Bệnh nhân mắc ung thư đang hoạt động / tiến triển (Cancer-associated thrombosis)?", key="has_cancer")
         has_drug_interactions = persistent_checkbox("Đang sử dụng thuốc tương tác mạnh (như Ketoconazole, Itraconazole, Ritonavir, Rifampicin, Phenytoin, Carbamazepine)?", key="has_drug_interactions")
         
-        # Rà soát chống chỉ định tiêu sợi huyết hệ thống
-        st.markdown("---")
-        if "thrombolysis_ci_open" not in st.session_state:
-            st.session_state.thrombolysis_ci_open = False
-
-        ci_arrow = "▼" if st.session_state.thrombolysis_ci_open else "▶"
-        if st.button(
-            f"{ci_arrow} 🩸 Bảng kiểm Chống chỉ định của Tiêu sợi huyết Hệ thống",
-            key="thrombolysis_ci_toggle",
-            use_container_width=True,
-        ):
-            st.session_state.thrombolysis_ci_open = not st.session_state.thrombolysis_ci_open
-            st.rerun()
-
-        if st.session_state.thrombolysis_ci_open:
-            with st.container(border=True):
-                abs1 = persistent_checkbox("Tiền sử xuất huyết não hoặc đột quỵ không rõ nguyên nhân bất kỳ thời điểm nào", key="abs1")
-                abs2 = persistent_checkbox("Đột quỵ nhồi máu não trong vòng 6 tháng qua", key="abs2")
-                abs3 = persistent_checkbox("U hệ thần kinh trung ương hoặc dị dạng động tĩnh mạch não", key="abs3")
-                abs4 = persistent_checkbox("Chấn thương lớn, phẫu thuật lớn hoặc chấn thương đầu nặng trong vòng 3 tuần qua", key="abs4")
-                abs5 = persistent_checkbox("Xuất huyết nội tạng đang tiến triển hoặc xuất huyết tiêu hóa trong vòng 1 tháng qua", key="abs5")
-                abs6 = persistent_checkbox("Phình tách động mạch chủ ngực/bụng hoặc nghi ngờ", key="abs6")
-                
-                st.markdown("**Chống chỉ định tương đối (Relative Contraindications):**")
-                rel1 = persistent_checkbox("Cơn thiếu máu não cục bộ thoáng qua (TIA) trong vòng 6 tháng qua", key="rel1")
-                rel2 = persistent_checkbox("Đang dùng kháng đông đường uống", key="rel2")
-                rel3 = persistent_checkbox("Mang thai hoặc trong vòng 1 tuần sau sinh", key="rel3")
-                rel4 = persistent_checkbox("Chọc dò mạch máu ở vị trí không ép được", key="rel4")
-                rel5 = persistent_checkbox("Hồi sức tim phổi (CPR) kéo dài hoặc chấn thương lớn do hồi sức", key="rel5")
-                rel6 = persistent_checkbox("Tăng huyết áp nặng không kiểm soát (HA tâm thu > 180 mmHg hoặc tâm trương > 110 mmHg)", key="rel6")
-                rel7 = persistent_checkbox("Bệnh gan nặng tiến triển hoặc viêm màng ngoài tim cấp", key="rel7")
-                
-                has_absolute = abs1 or abs2 or abs3 or abs4 or abs5 or abs6
-                has_relative = rel1 or rel2 or rel3 or rel4 or rel5 or rel6 or rel7
-                
-                if has_absolute:
-                    st.error("🚨 CẢNH BÁO: Bệnh nhân có chống chỉ định TUYỆT ĐỐI với tiêu sợi huyết hệ thống! Bắt buộc cân nhắc phương pháp Lấy huyết khối cơ học (MT) hoặc Phẫu thuật lấy huyết khối.")
-                elif has_relative:
-                    st.warning("⚠️ CẢNH BÁO: Bệnh nhân có chống chỉ định tương đối. Cần cân nhắc kỹ lợi ích/nguy cơ, ưu tiên can thiệp qua catheter (CDL) hoặc lấy huyết khối cơ học MT nếu có sẵn.")
-                else:
-                    st.success("Không phát hiện chống chỉ định tiêu sợi huyết hệ thống.")
         st.markdown("</div>", unsafe_allow_html=True)
         if st.button("Tiếp tục → Phân nhóm & phân luồng điều trị", type="primary", use_container_width=True, key="step3_to_2"):
             st.session_state.step3_open = 2
@@ -1608,6 +1567,48 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
             st.rerun()
     if st.session_state.final_category in ["C3", "D1", "D2", "E1", "E2"]:
         if render_flow_sub_header("3.4 ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao", 4, "step3_open", "step3_sub"):
+            # Rà soát chống chỉ định tiêu sợi huyết hệ thống — đặt trong mục tái tưới máu nâng cao
+            st.markdown("---")
+            if "thrombolysis_ci_open" not in st.session_state:
+                st.session_state.thrombolysis_ci_open = False
+
+            ci_arrow = "▼" if st.session_state.thrombolysis_ci_open else "▶"
+            if st.button(
+                f"{ci_arrow} 🩸 Bảng kiểm Chống chỉ định của Tiêu sợi huyết Hệ thống",
+                key="thrombolysis_ci_toggle",
+                use_container_width=True,
+            ):
+                st.session_state.thrombolysis_ci_open = not st.session_state.thrombolysis_ci_open
+                st.rerun()
+
+            if st.session_state.thrombolysis_ci_open:
+                with st.container(border=True):
+                    abs1 = persistent_checkbox("Tiền sử xuất huyết não hoặc đột quỵ không rõ nguyên nhân bất kỳ thời điểm nào", key="abs1")
+                    abs2 = persistent_checkbox("Đột quỵ nhồi máu não trong vòng 6 tháng qua", key="abs2")
+                    abs3 = persistent_checkbox("U hệ thần kinh trung ương hoặc dị dạng động tĩnh mạch não", key="abs3")
+                    abs4 = persistent_checkbox("Chấn thương lớn, phẫu thuật lớn hoặc chấn thương đầu nặng trong vòng 3 tuần qua", key="abs4")
+                    abs5 = persistent_checkbox("Xuất huyết nội tạng đang tiến triển hoặc xuất huyết tiêu hóa trong vòng 1 tháng qua", key="abs5")
+                    abs6 = persistent_checkbox("Phình tách động mạch chủ ngực/bụng hoặc nghi ngờ", key="abs6")
+                
+                    st.markdown("**Chống chỉ định tương đối (Relative Contraindications):**")
+                    rel1 = persistent_checkbox("Cơn thiếu máu não cục bộ thoáng qua (TIA) trong vòng 6 tháng qua", key="rel1")
+                    rel2 = persistent_checkbox("Đang dùng kháng đông đường uống", key="rel2")
+                    rel3 = persistent_checkbox("Mang thai hoặc trong vòng 1 tuần sau sinh", key="rel3")
+                    rel4 = persistent_checkbox("Chọc dò mạch máu ở vị trí không ép được", key="rel4")
+                    rel5 = persistent_checkbox("Hồi sức tim phổi (CPR) kéo dài hoặc chấn thương lớn do hồi sức", key="rel5")
+                    rel6 = persistent_checkbox("Tăng huyết áp nặng không kiểm soát (HA tâm thu > 180 mmHg hoặc tâm trương > 110 mmHg)", key="rel6")
+                    rel7 = persistent_checkbox("Bệnh gan nặng tiến triển hoặc viêm màng ngoài tim cấp", key="rel7")
+                
+                    has_absolute = abs1 or abs2 or abs3 or abs4 or abs5 or abs6
+                    has_relative = rel1 or rel2 or rel3 or rel4 or rel5 or rel6 or rel7
+                
+                    if has_absolute:
+                        st.error("🚨 CẢNH BÁO: Bệnh nhân có chống chỉ định TUYỆT ĐỐI với tiêu sợi huyết hệ thống! Bắt buộc cân nhắc phương pháp Lấy huyết khối cơ học (MT) hoặc Phẫu thuật lấy huyết khối.")
+                    elif has_relative:
+                        st.warning("⚠️ CẢNH BÁO: Bệnh nhân có chống chỉ định tương đối. Cần cân nhắc kỹ lợi ích/nguy cơ, ưu tiên can thiệp qua catheter (CDL) hoặc lấy huyết khối cơ học MT nếu có sẵn.")
+                    else:
+                        st.success("Không phát hiện chống chỉ định tiêu sợi huyết hệ thống.")
+
             
             # Đồng bộ phác đồ Alteplase chuẩn (Bỏ lỗi tự ý chia liều unapproved)
             st.info("💊 **Phác đồ Tiêu sợi huyết Hệ thống (Systemic Thrombolysis):**\n- **Các thuốc được FDA phê duyệt cho PE:** **rt-PA (Alteplase), Streptokinase, và Urokinase**. Trong đó, rt-PA (alteplase) là thuốc phổ biến nhất trong thực hành lâm sàng hiện đại.\n- **Phác đồ Alteplase chuẩn:** **100 mg truyền tĩnh mạch liên tục trong 2 giờ**.\n- *Cân nhắc liều thấp (Lower-dose):* Có thể cân nhắc truyền liều thấp (ví dụ: **50 mg rt-PA truyền trong 2 giờ** hoặc các phác đồ liều thấp khác) để giảm nguy cơ chảy máu (**Class 2b, LOE C-LD**), đặc biệt ở bệnh nhân có nguy cơ xuất huyết cao (Không áp dụng công thức chia liều cố định universally theo cân nặng).\n- *Lưu ý về Tenecteplase (TNK-tPA):* Đã được nghiên cứu lâm sàng nhưng **CHƯA ĐƯỢC FDA PHÊ DUYỆT** cho chỉ định thuyên tắc phổi (off-label) và không được xem là phác đồ tương đương quy chuẩn.")
