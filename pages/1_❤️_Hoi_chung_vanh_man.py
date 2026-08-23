@@ -22,26 +22,67 @@ st.sidebar.page_link(
 st.markdown("""
 <style>
     .reportview-container {
-        background: #f0f2f6;
-    }
-    .main-title {
-        color: #1e3d59;
-        font-family: 'Helvetica Neue', Arial, sans-serif;
-        text-align: center;
-        padding: 5px;
-        font-weight: bold;
-        font-size: 2.10rem !important;
-        margin-bottom: 5px;
-    }
-    .main-subtitle {
-        text-align: center;
-        color: #555;
-        font-size: 1.05rem;
-        margin-top: 0px;
-        margin-bottom: 25px;
+        background: #f8fafc;
     }
     
-
+    /* Massive Main Title */
+    h1.main-title {
+        font-size: 3.2rem !important;
+        color: #1e3d59 !important;
+        text-align: center !important;
+        font-weight: 900 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.5px !important;
+        margin-top: 15px !important;
+        margin-bottom: 5px !important;
+        line-height: 1.2 !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.1) !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    .main-subtitle {
+        text-align: center !important;
+        color: #475569 !important;
+        font-size: 1.3rem !important;
+        font-weight: 600 !important;
+        margin-top: 0px !important;
+        margin-bottom: 25px !important;
+    }
+    
+    /* Strict Visual Hierarchy CSS locks - colourful and prominent */
+    h1:not(.main-title) { 
+        font-size: 2.2rem !important; 
+        color: #1e3d59 !important; 
+        font-weight: 800 !important; 
+        margin-top: 20px !important; 
+        margin-bottom: 15px !important; 
+    }
+    h2 { 
+        font-size: 1.85rem !important; 
+        color: #1a5276 !important; 
+        font-weight: 800 !important; 
+        margin-top: 20px !important; 
+        margin-bottom: 12px !important; 
+    }
+    h3 { 
+        font-size: 1.55rem !important; /* st.subheader - larger and highly visible! */
+        color: #2980b9 !important; /* Beautiful Royal Medical Blue */
+        font-weight: 800 !important;
+        border-bottom: 2.5px solid #17b978 !important; /* Colorful underline */
+        padding-bottom: 6px !important;
+        margin-top: 28px !important;
+        margin-bottom: 16px !important;
+    }
+    h4 { 
+        font-size: 1.25rem !important; /* st.markdown("#### ...") */
+        color: #2c3e50 !important;
+        font-weight: 700 !important;
+        margin-top: 18px !important;
+        margin-bottom: 10px !important;
+    }
+    p, span, label, li {
+        font-size: 1.05rem !important;
+    }
 
     /* Step-based Alert Box styles */
     .recommendation-box {
@@ -78,7 +119,7 @@ st.markdown("""
         padding: 2px 6px;
         border-radius: 3px;
         font-weight: bold;
-        font-size: 0.85rem;
+        font-size: 0.95rem;
     }
     .symptom-tag-dec {
         background-color: #e2efda;
@@ -86,7 +127,7 @@ st.markdown("""
         padding: 2px 6px;
         border-radius: 3px;
         font-weight: bold;
-        font-size: 0.85rem;
+        font-size: 0.95rem;
     }
     .class-badge-1 {
         background-color: #2e7d32;
@@ -94,7 +135,7 @@ st.markdown("""
         padding: 2px 6px;
         border-radius: 3px;
         font-weight: bold;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
     .class-badge-2a {
         background-color: #e67e22;
@@ -102,7 +143,7 @@ st.markdown("""
         padding: 2px 6px;
         border-radius: 3px;
         font-weight: bold;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
     .class-badge-2b {
         background-color: #f1c40f;
@@ -110,7 +151,7 @@ st.markdown("""
         padding: 2px 6px;
         border-radius: 3px;
         font-weight: bold;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
     .class-badge-3 {
         background-color: #c0392b;
@@ -118,30 +159,7 @@ st.markdown("""
         padding: 2px 6px;
         border-radius: 3px;
         font-weight: bold;
-        font-size: 0.8rem;
-    }
-
-    /* Strict Visual Hierarchy CSS locks */
-    h1 { font-size: 1.80rem !important; }
-    h2 { font-size: 1.40rem !important; }
-    h3 { 
-        font-size: 1.10rem !important; /* st.subheader */
-        color: #1e3d59 !important; 
-        font-weight: 700 !important;
-        border-bottom: 1.5px solid #17b978 !important; 
-        padding-bottom: 3px !important;
-        margin-top: 20px !important;
-        margin-bottom: 12px !important;
-    }
-    h4 { 
-        font-size: 0.95rem !important; /* st.markdown("#### ...") */
-        color: #2c3e50 !important;
-        font-weight: 600 !important;
-        margin-top: 12px !important;
-        margin-bottom: 8px !important;
-    }
-    p, span, label, li {
-        font-size: 0.95rem !important;
+        font-size: 0.85rem;
     }
 
     /* Accordion Main Step Buttons styling - styled on button and button p/span to beat default Streamlit styles */
@@ -151,7 +169,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(23, 185, 120, 0.4) !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 15px 20px !important;
+        padding: 16px 22px !important;
         border-radius: 8px !important;
         margin-top: 15px !important;
         margin-bottom: 15px !important;
@@ -159,15 +177,16 @@ st.markdown("""
     }
     div.main-step-active button p, div.main-step-active [data-testid="stBaseButton-secondary"] p,
     div.main-step-active button span, div.main-step-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.80rem !important; /* Huge, prominent and absolute largest header! */
+        font-size: 2.1rem !important; /* Massive and absolute largest step header! */
         font-weight: 900 !important;
         color: #ffffff !important;
         text-transform: uppercase !important;
         margin: 0 !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3) !important;
     }
     
     div.main-step-completed button, div.main-step-completed [data-testid="stBaseButton-secondary"] {
-        background-color: #e8f8f5 !important;
+        background: linear-gradient(135deg, #e8f8f5, #d1f2eb) !important;
         border: 2px solid #2ecc71 !important;
         width: 100% !important;
         text-align: left !important;
@@ -175,41 +194,41 @@ st.markdown("""
         border-radius: 8px !important;
         margin-top: 10px !important;
         margin-bottom: 10px !important;
-        opacity: 0.85 !important;
+        opacity: 0.95 !important;
         display: block !important;
     }
     div.main-step-completed button p, div.main-step-completed [data-testid="stBaseButton-secondary"] p,
     div.main-step-completed button span, div.main-step-completed [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.40rem !important; /* Larger than sub-section headers */
+        font-size: 1.7rem !important; /* Clearly larger than subheadings (1.55rem) */
         font-weight: 800 !important;
-        color: #17b978 !important;
+        color: #117a65 !important;
         margin: 0 !important;
     }
     
     div.main-step-pending button, div.main-step-pending [data-testid="stBaseButton-secondary"] {
         background-color: #f1f2f6 !important;
-        border: 1px dashed #cccccc !important;
+        border: 1px dashed #bdc3c7 !important;
         width: 100% !important;
         text-align: left !important;
         padding: 12px 18px !important;
         border-radius: 8px !important;
         margin-top: 10px !important;
         margin-bottom: 10px !important;
-        opacity: 0.6 !important;
+        opacity: 0.7 !important;
         display: block !important;
     }
     div.main-step-pending button p, div.main-step-pending [data-testid="stBaseButton-secondary"] p,
     div.main-step-pending button span, div.main-step-pending [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.40rem !important;
+        font-size: 1.70rem !important; /* Matching completed step size for symmetry */
         font-weight: 700 !important;
-        color: #888888 !important;
+        color: #7f8c8d !important;
         margin: 0 !important;
     }
 
     /* Sub-section Accordion Buttons styling */
     div.sub-header-active button, div.sub-header-active [data-testid="stBaseButton-secondary"] {
-        background-color: #e8f4f8 !important;
-        border-left: 6px solid #17b978 !important;
+        background-color: #ebf5fb !important;
+        border-left: 8px solid #3498db !important;
         border-top: none !important;
         border-right: none !important;
         border-bottom: none !important;
@@ -223,29 +242,29 @@ st.markdown("""
     }
     div.sub-header-active button p, div.sub-header-active [data-testid="stBaseButton-secondary"] p,
     div.sub-header-active button span, div.sub-header-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.15rem !important; /* Smaller than step headers */
-        font-weight: 700 !important;
-        color: #1e3d59 !important;
+        font-size: 1.45rem !important; /* Smaller than step buttons, but highly prominent */
+        font-weight: 800 !important;
+        color: #1b4f72 !important;
         margin: 0 !important;
     }
     
     div.sub-header-inactive button, div.sub-header-inactive [data-testid="stBaseButton-secondary"] {
-        background-color: #f7f9fa !important;
-        border: 1px solid #d3d3d3 !important;
+        background-color: #fcfcfc !important;
+        border: 1px solid #d5dbdb !important;
         width: 100% !important;
         text-align: left !important;
         padding: 8px 12px !important;
         border-radius: 4px !important;
         margin-top: 8px !important;
         margin-bottom: 8px !important;
-        opacity: 0.8 !important;
+        opacity: 0.85 !important;
         display: block !important;
     }
     div.sub-header-inactive button p, div.sub-header-inactive [data-testid="stBaseButton-secondary"] p,
     div.sub-header-inactive button span, div.sub-header-inactive [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.05rem !important;
+        font-size: 1.30rem !important;
         font-weight: 600 !important;
-        color: #555555 !important;
+        color: #5d6d7e !important;
         margin: 0 !important;
     }
     div.sub-header-inactive button:hover {
