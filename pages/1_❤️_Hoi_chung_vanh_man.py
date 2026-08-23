@@ -6,8 +6,7 @@ st.set_page_config(
     page_title="ESC 2024 CCS Initial Management Tool v14",
     page_icon="🫀",
     layout="wide"
-)
-# MENU ĐIỀU HƯỚNG
+)# Menu điều hướng
 st.sidebar.page_link(
     "pe-cdss-web.py",
     label="🫁 Thuyên tắc phổi cấp"
@@ -25,14 +24,12 @@ st.markdown("""
         background: #f8fafc;
     }
     
-    /* Massive Main Title */
+    /* Massive Centered Main Title like Pulmonary Embolism App */
     h1.main-title {
-        font-size: 3.2rem !important;
-        color: #1e3d59 !important;
+        font-size: 2.50rem !important;
+        color: #0f2c59 !important;
         text-align: center !important;
-        font-weight: 900 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 1.5px !important;
+        font-weight: 800 !important;
         margin-top: 15px !important;
         margin-bottom: 5px !important;
         line-height: 1.2 !important;
@@ -43,45 +40,72 @@ st.markdown("""
     .main-subtitle {
         text-align: center !important;
         color: #475569 !important;
-        font-size: 1.3rem !important;
+        font-size: 1.15rem !important;
         font-weight: 600 !important;
         margin-top: 0px !important;
         margin-bottom: 25px !important;
     }
     
-    /* Strict Visual Hierarchy CSS locks - colourful and prominent */
-    h1:not(.main-title) { 
-        font-size: 2.2rem !important; 
-        color: #1e3d59 !important; 
-        font-weight: 800 !important; 
-        margin-top: 20px !important; 
-        margin-bottom: 15px !important; 
+    /* Sticky Navigation Container for the Horizontal Step Bar */
+    div[data-testid="stHorizontalBlock"]:has(.pe-step-active) {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 0px !important; /* Sticks right below the Streamlit top bar */
+        z-index: 999999 !important;
+        background-color: #f8fafc !important;
+        padding: 10px !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        box-shadow: 0 4px 12px rgba(15, 44, 89, 0.08) !important;
+        border-radius: 12px !important;
+        margin-bottom: 25px !important;
     }
-    h2 { 
-        font-size: 1.85rem !important; 
-        color: #1a5276 !important; 
-        font-weight: 800 !important; 
-        margin-top: 20px !important; 
-        margin-bottom: 12px !important; 
+
+    /* PE Step Bar active styling (looks exactly like the reddish coral in multimodal_0) */
+    div.pe-step-active button, div.pe-step-active [data-testid="stBaseButton-secondary"] {
+        background: #ff4d4d !important; /* Coral red as in PE image */
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(255, 77, 77, 0.4) !important;
+        width: 100% !important;
+        padding: 12px 15px !important;
+        border-radius: 10px !important;
+        display: block !important;
+        transition: all 0.2s ease !important;
     }
-    h3 { 
-        font-size: 1.55rem !important; /* st.subheader - larger and highly visible! */
-        color: #2980b9 !important; /* Beautiful Royal Medical Blue */
+    div.pe-step-active button p, div.pe-step-active button span,
+    div.pe-step-active [data-testid="stBaseButton-secondary"] p, div.pe-step-active [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.25rem !important; /* Largest in-step element, bold and uppercase! */
         font-weight: 800 !important;
-        border-bottom: 2.5px solid #17b978 !important; /* Colorful underline */
-        padding-bottom: 6px !important;
-        margin-top: 28px !important;
-        margin-bottom: 16px !important;
+        color: #ffffff !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
     }
-    h4 { 
-        font-size: 1.25rem !important; /* st.markdown("#### ...") */
-        color: #2c3e50 !important;
-        font-weight: 700 !important;
-        margin-top: 18px !important;
-        margin-bottom: 10px !important;
+
+    /* PE Step Bar inactive styling (white button with thin grey border and icons) */
+    div.pe-step-inactive button, div.pe-step-inactive [data-testid="stBaseButton-secondary"] {
+        background-color: #ffffff !important;
+        color: #1e3d59 !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        padding: 12px 15px !important;
+        border-radius: 10px !important;
+        display: block !important;
+        transition: all 0.2s ease !important;
     }
-    p, span, label, li {
-        font-size: 1.05rem !important;
+    div.pe-step-inactive button p, div.pe-step-inactive button span,
+    div.pe-step-inactive [data-testid="stBaseButton-secondary"] p, div.pe-step-inactive [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.15rem !important;
+        font-weight: 600 !important;
+        color: #1e3d59 !important;
+        margin: 0 !important;
+    }
+    div.pe-step-inactive button:hover {
+        border-color: #ff4d4d !important;
+        background-color: #fff5f5 !important;
+    }
+    div.pe-step-inactive button:hover p, div.pe-step-inactive button:hover span {
+        color: #ff4d4d !important;
     }
 
     /* Step-based Alert Box styles */
@@ -162,73 +186,10 @@ st.markdown("""
         font-size: 0.85rem;
     }
 
-    /* Accordion Main Step Buttons styling - styled on button and button p/span to beat default Streamlit styles */
-    div.main-step-active button, div.main-step-active [data-testid="stBaseButton-secondary"] {
-        background: linear-gradient(135deg, #1e3d59, #17b978) !important;
-        border: 2px solid #17b978 !important;
-        box-shadow: 0 4px 15px rgba(23, 185, 120, 0.4) !important;
-        width: 100% !important;
-        text-align: left !important;
-        padding: 16px 22px !important;
-        border-radius: 8px !important;
-        margin-top: 15px !important;
-        margin-bottom: 15px !important;
-        display: block !important;
-    }
-    div.main-step-active button p, div.main-step-active [data-testid="stBaseButton-secondary"] p,
-    div.main-step-active button span, div.main-step-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 2.1rem !important; /* Massive and absolute largest step header! */
-        font-weight: 900 !important;
-        color: #ffffff !important;
-        text-transform: uppercase !important;
-        margin: 0 !important;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.3) !important;
-    }
-    
-    div.main-step-completed button, div.main-step-completed [data-testid="stBaseButton-secondary"] {
-        background: linear-gradient(135deg, #e8f8f5, #d1f2eb) !important;
-        border: 2px solid #2ecc71 !important;
-        width: 100% !important;
-        text-align: left !important;
-        padding: 12px 18px !important;
-        border-radius: 8px !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
-        opacity: 0.95 !important;
-        display: block !important;
-    }
-    div.main-step-completed button p, div.main-step-completed [data-testid="stBaseButton-secondary"] p,
-    div.main-step-completed button span, div.main-step-completed [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.7rem !important; /* Clearly larger than subheadings (1.55rem) */
-        font-weight: 800 !important;
-        color: #117a65 !important;
-        margin: 0 !important;
-    }
-    
-    div.main-step-pending button, div.main-step-pending [data-testid="stBaseButton-secondary"] {
-        background-color: #f1f2f6 !important;
-        border: 1px dashed #bdc3c7 !important;
-        width: 100% !important;
-        text-align: left !important;
-        padding: 12px 18px !important;
-        border-radius: 8px !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
-        opacity: 0.7 !important;
-        display: block !important;
-    }
-    div.main-step-pending button p, div.main-step-pending [data-testid="stBaseButton-secondary"] p,
-    div.main-step-pending button span, div.main-step-pending [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.70rem !important; /* Matching completed step size for symmetry */
-        font-weight: 700 !important;
-        color: #7f8c8d !important;
-        margin: 0 !important;
-    }
-
     /* Sub-section Accordion Buttons styling */
     div.sub-header-active button, div.sub-header-active [data-testid="stBaseButton-secondary"] {
         background-color: #ebf5fb !important;
-        border-left: 8px solid #3498db !important;
+        border-left: 8px solid #17b978 !important;
         border-top: none !important;
         border-right: none !important;
         border-bottom: none !important;
@@ -236,47 +197,103 @@ st.markdown("""
         text-align: left !important;
         padding: 10px 15px !important;
         border-radius: 4px !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
         display: block !important;
     }
     div.sub-header-active button p, div.sub-header-active [data-testid="stBaseButton-secondary"] p,
     div.sub-header-active button span, div.sub-header-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.45rem !important; /* Smaller than step buttons, but highly prominent */
-        font-weight: 800 !important;
-        color: #1b4f72 !important;
+        font-size: 1.15rem !important; /* Smaller than step buttons, but highly prominent */
+        font-weight: 700 !important;
+        color: #0f2c59 !important;
         margin: 0 !important;
     }
     
     div.sub-header-inactive button, div.sub-header-inactive [data-testid="stBaseButton-secondary"] {
-        background-color: #fcfcfc !important;
-        border: 1px solid #d5dbdb !important;
+        background-color: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
         width: 100% !important;
         text-align: left !important;
         padding: 8px 12px !important;
         border-radius: 4px !important;
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
-        opacity: 0.85 !important;
         display: block !important;
     }
     div.sub-header-inactive button p, div.sub-header-inactive [data-testid="stBaseButton-secondary"] p,
     div.sub-header-inactive button span, div.sub-header-inactive [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.30rem !important;
+        font-size: 1.05rem !important;
         font-weight: 600 !important;
-        color: #5d6d7e !important;
+        color: #475569 !important;
         margin: 0 !important;
     }
     div.sub-header-inactive button:hover {
         border-color: #17b978 !important;
+    }
+    div.sub-header-inactive button:hover p, div.sub-header-inactive button:hover span {
         color: #17b978 !important;
-        opacity: 1.0 !important;
+    }
+
+    /* Locked Headings sizes for perfect hierarchy */
+    h3 { 
+        font-size: 1.15rem !important; /* st.subheader - highly visible! */
+        color: #0f2c59 !important; /* Beautiful Royal Medical Blue */
+        font-weight: 700 !important;
+        border-bottom: 2px solid #17b978 !important; /* Colorful underline */
+        padding-bottom: 4px !important;
+        margin-top: 22px !important;
+        margin-bottom: 12px !important;
+    }
+    h4 { 
+        font-size: 1.05rem !important; /* st.markdown("#### ...") */
+        color: #334155 !important;
+        font-weight: 600 !important;
+        margin-top: 15px !important;
+        margin-bottom: 8px !important;
+    }
+    p, span, label, li {
+        font-size: 0.95rem !important;
+        color: #334155 !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='main-title'>🫀 QUẢN LÝ BAN ĐẦU NGHI NGỜ HỘI CHỨNG MẠCH VÀNH MẠN (CCS)</h1>", unsafe_allow_html=True)
-st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng (CDSS) tương tác đa tầng theo Hướng dẫn ESC 2024</div>", unsafe_allow_html=True)
+st.markdown("<h1 class='main-title'>🩺 CDSS HỘI CHỨNG MẠCH VÀNH MẠN (ESC 2024)</h1>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v20)</div>", unsafe_allow_html=True)
+
+# Horizontal Step Navigation Bar exactly like Pulmonary Embolism App (multimodal_0)
+col_step1, col_step2, col_step3, col_step4 = st.columns(4)
+
+with col_step1:
+    wrapper_class = "pe-step-active" if st.session_state.step == 1 else "pe-step-inactive"
+    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
+    if st.button("⚡ BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", key="pe_step_btn_1"):
+        st.session_state.step = 1
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with col_step2:
+    wrapper_class = "pe-step-active" if st.session_state.step == 2 else "pe-step-inactive"
+    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
+    if st.button("📊 BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", key="pe_step_btn_2"):
+        st.session_state.step = 2
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with col_step3:
+    wrapper_class = "pe-step-active" if st.session_state.step == 3 else "pe-step-inactive"
+    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
+    if st.button("🔍 BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", key="pe_step_btn_3"):
+        st.session_state.step = 3
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with col_step4:
+    wrapper_class = "pe-step-active" if st.session_state.step == 4 else "pe-step-inactive"
+    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
+    if st.button("💊 BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", key="pe_step_btn_4"):
+        st.session_state.step = 4
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+st.divider()
+
 
 # Session State Initialization
 if 'step' not in st.session_state: st.session_state.step = 1
@@ -320,20 +337,14 @@ def set_step(step_num):
 def render_main_step_header(title, step_id):
     current_step = st.session_state.step
     is_active = (current_step == step_id)
-    is_completed = (current_step > step_id)
-    
-    arrow = "▼" if is_active else "▶"
-    prefix = "✅ " if is_completed else ""
-    status_text = " [ĐANG THỰC HIỆN]" if is_active else ""
-    
-    wrapper_class = "main-step-active" if is_active else ("main-step-completed" if is_completed else "main-step-pending")
-    
-    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
-    if st.button(f"{arrow} {prefix}{title}{status_text}", key=f"main_step_btn_{step_id}"):
-        st.session_state.step = step_id
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-    
+    if is_active:
+        st.markdown(f"""
+        <div style='text-align: center; margin-top: 10px; margin-bottom: 25px;'>
+            <span style='background-color: #ff4d4d; color: white; padding: 6px 15px; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 0.95rem;'>
+                📍 Bạn đang ở: {title}
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
     return is_active
 
 # Helper function to render sub-step accordion headers
