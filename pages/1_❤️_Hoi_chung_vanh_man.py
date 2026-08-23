@@ -3,7 +3,7 @@ import pandas as pd
 
 # Page Configuration
 st.set_page_config(
-    page_title="ESC 2024 CCS Initial Management Tool v11",
+    page_title="ESC 2024 CCS Initial Management Tool v12",
     page_icon="🫀",
     layout="wide"
 )
@@ -190,8 +190,16 @@ st.markdown("""
         color: #888888 !important;
     }
 
-    /* Styling for Active Expander */
-    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] {
+    /* Baseline styles for all expanders to ensure main title is always large */
+    [data-testid="stExpander"] .streamlit-expanderHeader p,
+    [data-testid="stExpander"] .streamlit-expanderHeader span,
+    [data-testid="stExpander"] .streamlit-expanderHeader div {
+        font-size: 1.45rem !important; /* Ensure main title is always large */
+        font-weight: 800 !important;
+    }
+
+    /* Styling for Active Expander (Using non-direct child has selector for Streamlit containers) */
+    div.element-container:has(.step-active-marker) + div.element-container div[data-testid="stExpander"] {
         border: 3px solid #17b978 !important; /* Prominent active green border */
         border-radius: 12px !important;
         box-shadow: 0 8px 24px rgba(23, 185, 120, 0.3) !important;
@@ -199,23 +207,23 @@ st.markdown("""
         transition: all 0.3s ease-in-out;
     }
 
-    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader {
+    div.element-container:has(.step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader {
         background-color: #1e3d59 !important; /* Deep dark blue background */
         color: #ffffff !important; /* White text */
-        font-size: 1.8rem !important; /* Extremely large */
-        font-weight: 800 !important;
         padding: 15px 20px !important;
         border-radius: 10px 10px 0 0 !important;
     }
     
-    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader p {
-        font-size: 1.8rem !important;
+    div.element-container:has(.step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader p,
+    div.element-container:has(.step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader span,
+    div.element-container:has(.step-active-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader div {
+        font-size: 1.6rem !important; /* Extremely large */
         font-weight: 800 !important;
         color: #ffffff !important;
     }
 
     /* Styling for Inactive/Faded Expander */
-    div:has(> .step-inactive-marker) + div.element-container div[data-testid="stExpander"] {
+    div.element-container:has(.step-inactive-marker) + div.element-container div[data-testid="stExpander"] {
         border: 1px solid #d3d3d3 !important;
         border-radius: 8px !important;
         box-shadow: none !important;
@@ -223,23 +231,25 @@ st.markdown("""
         transition: all 0.3s ease-in-out;
     }
 
-    div:has(> .step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader {
+    div.element-container:has(.step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader {
         background-color: #f8f9fa !important; /* Light gray background */
         color: #777777 !important; /* Muted gray text */
-        font-size: 1.2rem !important; /* Smaller text */
-        font-weight: 500 !important;
         padding: 10px 15px !important;
     }
     
-    div:has(> .step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader p {
-        font-size: 1.2rem !important;
-        font-weight: 500 !important;
+    div.element-container:has(.step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader p,
+    div.element-container:has(.step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader span,
+    div.element-container:has(.step-inactive-marker) + div.element-container div[data-testid="stExpander"] .streamlit-expanderHeader div {
+        font-size: 1.25rem !important; /* Smaller text */
+        font-weight: 600 !important;
         color: #777777 !important;
     }
 
-    /* Hierarchy inside Active Expander */
-    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] h3 {
-        font-size: 1.45rem !important;
+    /* Global hierarchy inside expanders - subheaders must be smaller than headers */
+    [data-testid="stExpander"] h3,
+    div[data-testid="stExpander"] h3,
+    .streamlit-expanderContent h3 {
+        font-size: 1.15rem !important; /* Subheaders: Guaranteed to be smaller than the 1.45rem or 1.6rem header */
         color: #1e3d59 !important;
         font-weight: 700 !important;
         border-bottom: 2px solid #17b978 !important;
@@ -248,8 +258,10 @@ st.markdown("""
         margin-bottom: 15px !important;
     }
     
-    div:has(> .step-active-marker) + div.element-container div[data-testid="stExpander"] h4 {
-        font-size: 1.15rem !important;
+    [data-testid="stExpander"] h4,
+    div[data-testid="stExpander"] h4,
+    .streamlit-expanderContent h4 {
+        font-size: 1.0rem !important; /* Smaller headings: Guaranteed to be smaller than h3 */
         color: #2c3e50 !important;
         font-weight: 600 !important;
         margin-top: 15px !important;
@@ -294,7 +306,7 @@ if 'dyslipidemia_flag' not in st.session_state:
 if 'hypertension_flag' not in st.session_state:
     st.session_state.hypertension_flag = False
 
-# Progress Bar Redesigned as Glow/Active Cards
+# Progress Bar Redesigned as Glow/Active Cards (Compacted as single line to avoid Markdown preformatted code block bug)
 current_step = st.session_state.step
 cards_html = "<div class='progress-container'>"
 steps_info = [
@@ -311,12 +323,7 @@ for idx, (num, label) in enumerate(steps_info):
         card_class = "card-completed"
     else:
         card_class = "card-pending"
-    cards_html += f'''
-    <div class='progress-card {card_class}'>
-        <div class='card-num'>{num}</div>
-        <div class='card-label'>{label}</div>
-    </div>
-    '''
+    cards_html += f"<div class='progress-card {card_class}'><div class='card-num'>{num}</div><div class='card-label'>{label}</div></div>"
 cards_html += "</div>"
 st.markdown(cards_html, unsafe_allow_html=True)
 
