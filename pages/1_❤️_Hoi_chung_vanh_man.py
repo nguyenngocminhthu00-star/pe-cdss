@@ -54,6 +54,7 @@ st.markdown("""
         border-radius: 0 !important;
         box-shadow: none !important;
         text-shadow: none !important;
+        white-space: nowrap !important;
     }
 
     .main-subtitle,
@@ -132,6 +133,7 @@ st.markdown("""
         h1.main-title * {
             font-size: 1.95rem !important;
             line-height: 1.04 !important;
+            white-space: normal !important;
         }
         .main-subtitle, .main-subtitle * {
             font-size: 0.94rem !important;
@@ -334,7 +336,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='main-title'>🫀 QUẢN LÝ BAN ĐẦU NGHI NGỜ HỘI CHỨNG MẠCH VÀNH MẠN (CCS)</h1>", unsafe_allow_html=True)
+st.markdown("<h1 class='main-title'>🫀 TIẾP CẬN BAN ĐẦU HỘI CHỨNG MẠCH VÀNH MẠN (CCS)</h1>", unsafe_allow_html=True)
 st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng (CDSS) tương tác đa tầng theo Hướng dẫn ESC 2024</div>", unsafe_allow_html=True)
 
 # Session State Initialization
