@@ -6,15 +6,6 @@ st.set_page_config(
     page_title="ESC 2024 CCS Initial Management Tool v14",
     page_icon="🫀",
     layout="wide"
-)# Menu điều hướng
-st.sidebar.page_link(
-    "pe-cdss-web.py",
-    label="🫁 Thuyên tắc phổi cấp"
-)
-
-st.sidebar.page_link(
-    "pages/1_❤️_Hoi_chung_vanh_man.py",
-    label="❤️ Hội chứng vành mạn"
 )
 
 # Custom CSS Styling to implement Strict Visual Hierarchy and Gorgeous Accordion Flow
@@ -24,88 +15,91 @@ st.markdown("""
         background: #f8fafc;
     }
     
-    /* Massive Centered Main Title like Pulmonary Embolism App */
+    /* =========================================================
+       VISUAL HIERARCHY
+       H0 (page title) > H1 (Bước 1-4) > H2 (đề mục cấp 2)
+       > H3 (st.subheader) > H4 > body text.
+       Chỉ thay đổi hiển thị, không thay đổi nội dung/logic.
+       ========================================================= */
+
+    /* H0 — Main page title: intentionally dominant */
     h1.main-title {
-        font-size: 2.50rem !important;
-        color: #0f2c59 !important;
+        font-size: 4.35rem !important;
+        color: #123a5a !important;
         text-align: center !important;
-        font-weight: 800 !important;
-        margin-top: 15px !important;
-        margin-bottom: 5px !important;
-        line-height: 1.2 !important;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.1) !important;
+        font-weight: 950 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.0px !important;
+        line-height: 1.10 !important;
+        margin: 12px 0 10px 0 !important;
+        padding: 28px 34px !important;
         display: block !important;
         width: 100% !important;
+        background: linear-gradient(135deg, #eef7ff 0%, #f4fbff 45%, #eefbf6 100%) !important;
+        border-top: 6px solid #1e3d59 !important;
+        border-bottom: 6px solid #17b978 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 30px rgba(30, 61, 89, 0.13) !important;
+        text-shadow: 0 2px 3px rgba(0,0,0,0.08) !important;
     }
+
     .main-subtitle {
         text-align: center !important;
         color: #475569 !important;
-        font-size: 1.15rem !important;
-        font-weight: 600 !important;
-        margin-top: 0px !important;
-        margin-bottom: 25px !important;
-    }
-    
-    /* Sticky Navigation Container for the Horizontal Step Bar */
-    div[data-testid="stHorizontalBlock"]:has(.pe-step-active) {
-        position: -webkit-sticky !important;
-        position: sticky !important;
-        top: 0px !important; /* Sticks right below the Streamlit top bar */
-        z-index: 999999 !important;
-        background-color: #f8fafc !important;
-        padding: 10px !important;
-        border-bottom: 2px solid #e2e8f0 !important;
-        box-shadow: 0 4px 12px rgba(15, 44, 89, 0.08) !important;
-        border-radius: 12px !important;
-        margin-bottom: 25px !important;
+        font-size: 1.35rem !important;
+        font-weight: 650 !important;
+        margin-top: 4px !important;
+        margin-bottom: 30px !important;
+        letter-spacing: 0.15px !important;
     }
 
-    /* PE Step Bar active styling (looks exactly like the reddish coral in multimodal_0) */
-    div.pe-step-active button, div.pe-step-active [data-testid="stBaseButton-secondary"] {
-        background: #ff4d4d !important; /* Coral red as in PE image */
-        color: #ffffff !important;
-        border: none !important;
-        box-shadow: 0 4px 12px rgba(255, 77, 77, 0.4) !important;
-        width: 100% !important;
-        padding: 12px 15px !important;
-        border-radius: 10px !important;
-        display: block !important;
-        transition: all 0.2s ease !important;
+    /* Native markdown heading hierarchy below the 4 main Step headings */
+    h1:not(.main-title) {
+        font-size: 2.00rem !important;
+        color: #153b5b !important;
+        font-weight: 850 !important;
+        margin-top: 22px !important;
+        margin-bottom: 14px !important;
     }
-    div.pe-step-active button p, div.pe-step-active button span,
-    div.pe-step-active [data-testid="stBaseButton-secondary"] p, div.pe-step-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.25rem !important; /* Largest in-step element, bold and uppercase! */
+    h2 {
+        font-size: 1.72rem !important;
+        color: #1a5276 !important;
+        font-weight: 820 !important;
+        margin-top: 20px !important;
+        margin-bottom: 12px !important;
+    }
+    h3 {
+        font-size: 1.38rem !important;
+        color: #256b93 !important;
         font-weight: 800 !important;
-        color: #ffffff !important;
-        text-transform: uppercase !important;
-        margin: 0 !important;
+        border-bottom: 2px solid #7ccfb0 !important;
+        padding-bottom: 6px !important;
+        margin-top: 24px !important;
+        margin-bottom: 14px !important;
+    }
+    h4 {
+        font-size: 1.18rem !important;
+        color: #2c3e50 !important;
+        font-weight: 720 !important;
+        margin-top: 16px !important;
+        margin-bottom: 9px !important;
+    }
+    p, span, label, li {
+        font-size: 1.03rem !important;
     }
 
-    /* PE Step Bar inactive styling (white button with thin grey border and icons) */
-    div.pe-step-inactive button, div.pe-step-inactive [data-testid="stBaseButton-secondary"] {
-        background-color: #ffffff !important;
-        color: #1e3d59 !important;
-        border: 1px solid #cbd5e1 !important;
-        box-shadow: none !important;
-        width: 100% !important;
-        padding: 12px 15px !important;
-        border-radius: 10px !important;
-        display: block !important;
-        transition: all 0.2s ease !important;
+    /* Responsive scaling keeps the hierarchy intact on smaller screens */
+    @media (max-width: 1200px) {
+        h1.main-title { font-size: 3.55rem !important; padding: 24px 26px !important; }
+        .main-subtitle { font-size: 1.22rem !important; }
     }
-    div.pe-step-inactive button p, div.pe-step-inactive button span,
-    div.pe-step-inactive [data-testid="stBaseButton-secondary"] p, div.pe-step-inactive [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.15rem !important;
-        font-weight: 600 !important;
-        color: #1e3d59 !important;
-        margin: 0 !important;
-    }
-    div.pe-step-inactive button:hover {
-        border-color: #ff4d4d !important;
-        background-color: #fff5f5 !important;
-    }
-    div.pe-step-inactive button:hover p, div.pe-step-inactive button:hover span {
-        color: #ff4d4d !important;
+    @media (max-width: 768px) {
+        h1.main-title { font-size: 2.35rem !important; padding: 20px 16px !important; }
+        .main-subtitle { font-size: 1.05rem !important; }
+        h1:not(.main-title) { font-size: 1.65rem !important; }
+        h2 { font-size: 1.45rem !important; }
+        h3 { font-size: 1.25rem !important; }
+        h4 { font-size: 1.10rem !important; }
     }
 
     /* Step-based Alert Box styles */
@@ -186,10 +180,73 @@ st.markdown("""
         font-size: 0.85rem;
     }
 
+    /* Accordion Main Step Buttons styling - styled on button and button p/span to beat default Streamlit styles */
+    div.main-step-active button, div.main-step-active [data-testid="stBaseButton-secondary"] {
+        background: linear-gradient(135deg, #1e3d59, #17b978) !important;
+        border: 2px solid #17b978 !important;
+        box-shadow: 0 4px 15px rgba(23, 185, 120, 0.4) !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding: 16px 22px !important;
+        border-radius: 8px !important;
+        margin-top: 15px !important;
+        margin-bottom: 15px !important;
+        display: block !important;
+    }
+    div.main-step-active button p, div.main-step-active [data-testid="stBaseButton-secondary"] p,
+    div.main-step-active button span, div.main-step-active [data-testid="stBaseButton-secondary"] span {
+        font-size: 2.1rem !important; /* Massive and absolute largest step header! */
+        font-weight: 900 !important;
+        color: #ffffff !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3) !important;
+    }
+    
+    div.main-step-completed button, div.main-step-completed [data-testid="stBaseButton-secondary"] {
+        background: linear-gradient(135deg, #e8f8f5, #d1f2eb) !important;
+        border: 2px solid #2ecc71 !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding: 12px 18px !important;
+        border-radius: 8px !important;
+        margin-top: 10px !important;
+        margin-bottom: 10px !important;
+        opacity: 0.95 !important;
+        display: block !important;
+    }
+    div.main-step-completed button p, div.main-step-completed [data-testid="stBaseButton-secondary"] p,
+    div.main-step-completed button span, div.main-step-completed [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.7rem !important; /* Clearly larger than subheadings (1.55rem) */
+        font-weight: 800 !important;
+        color: #117a65 !important;
+        margin: 0 !important;
+    }
+    
+    div.main-step-pending button, div.main-step-pending [data-testid="stBaseButton-secondary"] {
+        background-color: #f1f2f6 !important;
+        border: 1px dashed #bdc3c7 !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding: 12px 18px !important;
+        border-radius: 8px !important;
+        margin-top: 10px !important;
+        margin-bottom: 10px !important;
+        opacity: 0.7 !important;
+        display: block !important;
+    }
+    div.main-step-pending button p, div.main-step-pending [data-testid="stBaseButton-secondary"] p,
+    div.main-step-pending button span, div.main-step-pending [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.70rem !important; /* Matching completed step size for symmetry */
+        font-weight: 700 !important;
+        color: #7f8c8d !important;
+        margin: 0 !important;
+    }
+
     /* Sub-section Accordion Buttons styling */
     div.sub-header-active button, div.sub-header-active [data-testid="stBaseButton-secondary"] {
         background-color: #ebf5fb !important;
-        border-left: 8px solid #17b978 !important;
+        border-left: 8px solid #3498db !important;
         border-top: none !important;
         border-right: none !important;
         border-bottom: none !important;
@@ -197,103 +254,47 @@ st.markdown("""
         text-align: left !important;
         padding: 10px 15px !important;
         border-radius: 4px !important;
+        margin-top: 10px !important;
+        margin-bottom: 10px !important;
         display: block !important;
     }
     div.sub-header-active button p, div.sub-header-active [data-testid="stBaseButton-secondary"] p,
     div.sub-header-active button span, div.sub-header-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.15rem !important; /* Smaller than step buttons, but highly prominent */
-        font-weight: 700 !important;
-        color: #0f2c59 !important;
+        font-size: 1.45rem !important; /* Smaller than step buttons, but highly prominent */
+        font-weight: 800 !important;
+        color: #1b4f72 !important;
         margin: 0 !important;
     }
     
     div.sub-header-inactive button, div.sub-header-inactive [data-testid="stBaseButton-secondary"] {
-        background-color: #f8fafc !important;
-        border: 1px solid #cbd5e1 !important;
+        background-color: #fcfcfc !important;
+        border: 1px solid #d5dbdb !important;
         width: 100% !important;
         text-align: left !important;
         padding: 8px 12px !important;
         border-radius: 4px !important;
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+        opacity: 0.85 !important;
         display: block !important;
     }
     div.sub-header-inactive button p, div.sub-header-inactive [data-testid="stBaseButton-secondary"] p,
     div.sub-header-inactive button span, div.sub-header-inactive [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.05rem !important;
+        font-size: 1.30rem !important;
         font-weight: 600 !important;
-        color: #475569 !important;
+        color: #5d6d7e !important;
         margin: 0 !important;
     }
     div.sub-header-inactive button:hover {
         border-color: #17b978 !important;
-    }
-    div.sub-header-inactive button:hover p, div.sub-header-inactive button:hover span {
         color: #17b978 !important;
-    }
-
-    /* Locked Headings sizes for perfect hierarchy */
-    h3 { 
-        font-size: 1.15rem !important; /* st.subheader - highly visible! */
-        color: #0f2c59 !important; /* Beautiful Royal Medical Blue */
-        font-weight: 700 !important;
-        border-bottom: 2px solid #17b978 !important; /* Colorful underline */
-        padding-bottom: 4px !important;
-        margin-top: 22px !important;
-        margin-bottom: 12px !important;
-    }
-    h4 { 
-        font-size: 1.05rem !important; /* st.markdown("#### ...") */
-        color: #334155 !important;
-        font-weight: 600 !important;
-        margin-top: 15px !important;
-        margin-bottom: 8px !important;
-    }
-    p, span, label, li {
-        font-size: 0.95rem !important;
-        color: #334155 !important;
+        opacity: 1.0 !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='main-title'>🩺 CDSS HỘI CHỨNG MẠCH VÀNH MẠN (ESC 2024)</h1>", unsafe_allow_html=True)
-st.markdown("<div class='main-subtitle'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v20)</div>", unsafe_allow_html=True)
-
-# Horizontal Step Navigation Bar exactly like Pulmonary Embolism App (multimodal_0)
-col_step1, col_step2, col_step3, col_step4 = st.columns(4)
-
-with col_step1:
-    wrapper_class = "pe-step-active" if st.session_state.step == 1 else "pe-step-inactive"
-    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
-    if st.button("⚡ BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", key="pe_step_btn_1"):
-        st.session_state.step = 1
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col_step2:
-    wrapper_class = "pe-step-active" if st.session_state.step == 2 else "pe-step-inactive"
-    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
-    if st.button("📊 BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", key="pe_step_btn_2"):
-        st.session_state.step = 2
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col_step3:
-    wrapper_class = "pe-step-active" if st.session_state.step == 3 else "pe-step-inactive"
-    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
-    if st.button("🔍 BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", key="pe_step_btn_3"):
-        st.session_state.step = 3
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col_step4:
-    wrapper_class = "pe-step-active" if st.session_state.step == 4 else "pe-step-inactive"
-    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
-    if st.button("💊 BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", key="pe_step_btn_4"):
-        st.session_state.step = 4
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-st.divider()
-
+st.markdown("<h1 class='main-title'>🫀 QUẢN LÝ BAN ĐẦU NGHI NGỜ HỘI CHỨNG MẠCH VÀNH MẠN (CCS)</h1>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng (CDSS) tương tác đa tầng theo Hướng dẫn ESC 2024</div>", unsafe_allow_html=True)
 
 # Session State Initialization
 if 'step' not in st.session_state: st.session_state.step = 1
@@ -337,14 +338,74 @@ def set_step(step_num):
 def render_main_step_header(title, step_id):
     current_step = st.session_state.step
     is_active = (current_step == step_id)
+    is_completed = (current_step > step_id)
+    
+    arrow = "▼" if is_active else "▶"
+    prefix = "✅ " if is_completed else ""
+    status_text = " [ĐANG THỰC HIỆN]" if is_active else ""
+    
+    wrapper_class = "main-step-active" if is_active else ("main-step-completed" if is_completed else "main-step-pending")
+
+    # Robust key-based styling for the four primary headings (Bước 1-4).
+    # All four keep the SAME heading size; state is communicated by colour, not hierarchy.
     if is_active:
-        st.markdown(f"""
-        <div style='text-align: center; margin-top: 10px; margin-bottom: 25px;'>
-            <span style='background-color: #ff4d4d; color: white; padding: 6px 15px; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 0.95rem;'>
-                📍 Bạn đang ở: {title}
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
+        step_bg = "linear-gradient(135deg, #123a5a 0%, #176b78 52%, #17b978 100%)"
+        step_border = "#17b978"
+        step_text = "#ffffff"
+        step_shadow = "0 8px 22px rgba(23, 107, 120, 0.30)"
+    elif is_completed:
+        step_bg = "linear-gradient(135deg, #e7f8f1 0%, #d2f1e5 100%)"
+        step_border = "#2ecc71"
+        step_text = "#0d684f"
+        step_shadow = "0 5px 14px rgba(46, 204, 113, 0.16)"
+    else:
+        step_bg = "linear-gradient(135deg, #eef5fb 0%, #e7f1f8 100%)"
+        step_border = "#79a9c7"
+        step_text = "#183f5f"
+        step_shadow = "0 4px 12px rgba(30, 61, 89, 0.10)"
+
+    st.markdown(f"""
+    <style>
+    div[class*="st-key-main_step_btn_{step_id}"] button {{
+        width: 100% !important;
+        background: {step_bg} !important;
+        border: 2px solid {step_border} !important;
+        border-left-width: 9px !important;
+        border-radius: 12px !important;
+        padding: 17px 22px !important;
+        margin: 13px 0 !important;
+        min-height: 72px !important;
+        box-shadow: {step_shadow} !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+    }}
+    div[class*="st-key-main_step_btn_{step_id}"] button p,
+    div[class*="st-key-main_step_btn_{step_id}"] button span {{
+        font-size: 2.25rem !important;
+        line-height: 1.18 !important;
+        font-weight: 900 !important;
+        color: {step_text} !important;
+        letter-spacing: 0.25px !important;
+        margin: 0 !important;
+    }}
+    @media (max-width: 1200px) {{
+        div[class*="st-key-main_step_btn_{step_id}"] button p,
+        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.90rem !important; }}
+    }}
+    @media (max-width: 768px) {{
+        div[class*="st-key-main_step_btn_{step_id}"] button {{ padding: 13px 15px !important; min-height: 60px !important; }}
+        div[class*="st-key-main_step_btn_{step_id}"] button p,
+        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.45rem !important; }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
+    if st.button(f"{arrow} {prefix}{title}{status_text}", key=f"main_step_btn_{step_id}"):
+        st.session_state.step = step_id
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+    
     return is_active
 
 # Helper function to render sub-step accordion headers
@@ -354,9 +415,46 @@ def render_sub_header(title, sub_step_id, session_key):
     arrow = "▼" if is_active else "▶"
     
     wrapper_class = "sub-header-active" if is_active else "sub-header-inactive"
+
+    # Secondary accordion headings: visibly below Bước 1-4 in the hierarchy.
+    sub_bg = "#eaf4fb" if is_active else "#fbfdff"
+    sub_border = "#3498db" if is_active else "#c7d8e5"
+    sub_text = "#174d70" if is_active else "#4d6475"
+    sub_weight = 820 if is_active else 680
+    sub_size = "1.48rem" if is_active else "1.34rem"
+
+    widget_key = f"btn_{session_key}_{sub_step_id}"
+    st.markdown(f"""
+    <style>
+    div[class*="st-key-{widget_key}"] button {{
+        width: 100% !important;
+        background: {sub_bg} !important;
+        border: 1px solid {sub_border} !important;
+        border-left: 7px solid {sub_border} !important;
+        border-radius: 7px !important;
+        padding: 10px 14px !important;
+        margin: 8px 0 !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        box-shadow: {'0 3px 10px rgba(52, 152, 219, 0.10)' if is_active else 'none'} !important;
+    }}
+    div[class*="st-key-{widget_key}"] button p,
+    div[class*="st-key-{widget_key}"] button span {{
+        font-size: {sub_size} !important;
+        line-height: 1.22 !important;
+        font-weight: {sub_weight} !important;
+        color: {sub_text} !important;
+        margin: 0 !important;
+    }}
+    @media (max-width: 768px) {{
+        div[class*="st-key-{widget_key}"] button p,
+        div[class*="st-key-{widget_key}"] button span {{ font-size: 1.18rem !important; }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
     
     st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
-    if st.button(f"{arrow} {title}", key=f"btn_{session_key}_{sub_step_id}"):
+    if st.button(f"{arrow} {title}", key=widget_key):
         st.session_state[session_key] = sub_step_id
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
