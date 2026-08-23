@@ -41,28 +41,7 @@ st.markdown("""
         margin-bottom: 25px;
     }
     
-    /* Strict Visual Hierarchy CSS locks */
-    h1 { font-size: 2.0rem !important; }
-    h2 { font-size: 1.5rem !important; }
-    h3 { 
-        font-size: 1.15rem !important; 
-        color: #1e3d59 !important; 
-        font-weight: 700 !important;
-        border-bottom: 1.5px solid #17b978 !important; 
-        padding-bottom: 3px !important;
-        margin-top: 20px !important;
-        margin-bottom: 12px !important;
-    }
-    h4 { 
-        font-size: 1.0rem !important; 
-        color: #2c3e50 !important;
-        font-weight: 600 !important;
-        margin-top: 12px !important;
-        margin-bottom: 8px !important;
-    }
-    p, span, label, li {
-        font-size: 0.95rem !important;
-    }
+
 
     /* Step-based Alert Box styles */
     .recommendation-box {
@@ -142,29 +121,54 @@ st.markdown("""
         font-size: 0.8rem;
     }
 
-    /* Accordion Main Step Buttons styling */
-    div.main-step-active button {
+    /* Strict Visual Hierarchy CSS locks */
+    h1 { font-size: 1.80rem !important; }
+    h2 { font-size: 1.40rem !important; }
+    h3 { 
+        font-size: 1.10rem !important; /* st.subheader */
+        color: #1e3d59 !important; 
+        font-weight: 700 !important;
+        border-bottom: 1.5px solid #17b978 !important; 
+        padding-bottom: 3px !important;
+        margin-top: 20px !important;
+        margin-bottom: 12px !important;
+    }
+    h4 { 
+        font-size: 0.95rem !important; /* st.markdown("#### ...") */
+        color: #2c3e50 !important;
+        font-weight: 600 !important;
+        margin-top: 12px !important;
+        margin-bottom: 8px !important;
+    }
+    p, span, label, li {
+        font-size: 0.95rem !important;
+    }
+
+    /* Accordion Main Step Buttons styling - styled on button and button p/span to beat default Streamlit styles */
+    div.main-step-active button, div.main-step-active [data-testid="stBaseButton-secondary"] {
         background: linear-gradient(135deg, #1e3d59, #17b978) !important;
-        color: #ffffff !important;
         border: 2px solid #17b978 !important;
         box-shadow: 0 4px 15px rgba(23, 185, 120, 0.4) !important;
-        font-size: 1.55rem !important;
-        font-weight: 800 !important;
         width: 100% !important;
         text-align: left !important;
         padding: 15px 20px !important;
         border-radius: 8px !important;
         margin-top: 15px !important;
         margin-bottom: 15px !important;
+        display: block !important;
+    }
+    div.main-step-active button p, div.main-step-active [data-testid="stBaseButton-secondary"] p,
+    div.main-step-active button span, div.main-step-active [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.80rem !important; /* Huge, prominent and absolute largest header! */
+        font-weight: 900 !important;
+        color: #ffffff !important;
         text-transform: uppercase !important;
+        margin: 0 !important;
     }
     
-    div.main-step-completed button {
+    div.main-step-completed button, div.main-step-completed [data-testid="stBaseButton-secondary"] {
         background-color: #e8f8f5 !important;
-        color: #17b978 !important;
         border: 2px solid #2ecc71 !important;
-        font-size: 1.35rem !important;
-        font-weight: 700 !important;
         width: 100% !important;
         text-align: left !important;
         padding: 12px 18px !important;
@@ -172,14 +176,19 @@ st.markdown("""
         margin-top: 10px !important;
         margin-bottom: 10px !important;
         opacity: 0.85 !important;
+        display: block !important;
+    }
+    div.main-step-completed button p, div.main-step-completed [data-testid="stBaseButton-secondary"] p,
+    div.main-step-completed button span, div.main-step-completed [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.40rem !important; /* Larger than sub-section headers */
+        font-weight: 800 !important;
+        color: #17b978 !important;
+        margin: 0 !important;
     }
     
-    div.main-step-pending button {
+    div.main-step-pending button, div.main-step-pending [data-testid="stBaseButton-secondary"] {
         background-color: #f1f2f6 !important;
-        color: #888888 !important;
         border: 1px dashed #cccccc !important;
-        font-size: 1.35rem !important;
-        font-weight: 600 !important;
         width: 100% !important;
         text-align: left !important;
         padding: 12px 18px !important;
@@ -187,32 +196,42 @@ st.markdown("""
         margin-top: 10px !important;
         margin-bottom: 10px !important;
         opacity: 0.6 !important;
+        display: block !important;
+    }
+    div.main-step-pending button p, div.main-step-pending [data-testid="stBaseButton-secondary"] p,
+    div.main-step-pending button span, div.main-step-pending [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.40rem !important;
+        font-weight: 700 !important;
+        color: #888888 !important;
+        margin: 0 !important;
     }
 
     /* Sub-section Accordion Buttons styling */
-    div.sub-header-active button {
+    div.sub-header-active button, div.sub-header-active [data-testid="stBaseButton-secondary"] {
         background-color: #e8f4f8 !important;
-        color: #1e3d59 !important;
         border-left: 6px solid #17b978 !important;
         border-top: none !important;
         border-right: none !important;
         border-bottom: none !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
         width: 100% !important;
         text-align: left !important;
         padding: 10px 15px !important;
         border-radius: 4px !important;
         margin-top: 10px !important;
         margin-bottom: 10px !important;
+        display: block !important;
+    }
+    div.sub-header-active button p, div.sub-header-active [data-testid="stBaseButton-secondary"] p,
+    div.sub-header-active button span, div.sub-header-active [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.15rem !important; /* Smaller than step headers */
+        font-weight: 700 !important;
+        color: #1e3d59 !important;
+        margin: 0 !important;
     }
     
-    div.sub-header-inactive button {
+    div.sub-header-inactive button, div.sub-header-inactive [data-testid="stBaseButton-secondary"] {
         background-color: #f7f9fa !important;
-        color: #555555 !important;
         border: 1px solid #d3d3d3 !important;
-        font-size: 1.15rem !important;
-        font-weight: 600 !important;
         width: 100% !important;
         text-align: left !important;
         padding: 8px 12px !important;
@@ -220,6 +239,14 @@ st.markdown("""
         margin-top: 8px !important;
         margin-bottom: 8px !important;
         opacity: 0.8 !important;
+        display: block !important;
+    }
+    div.sub-header-inactive button p, div.sub-header-inactive [data-testid="stBaseButton-secondary"] p,
+    div.sub-header-inactive button span, div.sub-header-inactive [data-testid="stBaseButton-secondary"] span {
+        font-size: 1.05rem !important;
+        font-weight: 600 !important;
+        color: #555555 !important;
+        margin: 0 !important;
     }
     div.sub-header-inactive button:hover {
         border-color: #17b978 !important;
@@ -498,7 +525,8 @@ elif render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
             lvef_val = st.slider("Phân suất tống máu thất trái (LVEF %):", min_value=10, max_value=80, value=st.session_state.get('lvef_val', 55))
             st.session_state.lvef_val = lvef_val
         with echo_col2:
-            echo_findings = st.multiselect("Phát hiện bất thường trên siêu âm:", [
+            echo_findings = st.multiselect("Kết quả siêu âm tim lúc nghỉ:", [
+                "Chưa ghi nhận bất thường (Bình thường lúc nghỉ)",
                 "Rối loạn vận động vùng thất trái (Regional wall motion abnormality)",
                 "Bệnh van tim thực tổn (Hẹp/hở van mức độ vừa - nặng)",
                 "Phì đại cơ thất trái (LV Hypertrophy)",
@@ -748,43 +776,55 @@ elif render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
         st.markdown(f"Khả năng lâm sàng thực tế của bệnh nhân: **{lik}%**")
         
         if lik <= 5:
-            st.success("""
-            **🟢 HOÃN CÁC THĂM DÒ CHẨN ĐOÁN SÂU HƠN <span class='class-badge-2a'>Class IIa</span>**
-            - Bệnh nhân thuộc nhóm khả năng lâm sàng rất thấp (≤5%). Tầm soát thường quy không đem lại lợi ích thực tế.
-            - Nên tập trung tìm kiếm các nguyên nhân gây đau ngực ngoài tim khác.
-            """)
+            st.markdown("""
+            <div class='success-box'>
+                <strong>🟢 HOÃN CÁC THĂM DÒ CHẨN ĐOÁN SÂU HƠN <span class='class-badge-2a'>Class IIa</span></strong><br>
+                - Bệnh nhân thuộc nhóm khả năng lâm sàng rất thấp (≤5%). Tầm soát thường quy không đem lại lợi ích thực tế.<br>
+                - Nên tập trung tìm kiếm các nguyên nhân gây đau ngực ngoài tim khác.
+            </div>
+            """, unsafe_allow_html=True)
         elif 5 < lik <= 15:
-            st.info("""
-            **🔵 CHỤP CẮT LỚP VI TÍNH ĐỘNG MẠCH VÀNH (CCTA) <span class='class-badge-1'>Class I</span>**
-            - Chỉ định ưu tiên hàng đầu để chẩn đoán xác định và loại trừ hẹp động mạch vành cơ học ở nhóm khả năng lâm sàng thấp.
-            - Giúp đánh giá chi tiết gánh nặng và cấu trúc mảng xơ vữa.
-            """)
+            st.markdown("""
+            <div class='recommendation-box'>
+                <strong>🔵 CHỤP CẮT LỚP VI TÍNH ĐỘNG MẠCH VÀNH (CCTA) <span class='class-badge-1'>Class I</span></strong><br>
+                - Chỉ định ưu tiên hàng đầu để chẩn đoán xác định và loại trừ hẹp động mạch vành cơ học ở nhóm khả năng lâm sàng thấp.<br>
+                - Giúp đánh giá chi tiết gánh nặng và cấu trúc mảng xơ vữa.
+            </div>
+            """, unsafe_allow_html=True)
         elif 15 < lik <= 50:
             if cacs_score >= 400:
-                st.warning("""
-                **🟡 THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC LÀ ƯU TIÊN <span class='class-badge-2a'>Class IIa</span>**
-                - Do vôi hóa mạch vành rất nặng (CACS ≥ 400), độ chính xác của chụp cắt lớp CCTA bị suy giảm mạnh do xảo ảnh vôi hóa.
-                - Khuyên dùng: **Stress Echo, Stress CMR, PET hoặc stress SPECT** để đánh giá trực tiếp thiếu máu cơ tim sinh lý.
-                """)
+                st.markdown("""
+                <div class='warning-box' style='border-left-color: #fd7e14;'>
+                    <strong>🟡 THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC LÀ ƯU TIÊN <span class='class-badge-2a'>Class IIa</span></strong><br>
+                    - Do vôi hóa mạch vành rất nặng (CACS ≥ 400), độ chính xác của chụp cắt lớp CCTA bị suy giảm mạnh do xảo ảnh vôi hóa.<br>
+                    - Khuyên dùng: <strong>Stress Echo, Stress CMR, PET hoặc stress SPECT</strong> để đánh giá trực tiếp thiếu máu cơ tim sinh lý.
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.warning("""
-                **🟡 CHỌN CCTA (Class I A) HOẶC THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC (Class I B)**
-                - Bệnh nhân thuộc nhóm trung bình (15-50%) có thể lựa chọn linh hoạt một trong hai thăm dò đầu tay:
-                    * **CCTA (Cắt lớp vi tính):** Ưu tiên để loại trừ hẹp, bệnh nhân trẻ, ít vôi hóa.
-                    * **Hình ảnh chức năng gắng sức (Stress Echo, Stress CMR, SPECT, PET):** Ưu tiên nếu nghi ngờ thiếu máu cơ tim diện rộng hoặc có tiền sử nhồi máu cơ tim cũ.
-                """)
+                st.markdown("""
+                <div class='warning-box' style='border-left-color: #fd7e14;'>
+                    <strong>🟡 CHỌN CCTA (Class I A) HOẶC THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC (Class I B)</strong><br>
+                    - Bệnh nhân thuộc nhóm trung bình (15-50%) có thể lựa chọn linh hoạt một trong hai thăm dò đầu tay:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;* <strong>CCTA (Cắt lớp vi tính):</strong> Ưu tiên để loại trừ hẹp, bệnh nhân trẻ, ít vôi hóa.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;* <strong>Hình ảnh chức năng gắng sức (Stress Echo, Stress CMR, SPECT, PET):</strong> Ưu tiên nếu nghi ngờ thiếu máu cơ tim diện rộng hoặc có tiền sử nhồi máu cơ tim cũ.
+                </div>
+                """, unsafe_allow_html=True)
         elif 50 < lik <= 85:
-            st.error("""
-            **🟠 ƯU TIÊN THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC <span class='class-badge-1'>Class I</span>**
-            - Bệnh nhân khả năng lâm sàng cao (>50%). Khuyên chỉ định các thăm dò chức năng không xâm lấn để đánh giá trực tiếp diện tích vùng thiếu máu cơ tim.
-            - Chỉ định: **Stress Echo, Stress CMR, SPECT hoặc PET**.
-            """)
+            st.markdown("""
+            <div class='warning-box' style='border-left-color: #fd7e14;'>
+                <strong>🟠 ƯU TIÊN THĂM DÒ HÌNH ẢNH CHỨC NĂNG GẮNG SỨC <span class='class-badge-1'>Class I</span></strong><br>
+                - Bệnh nhân khả năng lâm sàng cao (>50%). Khuyên chỉ định các thăm dò chức năng không xâm lấn để đánh giá trực tiếp diện tích vùng thiếu máu cơ tim.<br>
+                - Chỉ định: <strong>Stress Echo, Stress CMR, SPECT hoặc PET</strong>.
+            </div>
+            """, unsafe_allow_html=True)
         else: # > 85%
-            st.error("""
-            **🔴 CHỤP ĐỘNG MẠCH VÀNH XÂM LẤN (ICA) TRỰC TIẾP <span class='class-badge-1'>Class I</span>**
-            - Nhóm khả năng lâm sàng rất cao (>85%), đau thắt ngực nặng kháng trị bằng thuốc, hoặc có biểu hiện suy tim cơ năng rõ rệt.
-            - Tiến hành ICA trực tiếp để lập phác đồ và lên kế hoạch can thiệp tái thông mạch vành đồng thời (kèm đo FFR/iFR nếu có hẹp trung gian).
-            """)
+            st.markdown("""
+            <div class='warning-box'>
+                <strong>🔴 CHỤP ĐỘNG MẠCH VÀNH XÂM LẤN (ICA) TRỰC TIẾP <span class='class-badge-1'>Class I</span></strong><br>
+                - Nhóm khả năng lâm sàng rất cao (>85%), đau thắt ngực nặng kháng trị bằng thuốc, hoặc có biểu hiện suy tim cơ năng rõ rệt.<br>
+                - Tiến hành ICA trực tiếp để lập phác đồ và lên kế hoạch can thiệp tái thông mạch vành đồng thời (kèm đo FFR/iFR nếu có hẹp trung gian).
+            </div>
+            """, unsafe_allow_html=True)
 
     # Sub-step 3.2: Kết quả cận lâm sàng
     if render_sub_header("Kết quả cận lâm sàng", 2, "step3_sub"):
