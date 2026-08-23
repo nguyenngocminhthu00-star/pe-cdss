@@ -789,7 +789,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
     hemo_options = [
         "Huyết động ổn định (Huyết áp bình thường)",
         "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)",
-        "Tụt huyết áp kéo dài hoặc tái diễn KÈM sốc tim (Cardiogenic shock; AHA/ACC Category E1, tương thích SCAI SHOCK C)",
+        "Tụt huyết áp kéo dài hoặc tái diễn do sốc tim (SCAI SHOCK stage C)",
         "Sốc tim kháng trị hoặc Ngừng tuần hoàn (SCAI Stage D/E, hoặc cardiac arrest không đạt ROSC sau 30 phút hồi sức)",
         "Thuyên tắc phổi phát hiện tình cờ, hoàn toàn không có triệu chứng (Category A - Subclinical PE)"
     ]
@@ -822,12 +822,12 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                 <em>Định nghĩa:</em> Sốc tim kháng trị (SCAI Stage D hoặc E) hoặc ngừng tuần hoàn (cardiac arrest) không đạt ROSC sau 30 phút hồi sức tích cực. Đòi hỏi hồi sức nâng cao khẩn cấp.
             </div>
             """, unsafe_allow_html=True)
-        elif "KÈM sốc tim" in primary_hemo:
+        elif "do sốc tim" in primary_hemo:
             st.session_state.final_category = "E1"
             st.markdown("""
             <div class='u-card urgency-high'>
                 <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM E1 (Suy tim phổi - tuần hoàn, sốc tim)</strong><br>
-                <em>Định nghĩa:</em> Tụt huyết áp kéo dài hoặc tái diễn <strong>kèm sốc tim</strong> (tương thích SCAI SHOCK C). Không xếp E1 chỉ dựa vào một ngưỡng huyết áp đơn độc nếu chưa có bối cảnh suy tuần hoàn/sốc tim. Cần điều trị tích cực tại ICU.
+                Tụt huyết áp kéo dài hoặc tái diễn do sốc tim (SCAI SHOCK stage C).
             </div>
             """, unsafe_allow_html=True)
         elif "phát hiện tình cờ" in primary_hemo:
@@ -840,7 +840,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
             """, unsafe_allow_html=True)
             st.session_state.resp_modifier = False
         if st.button("Xác nhận trạng thái huyết động → Tiếp tục", type="primary", use_container_width=True, key="confirm_primary_hemo"):
-            if "Sốc tim kháng trị" in primary_hemo or "KÈM sốc tim" in primary_hemo or "phát hiện tình cờ" in primary_hemo:
+            if "Sốc tim kháng trị" in primary_hemo or "do sốc tim" in primary_hemo or "phát hiện tình cờ" in primary_hemo:
                 st.session_state.step2_focus = "branch"
             else:
                 st.session_state.step2_focus = "organ_damage"
@@ -855,7 +855,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
             if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_e2"):
                 st.session_state.step = 3
                 st.rerun()
-    elif "KÈM sốc tim" in primary_hemo:
+    elif "do sốc tim" in primary_hemo:
         if render_step2_sub_header("📢 Đánh giá Modifier R cho nhóm E", "branch"):
             st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
             r_e = persistent_checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?", key="r_e")
