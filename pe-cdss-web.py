@@ -4,99 +4,168 @@ import math
 # Cấu hình trang Streamlit
 st.set_page_config(
     page_title="Hỗ trợ Quyết định Lâm sàng PE - AHA/ACC 2026 (Bản chuẩn)",
-    page_icon="🩺",
+    page_icon="🫁",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
-# MENU ĐIỀU HƯỚNG
+
+# MENU ĐIỀU HƯỚNG — đồng bộ với công cụ CCS
 st.sidebar.page_link(
     "pe-cdss-web.py",
     label="🫁 Thuyên tắc phổi cấp"
 )
-
 st.sidebar.page_link(
     "pages/1_❤️_Hoi_chung_vanh_man.py",
     label="❤️ Hội chứng vành mạn"
 )
 
-# Custom CSS cho giao diện y tế hiện đại, chuyên nghiệp
-st.markdown("""
+# Giao diện đồng bộ CCS: phân cấp trực quan + accordion + responsive mobile
+st.markdown(r"""
 <style>
-    .main-header {
-        font-size: 2.2rem;
-        color: #1E3A8A;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 2px;
+    .stApp { background: #f8fafc; }
+    .block-container {
+        padding-top: 1.0rem !important;
+        padding-bottom: 2.0rem !important;
+        max-width: 1480px;
     }
-    .sub-header {
-        font-size: 1.1rem;
-        color: #4B5563;
-        text-align: center;
-        margin-bottom: 25px;
+
+    h1.main-title,
+    div[data-testid="stMarkdownContainer"] h1.main-title,
+    h1.main-title span,
+    h1.main-title * {
+        color: #123a5a !important;
+        font-size: 2.65rem !important;
+        line-height: 1.02 !important;
+        font-weight: 950 !important;
+        letter-spacing: -0.7px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
     }
+    .main-subtitle, .main-subtitle * {
+        color: #526979 !important;
+        font-size: 1.02rem !important;
+        line-height: 1.25 !important;
+        font-weight: 540 !important;
+        margin-top: 4px !important;
+        margin-bottom: 0 !important;
+    }
+    .header-divider {
+        height: 3px;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #123a5a 0%, #176b78 55%, #17b978 100%);
+        margin: 11px 0 16px 0;
+    }
+
+    h1:not(.main-title) { font-size: 1.45rem !important; color:#153b5b !important; font-weight:850 !important; }
+    h2 { font-size: 1.25rem !important; color:#1a5276 !important; font-weight:820 !important; }
+    h3 { font-size: 1.12rem !important; color:#256b93 !important; font-weight:800 !important; border-bottom:2px solid #7ccfb0 !important; padding-bottom:3px !important; }
+    h4 { font-size: 1.03rem !important; color:#2c3e50 !important; font-weight:720 !important; }
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] li,
+    label { font-size: 1.01rem !important; }
+    section.main div[data-testid="stVerticalBlock"] { gap: 0.38rem !important; }
+
     .section-card {
         background-color: #F8FAFC;
-        padding: 20px;
+        padding: 16px;
         border-radius: 8px;
         border-left: 5px solid #1E3A8A;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
     .result-card {
         background-color: #EFF6FF;
-        padding: 20px;
+        padding: 16px;
         border-radius: 8px;
         border: 1px solid #BFDBFE;
-        margin-top: 15px;
+        margin-top: 8px;
     }
-    .u-card {
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
-    .urgency-high {
-        background-color: #FEF2F2;
-        border-left: 5px solid #DC2626;
-        color: #991B1B;
-    }
-    .urgency-medium {
-        background-color: #FFFBEB;
-        border-left: 5px solid #D97706;
-        color: #92400E;
-    }
-    .urgency-low {
-        background-color: #F0FDF4;
-        border-left: 5px solid #16A34A;
-        color: #166534;
-    }
-    .badge {
-        background-color: #E2E8F0;
-        color: #1E293B;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
+    .u-card { padding: 13px; border-radius: 8px; margin-bottom: 8px; }
+    .urgency-high { background-color:#FEF2F2; border-left:5px solid #DC2626; color:#991B1B; }
+    .urgency-medium { background-color:#FFFBEB; border-left:5px solid #D97706; color:#92400E; }
+    .urgency-low { background-color:#F0FDF4; border-left:5px solid #16A34A; color:#166534; }
+    .badge { background-color:#E2E8F0; color:#1E293B; padding:4px 8px; border-radius:4px; font-size:.85rem; font-weight:600; }
+
+    /* Bảng rộng: giữ dễ đọc trên desktop và cuộn ngang trên mobile */
     .table-style {
         width: 100%;
         border-collapse: collapse;
-        margin: 15px 0;
+        margin: 12px 0;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
-    .table-style th, .table-style td {
-        border: 1px solid #CBD5E1;
-        padding: 8px 12px;
-        text-align: left;
+    .table-style tbody { display: table; width: 100%; min-width: 760px; }
+    .table-style th, .table-style td { border:1px solid #CBD5E1; padding:8px 12px; text-align:left; }
+    .table-style th { background-color:#F1F5F9; font-weight:600; }
+
+    /* Native expander được dùng như heading cấp 2 để nội dung vẫn được thực thi khi thu gọn. */
+    details[data-testid="stExpander"] {
+        border: 1px solid #c7d8e5 !important;
+        border-left: 6px solid #3498db !important;
+        border-radius: 7px !important;
+        background: #fbfdff !important;
+        margin: 4px 0 7px 0 !important;
+        overflow: hidden !important;
     }
-    .table-style th {
-        background-color: #F1F5F9;
-        font-weight: 600;
+    details[data-testid="stExpander"] > summary {
+        background: #eef7fc !important;
+        min-height: 42px !important;
+        padding: 4px 9px !important;
+    }
+    details[data-testid="stExpander"] > summary:hover { background:#e6f4fb !important; }
+    details[data-testid="stExpander"] > summary p,
+    details[data-testid="stExpander"] > summary span {
+        color:#174d70 !important;
+        font-size:1.08rem !important;
+        font-weight:820 !important;
+        line-height:1.12 !important;
+    }
+    details[data-testid="stExpander"] > div { padding-top: 6px !important; }
+
+    /* Touch targets */
+    div[data-testid="stButton"] button { min-height: 40px; }
+
+    @media (max-width: 1200px) {
+        h1.main-title, div[data-testid="stMarkdownContainer"] h1.main-title,
+        h1.main-title span, h1.main-title * { font-size:2.25rem !important; }
+    }
+    @media (max-width: 768px) {
+        .block-container { padding: .65rem .72rem 1.5rem .72rem !important; }
+        h1.main-title, div[data-testid="stMarkdownContainer"] h1.main-title,
+        h1.main-title span, h1.main-title * {
+            font-size:1.78rem !important;
+            line-height:1.05 !important;
+            white-space:normal !important;
+            letter-spacing:-0.25px !important;
+        }
+        .main-subtitle, .main-subtitle * { font-size:.91rem !important; line-height:1.22 !important; }
+        .header-divider { margin:8px 0 12px 0 !important; }
+        h1:not(.main-title) { font-size:1.26rem !important; }
+        h2 { font-size:1.13rem !important; }
+        h3 { font-size:1.00rem !important; }
+        h4 { font-size:.98rem !important; }
+        div[data-testid="stMarkdownContainer"] p,
+        div[data-testid="stMarkdownContainer"] li,
+        label { font-size:.96rem !important; }
+        .section-card, .result-card, .u-card { padding:11px !important; }
+        details[data-testid="stExpander"] > summary { min-height:46px !important; padding:6px 8px !important; }
+        details[data-testid="stExpander"] > summary p,
+        details[data-testid="stExpander"] > summary span { font-size:.98rem !important; }
+        div[data-testid="stButton"] button { min-height:46px !important; width:100% !important; }
+        /* Mọi micro-column tự xếp dọc trên điện thoại; desktop không bị ảnh hưởng. */
+        div[data-testid="stHorizontalBlock"] { flex-wrap:wrap !important; gap:.35rem !important; }
+        div[data-testid="stColumn"], div[data-testid="column"] { flex:1 1 100% !important; min-width:100% !important; width:100% !important; }
+        input, textarea, select { font-size:16px !important; }
+        .table-style { max-width:100%; }
+        .table-style tbody { min-width:720px; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='main-header'>🩺 CDSS THUYÊN TẮC PHỔI CẤP (AHA/ACC 2026)</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-header'>Công cụ Hỗ trợ Quyết định Lâm sàng Tương tác tại Giường bệnh (Bản Chuẩn hóa Guideline v18)</div>", unsafe_allow_html=True)
-
+st.markdown("<h1 class='main-title'>🫁 TIẾP CẬN BAN ĐẦU THUYÊN TẮC PHỔI CẤP (PE)</h1>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng (CDSS) tương tác đa tầng theo Hướng dẫn AHA/ACC 2026</div>", unsafe_allow_html=True)
+st.markdown("<div class='header-divider'></div>", unsafe_allow_html=True)
 # Khởi tạo kho lưu trữ toàn cục cho các lựa chọn nếu chưa có
 if 'saved_inputs' not in st.session_state:
     st.session_state.saved_inputs = {}
@@ -154,32 +223,71 @@ if 'resp_modifier' not in st.session_state:
 if 'g2_stable_flow' not in st.session_state:
     st.session_state.g2_stable_flow = "organ_damage"  # Tuần tự mới: organ_damage -> cpes -> prognosis
 
-# Tạo các cột điều hướng bước ở đầu trang
-step_cols = st.columns(3)
-with step_cols[0]:
-    if st.button("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", use_container_width=True, type="primary" if st.session_state.step == 1 else "secondary"):
-        st.session_state.step = 1
-        st.rerun()
-with step_cols[1]:
-    if st.button("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", use_container_width=True, type="primary" if st.session_state.step == 2 else "secondary"):
-        st.session_state.step = 2
-        st.rerun()
-with step_cols[2]:
-    if st.button("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH LIỀU", use_container_width=True, type="primary" if st.session_state.step == 3 else "secondary"):
-        st.session_state.step = 3
-        st.rerun()
+if 'step1_sub' not in st.session_state:
+    st.session_state.step1_sub = 1
+if 'step2_focus' not in st.session_state:
+    st.session_state.step2_focus = "hemo"
+if 'step3_open' not in st.session_state:
+    st.session_state.step3_open = 1
 
-st.markdown("---")
+# Helper render main step giống CCS; chỉ thay đổi UI/interaction, không đổi logic lâm sàng.
+def render_main_step_header(title, step_id):
+    current_step = st.session_state.step
+    is_active = (current_step == step_id)
+    is_completed = (current_step > step_id)
+    arrow = "▼" if is_active else "▶"
+    prefix = "✅ " if is_completed else ""
+    status_text = " [ĐANG THỰC HIỆN]" if is_active else ""
+
+    if is_active:
+        bg = "linear-gradient(135deg, #123a5a 0%, #176b78 52%, #17b978 100%)"
+        border = "#17b978"; text = "#ffffff"; shadow = "0 8px 22px rgba(23,107,120,.30)"
+    elif is_completed:
+        bg = "linear-gradient(135deg, #e7f8f1 0%, #d2f1e5 100%)"
+        border = "#2ecc71"; text = "#0d684f"; shadow = "0 5px 14px rgba(46,204,113,.16)"
+    else:
+        bg = "linear-gradient(135deg, #eef5fb 0%, #e7f1f8 100%)"
+        border = "#79a9c7"; text = "#183f5f"; shadow = "0 4px 12px rgba(30,61,89,.10)"
+
+    key = f"main_step_btn_{step_id}"
+    st.markdown(f"""
+    <style>
+    div[class*="st-key-{key}"] button {{
+        width:100% !important; background:{bg} !important; border:2px solid {border} !important;
+        border-left-width:7px !important; border-radius:9px !important; padding:6px 12px !important;
+        margin:1px 0 !important; min-height:42px !important; box-shadow:{shadow} !important;
+        justify-content:flex-start !important; text-align:left !important;
+    }}
+    div[class*="st-key-{key}"] button p, div[class*="st-key-{key}"] button span {{
+        font-size:1.38rem !important; line-height:1.05 !important; font-weight:900 !important;
+        color:{text} !important; margin:0 !important;
+    }}
+    @media (max-width:768px) {{
+      div[class*="st-key-{key}"] button {{ padding:7px 9px !important; min-height:48px !important; }}
+      div[class*="st-key-{key}"] button p, div[class*="st-key-{key}"] button span {{ font-size:1.08rem !important; }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    if st.button(f"{arrow} {prefix}{title}{status_text}", key=key):
+        st.session_state.step = 0 if is_active else step_id
+        st.rerun()
+    return is_active
+
+# Nút điều hướng nhỏ giữa các heading cấp 2.
+def goto_step1_sub(n):
+    st.session_state.step1_sub = n
+    st.rerun()
+
+def goto_step3_sub(n):
+    st.session_state.step3_open = n
+    st.rerun()
 
 # ==============================================================================
 # BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ PE
 # ==============================================================================
-if st.session_state.step == 1:
+if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
     st.subheader("⚡ GIAI ĐOẠN 1: TIẾP CẬN CHẨN ĐOÁN BAN ĐẦU")
-    
-    col1_1, col1_2 = st.columns([1, 1], gap="large")
-    
-    with col1_1:
+    with st.expander("1.1 📋 Đánh giá Sơ bộ & Xác suất lâm sàng tiền nghiệm (CPTP)", expanded=(st.session_state.step1_sub == 1)):
         st.subheader("📋 Đánh giá Sơ bộ & Xác suất lâm sàng tiền nghiệm (CPTP)")
         
         # Câu hỏi sàng lọc chống chỉ định loại trừ không hình ảnh học
@@ -321,8 +429,10 @@ if st.session_state.step == 1:
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.success("Bệnh nhân không có triệu chứng nghi ngờ. Khám phát hiện tình cờ -> Thích hợp để quản lý ngoại trú (Category A)")
-
-    with col1_2:
+        if st.button("Tiếp tục → Thuật toán loại trừ không hình ảnh học", type="primary", use_container_width=True, key="step1_to_sub2"):
+            st.session_state.step1_sub = 2
+            st.rerun()
+    with st.expander("1.2 ⚡ Thuật toán Loại trừ Không hình ảnh học", expanded=(st.session_state.step1_sub == 2)):
         st.subheader("⚡ 2. Thuật toán Loại trừ Không hình ảnh học")
         
         if is_suspected:
@@ -520,25 +630,22 @@ if st.session_state.step == 1:
                 st.caption("Nếu bệnh nhân có chống chỉ định tuyệt đối với CTPA (suy thận nặng CrCl < 30, dị ứng thuốc cản quang có iod, v.v.):")
                 st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)**.")
                 st.markdown("</div>", unsafe_allow_html=True)
-
-    # Nút điều hướng thông thoáng, không còn rào cản pe_confirmed
     st.markdown("---")
     col_nav = st.columns([4, 1])
     with col_nav[1]:
         if st.button("Tiếp tục sang GĐ 2 ➡️", use_container_width=True, type="primary"):
             st.session_state.step = 2
-            st.rerun()# ==============================================================================
+            st.session_state.step2_focus = "hemo"
+            st.rerun()
+
+# ==============================================================================
 # BƯỚC 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026 (RẼ NHÁNH TUẦN TỰ)
 # ==============================================================================
-elif st.session_state.step == 2:
+if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2):
     st.subheader("📊 GIAI ĐOẠN 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026")
-    
-    col2_1, col2_2 = st.columns([1, 1], gap="large")
-    
-    with col2_1:
+    with st.expander("🧬 Đánh giá Huyết động học & Tim phổi cấp cứu", expanded=(st.session_state.step2_focus == "hemo")):
         st.markdown("<div class='section-card'>", unsafe_allow_html=True)
         st.write("##### 🧬 Đánh giá Huyết động học & Tim phổi cấp cứu")
-        
         # 1. Trạng thái huyết động chính
         primary_hemo = persistent_selectbox("1. Hãy chọn trạng thái Huyết động chính của bệnh nhân:", [
             "Huyết động ổn định (Huyết áp bình thường)",
@@ -557,9 +664,8 @@ elif st.session_state.step == 2:
             st.session_state.g2_stable_flow = "organ_damage"
             st.session_state.final_category = None
             st.session_state.resp_modifier = False
+            st.session_state.step2_focus = "hemo"
             st.rerun()
-        
-        # Xử lý các nhánh huyết động không ổn định rõ rệt
         if "Sốc tim kháng trị" in primary_hemo:
             st.session_state.final_category = "E2"
             st.markdown("""
@@ -568,17 +674,6 @@ elif st.session_state.step == 2:
                 <em>Định nghĩa:</em> Sốc tim kháng trị (SCAI Stage D hoặc E) hoặc ngừng tuần hoàn (cardiac arrest) không đạt ROSC sau 30 phút hồi sức tích cực. Đòi hỏi hồi sức nâng cao khẩn cấp.
             </div>
             """, unsafe_allow_html=True)
-            
-            # Sàng lọc suy hô hấp (Modifier R) cho nhóm E
-            st.write("---")
-            st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
-            r_e = persistent_checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?", key="r_e")
-            st.session_state.resp_modifier = r_e
-            
-            if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
-                st.session_state.step = 3
-                st.rerun()
-            
         elif "Tụt huyết áp kéo dài" in primary_hemo:
             st.session_state.final_category = "E1"
             st.markdown("""
@@ -587,17 +682,6 @@ elif st.session_state.step == 2:
                 <em>Định nghĩa:</em> Sốc tim hoặc tụt huyết áp kéo dài (HA tâm thu <90 mmHg hoặc giảm >40 mmHg kéo dài >=15 phút, hoặc cần dùng vận mạch). Cần điều trị tích cực tại ICU.
             </div>
             """, unsafe_allow_html=True)
-            
-            # Sàng lọc suy hô hấp (Modifier R) cho nhóm E
-            st.write("---")
-            st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
-            r_e = persistent_checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?", key="r_e")
-            st.session_state.resp_modifier = r_e
-            
-            if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
-                st.session_state.step = 3
-                st.rerun()
-
         elif "phát hiện tình cờ" in primary_hemo:
             st.session_state.final_category = "A"
             st.markdown("""
@@ -607,7 +691,30 @@ elif st.session_state.step == 2:
             </div>
             """, unsafe_allow_html=True)
             st.session_state.resp_modifier = False
+        st.markdown("</div>", unsafe_allow_html=True)
+        if st.button("Xác nhận trạng thái huyết động → Tiếp tục", type="primary", use_container_width=True, key="confirm_primary_hemo"):
+            st.session_state.step2_focus = "branch" if ("Sốc tim kháng trị" in primary_hemo or "Tụt huyết áp kéo dài" in primary_hemo or "phát hiện tình cờ" in primary_hemo) else "flow"
+            st.rerun()
+    if "Sốc tim kháng trị" in primary_hemo:
+        with st.expander("📢 Đánh giá Modifier R cho nhóm E", expanded=(st.session_state.step2_focus == "branch")):
+            st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
+            r_e = persistent_checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?", key="r_e")
+            st.session_state.resp_modifier = r_e
             
+            if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_e2"):
+                st.session_state.step = 3
+                st.rerun()
+    elif "Tụt huyết áp kéo dài" in primary_hemo:
+        with st.expander("📢 Đánh giá Modifier R cho nhóm E", expanded=(st.session_state.step2_focus == "branch")):
+            st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
+            r_e = persistent_checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?", key="r_e")
+            st.session_state.resp_modifier = r_e
+            
+            if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_e1"):
+                st.session_state.step = 3
+                st.rerun()
+    elif "phát hiện tình cờ" in primary_hemo:
+        with st.expander("📋 Đánh giá Tiêu chuẩn An toàn Điều trị Ngoại trú cho Nhóm A", expanded=(st.session_state.step2_focus == "branch")):
             st.markdown("<div class='section-card'>", unsafe_allow_html=True)
             st.write("##### 📋 Đánh giá Tiêu chuẩn An toàn Điều trị Ngoại trú cho Nhóm A")
             st.caption("Khuyến cáo AHA/ACC 2026 cho phép quản lý ngoại trú (Class 2a, LOE B-R) cho một số bệnh nhân được lựa chọn thuộc Nhóm A khi thỏa mãn đầy đủ các tiêu chuẩn y khoa và xã hội dưới đây:")
@@ -667,7 +774,7 @@ elif st.session_state.step == 2:
             
             if is_a_medical_safe and is_a_social_safe:
                 st.markdown("<div class='u-card' style='background-color: #F0FDF4; border-left: 5px solid #16A34A; color: #166534;'><strong>✔️ ĐỦ TIÊU CHUẨN ĐIỀU TRỊ NGOẠI TRÚ (Class 2a, LOE B-R)</strong><br>Bệnh nhân thỏa mãn đầy đủ điều kiện y khoa và xã hội để quản lý ngoại trú an toàn.</div>", unsafe_allow_html=True)
-                if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
+                if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_organ"):
                     st.session_state.step = 3
                     st.rerun()
             else:
@@ -676,38 +783,50 @@ elif st.session_state.step == 2:
                     st.session_state.step = 3
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
-
-        # ==============================================================================
-        # LUỒNG TUẦN TỰ CHO HUYẾT ÁP ỔN ĐỊNH VÀ TỤT HUYẾT ÁP THOÁNG QUA (YÊU CẦU MỚI: ĐÁNH TỔN THƯƠNG CƠ QUAN TRƯỚC!)
-        # ==============================================================================
-        if primary_hemo in ["Huyết động ổn định (Huyết áp bình thường)", "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)"]:
+    if primary_hemo in ["Huyết động ổn định (Huyết áp bình thường)", "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)"]:
+        if primary_hemo == "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)":
+            st.session_state.g2_stable_flow = "organ_damage"
+        _flow = st.session_state.g2_stable_flow
+        _flow_rank = {"organ_damage": 1, "cpes": 2, "prognosis": 3, "rv_biomarkers": 4, "hk_position": 4}.get(_flow, 1)
+        with st.expander("2.1 📋 Đánh giá Tổn thương cơ quan đích & Giảm tưới máu mô", expanded=(st.session_state.step2_focus != "hemo" and _flow == "organ_damage")):
+            st.caption("Hãy rà soát kỹ các dấu hiệu giảm tưới máu hoặc suy chức năng cơ quan đích dưới đây:")
             
-            # Đảm bảo nếu là Tụt huyết áp thoáng qua thì CHỈ ĐƯỢC PHÉP ở trạng thái organ_damage!
-            if primary_hemo == "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)":
-                st.session_state.g2_stable_flow = "organ_damage"
-
-            # --------------------------------------------------------------------------
-            # BƯỚC 2.1: ĐÁNH GIÁ TỔN THƯƠNG CƠ QUAN TRƯỚC (QUY TRÌNH MỚI!)
-            # --------------------------------------------------------------------------
-            if st.session_state.g2_stable_flow == "organ_damage":
-                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                st.write("##### 📋 BƯỚC 2.1: Đánh giá Tổn thương cơ quan đích & Giảm tưới máu mô")
-                st.caption("Hãy rà soát kỹ các dấu hiệu giảm tưới máu hoặc suy chức năng cơ quan đích dưới đây:")
+            opt_lactate = persistent_checkbox("Nồng độ Lactate huyết thanh > 2.0 mmol/L", key="opt_lactate")
+            opt_aki = persistent_checkbox("Suy thận cấp (AKI) (Creatinine tăng >= 0.3 mg/dL hoặc gấp >= 1.5 lần nền trong 24h)", key="opt_aki")
+            opt_oliguria = persistent_checkbox("Thiểu niệu tiến triển (Lượng nước tiểu < 0.5 mL/kg/giờ kéo dài >= 2 giờ)", key="opt_oliguria")
+            opt_mental = persistent_checkbox("Thay đổi trạng thái tâm thần cấp tính (lờ đờ, u ám, ngủ gà, vật vã do thiếu máu não)", key="opt_mental")
+            opt_ci_map = persistent_checkbox("Huyết áp trung bình MAP < 60 mmHg HOẶC Chỉ số tim (Cardiac Index) <= 2.2 L/min/m²", key="opt_ci_map")
+            
+            has_hypoperfusion = opt_lactate or opt_aki or opt_oliguria or opt_mental or opt_ci_map
+            
+            if has_hypoperfusion:
+                st.session_state.final_category = "D2"
+                st.markdown("""
+                <div class='u-card urgency-high'>
+                    <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM D2 (Sốc ẩn - Incipient Cardiopulmonary Failure)</strong><br>
+                    Phát hiện thấy bằng chứng giảm tưới máu mô/tổn thương cơ quan đích mặc dù huyết áp vẫn đang được cơ thể bù trừ. Bệnh nhân có nguy cơ sụp đổ tuần hoàn cao!
+                </div>
+                """, unsafe_allow_html=True)
                 
-                opt_lactate = persistent_checkbox("Nồng độ Lactate huyết thanh > 2.0 mmol/L", key="opt_lactate")
-                opt_aki = persistent_checkbox("Suy thận cấp (AKI) (Creatinine tăng >= 0.3 mg/dL hoặc gấp >= 1.5 lần nền trong 24h)", key="opt_aki")
-                opt_oliguria = persistent_checkbox("Thiểu niệu tiến triển (Lượng nước tiểu < 0.5 mL/kg/giờ kéo dài >= 2 giờ)", key="opt_oliguria")
-                opt_mental = persistent_checkbox("Thay đổi trạng thái tâm thần cấp tính (lờ đờ, u ám, ngủ gà, vật vã do thiếu máu não)", key="opt_mental")
-                opt_ci_map = persistent_checkbox("Huyết áp trung bình MAP < 60 mmHg HOẶC Chỉ số tim (Cardiac Index) <= 2.2 L/min/m²", key="opt_ci_map")
+                # Đánh giá Respiratory Modifier cho nhóm D
+                st.write("---")
+                st.write("##### 📢 Đánh giá Modifier R cho nhóm D")
+                r_d = persistent_checkbox("Cần hỗ trợ oxy lưu lượng >6 L/phút qua gọng mũi thường HOẶC mặt nạ không thở lại (NRB)?", key="r_d")
+                st.session_state.resp_modifier = r_d
                 
-                has_hypoperfusion = opt_lactate or opt_aki or opt_oliguria or opt_mental or opt_ci_map
+                if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_organ_d1"):
+                    st.session_state.step = 3
+                    st.rerun()
+            else:
+                st.success("Không phát hiện dấu hiệu giảm tưới máu cơ quan đích nào.")
                 
-                if has_hypoperfusion:
-                    st.session_state.final_category = "D2"
+                if primary_hemo == "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)":
+                    # Tụt HA thoáng qua + Không giảm tưới máu -> D1
+                    st.session_state.final_category = "D1"
                     st.markdown("""
-                    <div class='u-card urgency-high'>
-                        <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM D2 (Sốc ẩn - Incipient Cardiopulmonary Failure)</strong><br>
-                        Phát hiện thấy bằng chứng giảm tưới máu mô/tổn thương cơ quan đích mặc dù huyết áp vẫn đang được cơ thể bù trừ. Bệnh nhân có nguy cơ sụp đổ tuần hoàn cao!
+                    <div class='u-card urgency-medium'>
+                        <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM D1 (Tụt huyết áp thoáng qua)</strong><br>
+                        Huyết động có biểu hiện mất bù thoáng qua nhưng chưa tiến triển thành tổn thương cơ quan đích.
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -717,45 +836,17 @@ elif st.session_state.step == 2:
                     r_d = persistent_checkbox("Cần hỗ trợ oxy lưu lượng >6 L/phút qua gọng mũi thường HOẶC mặt nạ không thở lại (NRB)?", key="r_d")
                     st.session_state.resp_modifier = r_d
                     
-                    if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
+                    if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_cpes"):
                         st.session_state.step = 3
                         st.rerun()
                 else:
-                    st.success("Không phát hiện dấu hiệu giảm tưới máu cơ quan đích nào.")
-                    
-                    if primary_hemo == "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)":
-                        # Tụt HA thoáng qua + Không giảm tưới máu -> D1
-                        st.session_state.final_category = "D1"
-                        st.markdown("""
-                        <div class='u-card urgency-medium'>
-                            <strong>>>> CHẨN ĐOÁN LÂM SÀNG: NHÓM D1 (Tụt huyết áp thoáng qua)</strong><br>
-                            Huyết động có biểu hiện mất bù thoáng qua nhưng chưa tiến triển thành tổn thương cơ quan đích.
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Đánh giá Respiratory Modifier cho nhóm D
-                        st.write("---")
-                        st.write("##### 📢 Đánh giá Modifier R cho nhóm D")
-                        r_d = persistent_checkbox("Cần hỗ trợ oxy lưu lượng >6 L/phút qua gọng mũi thường HOẶC mặt nạ không thở lại (NRB)?", key="r_d")
-                        st.session_state.resp_modifier = r_d
-                        
-                        if st.button("Xác nhận & Đi tới Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
-                            st.session_state.step = 3
-                            st.rerun()
-                    else:
-                        # Huyết áp bình thường + Không giảm tưới máu -> Đánh giá CPES
-                        st.info("Huyết áp bình thường và không có giảm tưới máu. Hãy bấm nút dưới đây để chuyển sang đánh giá thang điểm CPES.")
-                        if st.button("Xác nhận Không giảm tưới máu -> Tiếp tục đánh giá CPES ➡️", type="primary", use_container_width=True):
-                            st.session_state.g2_stable_flow = "cpes"
-                            st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            # --------------------------------------------------------------------------
-            # BƯỚC 2.2: ĐÁNH GIÁ CPES (CHỈ CHO HUYẾT ÁP BÌNH THƯỜNG KHÔNG GIẢM TƯỚI MÁU)
-            # --------------------------------------------------------------------------
-            elif st.session_state.g2_stable_flow == "cpes" and primary_hemo == "Huyết động ổn định (Huyết áp bình thường)":
-                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                st.write("##### 📊 BƯỚC 2.2: Đánh giá Thang điểm CPES (Composite Pulmonary Embolism Shock)")
+                    # Huyết áp bình thường + Không giảm tưới máu -> Đánh giá CPES
+                    st.info("Huyết áp bình thường và không có giảm tưới máu. Hãy bấm nút dưới đây để chuyển sang đánh giá thang điểm CPES.")
+                    if st.button("Xác nhận Không giảm tưới máu -> Tiếp tục đánh giá CPES ➡️", type="primary", use_container_width=True):
+                        st.session_state.g2_stable_flow = "cpes"
+                        st.rerun()
+        if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow_rank >= 2:
+            with st.expander("2.2 📊 Đánh giá Thang điểm CPES (Composite Pulmonary Embolism Shock)", expanded=(_flow == "cpes")):
                 st.caption("CPES (0-6 điểm) giúp sàng lọc sớm nguy cơ tiến triển thành Sốc ẩn ở bệnh nhân có huyết áp ổn định và không có tổn thương cơ quan trước đó.")
                 
                 c1 = persistent_checkbox("1. Tăng men tim Troponin tim (+1)", key="c1")
@@ -795,13 +886,8 @@ elif st.session_state.step == 2:
                 if st.button("⬅️ Quay lại đánh giá Tổn thương cơ quan", type="secondary"):
                     st.session_state.g2_stable_flow = "organ_damage"
                     st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            # --------------------------------------------------------------------------
-            # BƯỚC 2.3: ĐÁNH GIÁ THANG ĐIỂM TIÊN LƯỢNG LÂM SÀNG (LỰA CHỌN 1 TRONG 4 THANG)
-            # --------------------------------------------------------------------------
-            elif st.session_state.g2_stable_flow == "prognosis" and primary_hemo == "Huyết động ổn định (Huyết áp bình thường)":
-                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
+        if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow_rank >= 3:
+            with st.expander("2.3 📋 Đánh giá Thang điểm Tiên lượng Lâm sàng", expanded=(_flow == "prognosis")):
                 st.write("##### 📋 BƯỚC 2.3: Đánh giá Thang điểm Tiên lượng Lâm sàng")
                 st.caption("Do không có giảm tưới máu/sốc ẩn, bệnh nhân sẽ được phân loại vào Nhóm B (Nguy cơ thấp) hoặc Nhóm C (Nguy cơ trung bình). Hãy lựa chọn 1 thang điểm duy nhất để đánh giá:")
                 
@@ -913,14 +999,8 @@ elif st.session_state.step == 2:
                 if st.button("⬅️ Quay lại đánh giá CPES", type="secondary"):
                     st.session_state.g2_stable_flow = "cpes"
                     st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            # --------------------------------------------------------------------------
-            # BƯỚC 2.4: ĐÁNH GIÁ RV & BIOMARKERS (CHỈ CHO NHÓM C)
-            # --------------------------------------------------------------------------
-            elif st.session_state.g2_stable_flow == "rv_biomarkers" and primary_hemo == "Huyết động ổn định (Huyết áp bình thường)":
-                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                st.write("##### 🧬 BƯỚC 2.4: Đánh giá Thất phải (RV) & Biomarkers (Nhóm C)")
+        if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow == "rv_biomarkers":
+            with st.expander("2.4 🧬 Đánh giá Thất phải (RV) & Biomarkers — Nhóm C", expanded=True):
                 st.caption("Xác định mức độ tổn thương tim phải để chia nhóm C thành C1, C2, C3.")
                 
                 st.write("**1. Đánh giá chi tiết Rối loạn chức năng Thất phải (RV) (Siêu âm/CT):**")
@@ -958,21 +1038,15 @@ elif st.session_state.step == 2:
                 r_c = persistent_checkbox("SpO2 < 90% ở khí trời, HOẶC nhịp thở (RR) >= 30 lần/phút, HOẶC đang cần bổ sung oxy hỗ trợ thông thường (qua gọng kính/mặt nạ)?", key="r_c")
                 st.session_state.resp_modifier = r_c
                 
-                if st.button("Xác nhận Phân nhóm & Chuyển sang Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
+                if st.button("Xác nhận Phân nhóm & Chuyển sang Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_rv"):
                     st.session_state.step = 3
                     st.rerun()
                     
                 if st.button("⬅️ Quay lại chọn Thang điểm tiên lượng", type="secondary"):
                     st.session_state.g2_stable_flow = "prognosis"
                     st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            # --------------------------------------------------------------------------
-            # BƯỚC 2.5: ĐÁNH GIÁ VỊ TRÍ HUYẾT KHỐI (CHỈ CHO NHÓM B)
-            # --------------------------------------------------------------------------
-            elif st.session_state.g2_stable_flow == "hk_position" and primary_hemo == "Huyết động ổn định (Huyết áp bình thường)":
-                st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                st.write("##### 🔍 BƯỚC 2.5: Đánh giá vị trí huyết khối cho nhóm B")
+        if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow == "hk_position":
+            with st.expander("2.5 🔍 Đánh giá vị trí huyết khối — Nhóm B", expanded=True):
                 st.caption("Xác định vị trí giải phẫu của huyết khối để chia nhóm B thành B1 (Dưới phân thùy) hoặc B2 (Phân thùy trở lên).")
                 
                 is_subsegmental = persistent_checkbox("Huyết khối chỉ khu trú ở nhánh dưới phân thùy (Subsegmental PE) trên CTPA?", key="is_subsegmental")
@@ -990,16 +1064,14 @@ elif st.session_state.step == 2:
                 r_b = persistent_checkbox("SpO2 < 90% ở khí trời, HOẶC nhịp thở (RR) >= 30 lần/phút, HOẶC đang cần bổ sung oxy hỗ trợ thông thường (qua gọng kính/mặt nạ)?", key="r_b")
                 st.session_state.resp_modifier = r_b
                 
-                if st.button("Xác nhận Phân nhóm & Chuyển sang Bước 3: Điều trị ➡️", type="primary", use_container_width=True):
+                if st.button("Xác nhận Phân nhóm & Chuyển sang Bước 3: Điều trị ➡️", type="primary", use_container_width=True, key="to_step3_hk"):
                     st.session_state.step = 3
                     st.rerun()
                     
                 if st.button("⬅️ Quay lại chọn Thang điểm tiên lượng", type="secondary"):
                     st.session_state.g2_stable_flow = "prognosis"
                     st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-    with col2_2:
+    with st.expander("ℹ️ Xem Sơ đồ Tóm tắt Phân tầng AHA/ACC 2026", expanded=False):
         st.subheader("📋 Sơ đồ Tóm tắt Phân tầng AHA/ACC 2026")
         st.markdown("""
         *   **Nhóm E (Nguy kịch):** Ngừng tuần hoàn / Sốc tim thực sự.
@@ -1017,15 +1089,10 @@ elif st.session_state.step == 2:
 # ==============================================================================
 # BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH LIỀU
 # ==============================================================================
-elif st.session_state.step == 3:
-    # Đồng bộ hóa hai biến pregnancy để tránh lỗi hiển thị lệch pha
+if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH LIỀU", 3):
     st.session_state.is_pregnant = st.session_state.saved_inputs.get('is_pregnant', False)
-
     st.subheader("💊 GIAI ĐOẠN 3: CÁ THỂ HÓA ĐIỀU TRỊ VÀ TÍNH LIỀU THUỐC")
-    
-    col3_1, col3_2 = st.columns([1, 1], gap="large")
-    
-    with col3_1:
+    with st.expander("3.1 🧬 Nhập thông số sinh học & Tình huống đặc biệt", expanded=(st.session_state.step3_open == 1)):
         st.subheader("🧬 1. Nhập thông số sinh học & Tình huống đặc biệt")
         
         # Nhập thông số cân nặng chiều cao chức năng thận bằng persistent widget để không bao giờ bị reset!
@@ -1067,7 +1134,8 @@ elif st.session_state.step == 3:
         # Rà soát chống chỉ định tiêu sợi huyết hệ thống
         st.markdown("---")
         st.write("**Bảng kiểm Chống chỉ định của Tiêu sợi huyết Hệ thống:**")
-        with st.expander("Bấm vào để rà soát chống chỉ định tiêu sợi huyết"):
+        show_thrombolysis_ci = st.toggle("Bấm vào để rà soát chống chỉ định tiêu sợi huyết", key="show_thrombolysis_ci")
+        if show_thrombolysis_ci:
             abs1 = persistent_checkbox("Tiền sử xuất huyết não hoặc đột quỵ không rõ nguyên nhân bất kỳ thời điểm nào", key="abs1")
             abs2 = persistent_checkbox("Đột quỵ nhồi máu não trong vòng 6 tháng qua", key="abs2")
             abs3 = persistent_checkbox("U hệ thần kinh trung ương hoặc dị dạng động tĩnh mạch não", key="abs3")
@@ -1094,8 +1162,10 @@ elif st.session_state.step == 3:
             else:
                 st.success("Không phát hiện chống chỉ định tiêu sợi huyết hệ thống.")
         st.markdown("</div>", unsafe_allow_html=True)
-
-    with col3_2:
+        if st.button("Tiếp tục → Phân nhóm & phân luồng điều trị", type="primary", use_container_width=True, key="step3_to_2"):
+            st.session_state.step3_open = 2
+            st.rerun()
+    with st.expander("3.2 📍 Phân nhóm lâm sàng & Phân luồng điều trị (Triage/PERT)", expanded=(st.session_state.step3_open == 2)):
         r_suffix = "R" if st.session_state.resp_modifier else ""
         final_group = f"{st.session_state.final_category}{r_suffix}" if st.session_state.final_category else "Chưa xác định"
         
@@ -1141,7 +1211,10 @@ elif st.session_state.step == 3:
 """, unsafe_allow_html=True)
 
         st.write("---")
-
+        if st.button("Tiếp tục → Kháng đông & tính liều", type="primary", use_container_width=True, key="step3_to_3"):
+            st.session_state.step3_open = 3
+            st.rerun()
+    with st.expander("3.3 💊 Kháng đông & tính liều cá thể hóa", expanded=(st.session_state.step3_open == 3)):
         # --------------------------------------------------------------------------
         # PHÁC ĐỒ ĐIỀU TRỊ CHUYÊN BIỆT CHO THAI KỲ / CHO CON BÚ TRƯỚC (KHÔNG HIỆN DOACs)
         # --------------------------------------------------------------------------
@@ -1306,11 +1379,15 @@ elif st.session_state.step == 3:
                         st.error("- Chống chỉ định Enoxaparin do CrCl < 15 mL/phút.")
 
             
-
-        # --------------------------------------------------------------------------
-        # LIỆU PHÁP CAN THIỆP TÁI TƯỚI MÁU NÂNG CAO (CDL, SURGERY, VA-ECMO THEO TABLE 7)
-        # --------------------------------------------------------------------------
-        if st.session_state.final_category in ["C3", "D1", "D2", "E1", "E2"]:
+        _has_advanced = st.session_state.final_category in ["C3", "D1", "D2", "E1", "E2"]
+        _has_resp = bool(st.session_state.resp_modifier)
+        _has_longterm = (not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"])
+        _next3 = 4 if _has_advanced else (5 if _has_resp else (6 if _has_longterm else None))
+        if _next3 and st.button("Tiếp tục → Nội dung điều trị tiếp theo", type="primary", use_container_width=True, key="step3_after_anticoag"):
+            st.session_state.step3_open = _next3
+            st.rerun()
+    if st.session_state.final_category in ["C3", "D1", "D2", "E1", "E2"]:
+        with st.expander("3.4 ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao", expanded=(st.session_state.step3_open == 4)):
             st.write("---")
             st.write("##### ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao (AHA/ACC 2026):")
             
@@ -1365,16 +1442,18 @@ elif st.session_state.step == 3:
                 </table>
 """, unsafe_allow_html=True)
                 st.info("💡 **Hỗ trợ VA-ECMO trong Nhóm E2 (Sốc tim kháng trị / Ngừng tuần hoàn):** Khuyến cáo thiết lập VA-ECMO (**Class 2a, LOE B-NR**) để ổn định huyết động và hỗ trợ chức năng tim phổi hồi sức nâng cao (E-CPR).")
-
-        # Hiển thị Respiratory Modifier nếu có R
-        if st.session_state.resp_modifier:
+            _next4 = 5 if st.session_state.resp_modifier else (6 if (not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]) else None)
+            if _next4 and st.button("Tiếp tục → Nội dung điều trị tiếp theo", type="primary", use_container_width=True, key="step3_after_reperfusion"):
+                st.session_state.step3_open = _next4
+                st.rerun()
+    if st.session_state.resp_modifier:
+        with st.expander("3.5 📢 Hỗ trợ hô hấp — Modifier R", expanded=(st.session_state.step3_open == 5)):
             st.error("📢 **CẢNH BÁO SUY HÔ HẤP (Respiratory Modifier R):**\nBệnh nhân có suy hô hấp đi kèm. Theo Hướng dẫn AHA/ACC 2026, liệu pháp oxy dòng cao qua gọng mũi (HFNC) được khuyến cáo sử dụng ở bệnh nhân có suy hô hấp giảm oxy máu từ vừa đến nặng (Class 2a, LOE C-LD).\\n\\n*Lưu ý lâm sàng cực kỳ quan trọng:* Khuyến cáo không tự ý áp dụng thông khí áp lực dương (như NIV/CPAP hoặc thở máy xâm lấn) như một phương án ưu tiên thường quy, vì áp lực dương lồng ngực làm giảm tiền gánh và tăng hậu gánh thất phải cấp, dễ dẫn đến sụp đổ tuần hoàn tim phải cấp (NIV/thông khí áp lực dương chính là một marker lâm sàng của mức độ nguy kịch E-R).")
-
-        
-        # --------------------------------------------------------------------------
-        # KẾ HOẠCH DUY TRÌ DÀI HẠN CHO C1 - E2 SAU KHI TIÊM ỔN ĐỊNH
-        # --------------------------------------------------------------------------
-        if not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]:
+            if (not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]) and st.button("Tiếp tục → Kế hoạch duy trì dài hạn", type="primary", use_container_width=True, key="step3_after_resp"):
+                st.session_state.step3_open = 6
+                st.rerun()
+    if not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]:
+        with st.expander("3.6 🔄 Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn", expanded=(st.session_state.step3_open == 6)):
             st.markdown("---")
             st.markdown("<div style='background-color: #F8FAFC; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px;'>", unsafe_allow_html=True)
             st.write("🔄 **Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn (AHA/ACC 2026):**")
@@ -1389,9 +1468,7 @@ elif st.session_state.step == 3:
             else:
                 st.success("🏠 **DUY TRÌ THÔNG THƯỜNG (Standard Case - Không có bối cảnh đặc biệt):**\n- **Kháng đông ưu tiên:** Khuyến cáo chuyển đổi từ kháng đông tiêm sang **DOACs đường uống** (Apixaban hoặc Rivaroxaban) (Class 1, LOE B-R) sau khi bệnh nhân ổn định tại viện.\n- **Cách thức chuyển đổi:** Bắt đầu uống liều DOAC đầu tiên **ngay vào thời điểm liều LMWH tiếp theo chuẩn bị tiêm** (không cần gối overlap liều), hoặc uống ngay khi ngừng truyền UFH tĩnh mạch.\n- **Thời gian điều trị cụ thể (Duration):**\n  1. **Nếu PE do yếu tố nguy cơ có thể đảo ngược lớn (như phẫu thuật lớn):** Ngừng điều trị kháng đông sau **3 tháng** điều trị đầy đủ (Class 1, LOE B-NR) để cân bằng lợi ích - nguy cơ chảy máu.\n  2. **Nếu PE tự phát (không rõ nguyên nhân) hoặc có yếu tố nguy cơ dai dẳng:** Khuyến cáo tiếp tục điều trị kháng đông kéo dài **vô hạn định (extended phase)** (Class 1, LOE A) với việc đánh giá định kỳ nguy cơ chảy máu và lợi ích (Class 1, LOE B-NR). Khi chuyển sang giai đoạn kéo dài (sau 3-6 tháng), khuyến cáo **giảm xuống liều dự phòng thứ phát: Apixaban 2.5mg BID HOẶC Rivaroxaban 10mg hằng ngày** để giảm nguy cơ chảy máu nặng (Class 1, LOE A).")
             st.markdown("</div>", unsafe_allow_html=True)
-
-        # Nút chuyển tiếp ngược
-        st.markdown("---")
-        if st.button("⬅️ Quay lại Giai đoạn Phân loại (Bước 2)"):
-            st.session_state.step = 2
-            st.rerun()
+    st.markdown("---")
+    if st.button("⬅️ Quay lại Giai đoạn Phân loại (Bước 2)"):
+        st.session_state.step = 2
+        st.rerun()
