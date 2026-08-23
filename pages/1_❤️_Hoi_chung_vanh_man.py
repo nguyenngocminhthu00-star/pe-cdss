@@ -351,7 +351,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 class='main-title'>🫀 TIẾP CẬN BAN ĐẦU HỘI CHỨNG MẠCH VÀNH MẠN (CCS)</h1>", unsafe_allow_html=True)
-st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng (CDSS) tương tác đa tầng theo Hướng dẫn ESC 2024</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng theo ESC 2024</div>", unsafe_allow_html=True)
 st.markdown("<div class='header-divider'></div>", unsafe_allow_html=True)
 
 # Session State Initialization
@@ -448,15 +448,8 @@ for _k in [
     if _k in st.session_state:
         st.session_state[_k] = st.session_state[_k]
 
-# Global ACS Emergency Banner
-if st.session_state.acute_flag:
-    st.markdown("""
-    <div class='warning-box'>
-        <h3 style='color: #ff4d4d; margin-top: 0;'>🔴 CẢNH BÁO KHẨN CẤP: NGHI NGỜ HỘI CHỨNG MẠCH VÀNH CẤP (ACS)!</h3>
-        <p style='font-size: 1.1rem;'>Bệnh nhân có triệu chứng đau ngực không ổn định, biến đổi ECG cấp tính hoặc huyết động không ổn định. 
-        <strong>Khuyến cáo chuyển ngay bệnh nhân đến Khoa Cấp cứu (Emergency Department)</strong> để làm Troponin nhạy cảm cao (hs-cTn) và xử trí khẩn cấp theo phác đồ ACS. Quy trình chẩn đoán mạch vành mạn bị tạm dừng.</p>
-    </div>
-    """, unsafe_allow_html=True)
+# ACS screening banner removed from the visible workflow in this content revision.
+st.session_state.acute_flag = False
 
 # Helper function to switch steps safely
 def set_step(step_num):
@@ -594,60 +587,23 @@ def render_sub_header(title, sub_step_id, session_key):
 # ====================================================
 if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
     
-    # Sub-step 1.1: Triệu chứng cảnh báo
-    if render_sub_header("Triệu chứng cảnh báo", 1, "step1_sub"):
-        st.subheader("1. Đánh giá dấu hiệu nguy kịch loại trừ ACS")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            acute_symptoms = st.checkbox(
-                "Đau thắt ngực mới xuất hiện, tăng dần tần suất hoặc cường độ (Crescendo angina)",
-                value=st.session_state.get('acute_s_val', False),
-                key='acute_s_val'
-            )
-            unstable_symptoms = st.checkbox(
-                "Triệu chứng huyết động không ổn định (đau ngực khi nghỉ, suy tim cấp, rối loạn nhịp mới)",
-                value=st.session_state.get('unstable_s_val', False),
-                key='unstable_s_val'
-            )
-        with col2:
-            resting_ecg_acute = st.checkbox(
-                "ECG lúc nghỉ biến đổi động học cấp tính (ST chênh lên/chênh xuống, sóng T âm sâu đối xứng)",
-                value=st.session_state.get('resting_ecg_acute_val', False),
-                key='resting_ecg_acute_val'
-            )
-            
-        # Immediately adjust global ACS flag
-        if acute_symptoms or unstable_symptoms or resting_ecg_acute:
-            if not st.session_state.acute_flag:
-                st.session_state.acute_flag = True
-                st.rerun()
-        else:
-            if st.session_state.acute_flag:
-                st.session_state.acute_flag = False
-                st.rerun()
-                
-        if not st.session_state.acute_flag:
-            st.success("✅ Chưa phát hiện dấu hiệu nguy kịch. Triệu chứng cơ bản ổn định, cho phép tiếp tục quy trình đánh giá mạch vành mạn.")
-
-    # Sub-step 1.2: Triệu chứng lâm sàng
-    if render_sub_header("Triệu chứng lâm sàng", 2, "step1_sub"):
-        st.subheader("2. Khảo sát đặc điểm cơn đau ngực hoặc khó thở")
-        
+    # Sub-step 1.1: Triệu chứng lâm sàng
+    if render_sub_header("Triệu chứng lâm sàng", 1, "step1_sub"):
         symptom_presentation = st.radio(
             "Lựa chọn biểu hiện lâm sàng chủ đạo của bệnh nhân:",
             ["Đau/Khó chịu vùng ngực", "Khó thở khi gắng sức"],
-            key="symptom_presentation_val"
+            key="symptom_presentation_val",
+            label_visibility="collapsed"
         )
         
         symptom_analysis = {"type": symptom_presentation, "auto_winther_score": 0, "summary_text": ""}
 
         # Sinh hiệu nền: lưu xuyên bước để cá thể hóa điều trị ở Bước 4
-        st.write("**Sinh hiệu nền phục vụ lựa chọn điều trị chống đau ngực:**")
+        st.write("**Sinh hiệu:**")
         vit_col1, vit_col2 = st.columns(2)
         with vit_col1:
             st.number_input(
-                "Huyết áp tâm thu (SBP, mmHg):",
+                "HAThu (SBP, mmHg):",
                 min_value=50,
                 max_value=250,
                 step=1,
@@ -663,23 +619,22 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
                 key="hr_val",
                 help="Tần số tim lúc nghỉ; được dùng lại ở Bước 4 để cá thể hóa lựa chọn thuốc chống đau ngực."
             )
-        st.caption("SBP và HR được lưu xuyên suốt quy trình và tự động sử dụng tại Bước 4 trong hồ sơ định hướng lựa chọn thuốc chống đau ngực.")
 
-        st.write("**Bệnh sử tim mạch ảnh hưởng trực tiếp đến điều trị dự phòng biến cố:**")
+        st.write("**Tiền căn tim mạch:**")
         hx1, hx2 = st.columns(2)
         with hx1:
-            prior_mi = st.checkbox("Tiền sử nhồi máu cơ tim (MI)", key="prior_mi_chk")
-            prior_pci = st.checkbox("Tiền sử PCI từ xa / đã qua giai đoạn DAPT ban đầu", key="prior_pci_chk")
+            prior_mi = st.checkbox("Tiền căn nhồi máu cơ tim ", key="prior_mi_chk")
+            prior_pci = st.checkbox("Tiền căn PCI đã qua giai đoạn DAPT", key="prior_pci_chk")
         with hx2:
-            prior_cabg = st.checkbox("Tiền sử CABG", key="prior_cabg_chk")
-            oac_indication = st.checkbox("Có chỉ định dùng kháng đông đường uống (OAC) dài hạn", key="oac_indication_chk")
+            prior_cabg = st.checkbox("Tiền căn CABG", key="prior_cabg_chk")
+            oac_indication = st.checkbox("Có chỉ định dùng kháng đông đường uống dài hạn", key="oac_indication_chk")
         st.session_state.prior_mi = prior_mi
         st.session_state.prior_pci = prior_pci
         st.session_state.prior_cabg = prior_cabg
         st.session_state.oac_indication = oac_indication
         
         if symptom_presentation == "Đau/Khó chịu vùng ngực":
-            st.write("**Đánh giá tính chất đau ngực:**")
+            st.write("**Tính chất đau ngực:**")
             col_ang1, col_ang2 = st.columns(2)
             with col_ang1:
                 st.markdown("<span class='symptom-tag-inc'>Tăng khả năng lâm sàng</span>", unsafe_allow_html=True)
@@ -710,7 +665,7 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
                 symptom_analysis["summary_text"] = "👉 Triệu chứng đau ngực có đặc tính gợi ý giảm khả năng do tim (Nghi ngờ đau ngực không do tim)."
                 
         else: # Exertional dyspnoea
-            st.write("**Đánh giá tính chất khó thở:**")
+            st.write("**Tính chất khó thở:**")
             col_dys1, col_dys2 = st.columns(2)
             with col_dys1:
                 st.markdown("<span class='symptom-tag-inc'>Tăng khả năng lâm sàng</span>", unsafe_allow_html=True)
@@ -735,19 +690,19 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
         st.info(symptom_analysis["summary_text"])
         st.session_state.symptom_analysis = symptom_analysis
 
-    # Sub-step 1.3: Cận lâm sàng ban đầu
-    if render_sub_header("Cận lâm sàng ban đầu", 3, "step1_sub"):
-        st.subheader("3. Nhập kết quả xét nghiệm và thăm dò cơ bản")
+    # Sub-step 1.2: Cận lâm sàng ban đầu
+    if render_sub_header("Cận lâm sàng ban đầu", 2, "step1_sub"):
+        st.subheader("3. Cận lâm sàng")
         
         test_col1, test_col2 = st.columns(2)
         with test_col1:
-            st.write("**Xét nghiệm bắt buộc thường quy:**")
-            done_ecg = st.checkbox("Điện tâm đồ 12 chuyển đạo lúc nghỉ", key="done_ecg_chk")
+            done_ecg = st.checkbox("ECG 12 chuyển đạo", key="done_ecg_chk")
             if done_ecg:
                 ecg_res = st.radio(
                     "Kết quả ECG lúc nghỉ:",
                     ["Bình thường", "Bất thường (Sóng Q bệnh lý, ST-T thay đổi động học, LBBB...)"],
-                    key="ecg_result_val"
+                    key="ecg_result_val",
+                    label_visibility="collapsed"
                 )
                 st.session_state.ecg_abnormal = (ecg_res != "Bình thường")
                 
@@ -770,7 +725,6 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
 
                     st.session_state.lpa_val = st.number_input("Lipoprotein(a) - nmol/L (nhập 0 nếu chưa làm):", min_value=0, max_value=500, value=st.session_state.get('lpa_val', 0))
                     st.session_state.hb_val = st.number_input("Hemoglobin (g/dL):", min_value=3.0, max_value=25.0, value=float(st.session_state.hb_val), step=0.1)
-                    st.caption("ESC 2024: công thức máu (bao gồm hemoglobin) là xét nghiệm cơ bản được khuyến cáo trong đánh giá ban đầu.")
 
                 with bio_col2:
                     st.session_state.hba1c_val = st.number_input("HbA1c (%):", min_value=3.0, max_value=20.0, value=st.session_state.get('hba1c_val', 5.8), step=0.1)
@@ -799,28 +753,20 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
 
         with test_col2:
             st.write("**Thăm dò chọn lọc bổ sung:**")
-            done_cxr = st.checkbox("Chụp X-quang ngực thẳng (khi có chỉ định chọn lọc)", key="done_cxr_chk")
+            done_cxr = st.checkbox("Chụp X-quang ngực thẳng ", key="done_cxr_chk")
             if done_cxr:
-                st.caption("ESC 2024: cân nhắc X-quang ngực khi nghi suy tim, bệnh phổi cấp, bệnh động mạch chủ hoặc nguyên nhân tim/lồng ngực ngoài mạch vành.")
-                cxr_status = st.radio("Kết quả X-quang ngực:", ["Chưa ghi nhận bất thường (Bình thường)", "Có bất thường"], key="cxr_status_val")
+                cxr_status = st.radio(
+                    "Kết quả X-quang ngực:",
+                    ["Chưa ghi nhận bất thường", "Có bất thường"],
+                    key="cxr_status_val",
+                    label_visibility="collapsed"
+                )
                 if cxr_status == "Có bất thường":
                     cxr_res = st.multiselect("Bất thường ghi nhận:", ["Bóng tim to", "Sung huyết phổi", "Tràn dịch màng phổi", "Bất thường phổi/động mạch chủ/lồng ngực khác"], key="cxr_findings_val")
                     st.session_state.cxr_abnormal = len(cxr_res) > 0
                 else:
                     st.session_state.cxr_abnormal = False
                     st.success("✅ Chưa ghi nhận bất thường trên X-quang ngực.")
-
-            done_ambulatory_ecg = st.checkbox("Theo dõi ECG lưu động (Holter/ambulatory ECG) khi có chỉ định", key="done_ambulatory_ecg_chk")
-            if done_ambulatory_ecg:
-                ambulatory_reason = st.multiselect(
-                    "Chỉ định phù hợp:",
-                    ["Đau ngực kèm nghi rối loạn nhịp", "Nghi đau thắt ngực do co thắt mạch vành (VSA)"],
-                    key="ambulatory_reason_val"
-                )
-                if "Đau ngực kèm nghi rối loạn nhịp" in ambulatory_reason:
-                    st.info("ℹ️ ESC 2024: ambulatory ECG được khuyến cáo khi đau ngực kèm nghi rối loạn nhịp (Class I C).")
-                if "Nghi đau thắt ngực do co thắt mạch vành (VSA)" in ambulatory_reason:
-                    st.info("ℹ️ ESC 2024: ambulatory ST-segment monitoring nên được cân nhắc khi nghi VSA và có triệu chứng thường xuyên (Class IIa B).")
 
             done_pft = st.checkbox("Đo chức năng hô hấp (PFT)", key="done_pft_chk")
             if done_pft:
@@ -843,7 +789,6 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
     
     # Sub-step 2.1: Siêu âm tim
     if render_sub_header("Siêu âm tim", 1, "step2_sub"):
-        st.subheader("1. Đánh giá siêu âm tim qua thành ngực lúc nghỉ")
         echo_col1, echo_col2 = st.columns(2)
         with echo_col1:
             if "lvef_slider_widget" not in st.session_state:
@@ -852,53 +797,53 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
             st.session_state.lvef_val = lvef_val
         with echo_col2:
             echo_findings = st.multiselect("Kết quả siêu âm tim lúc nghỉ:", [
-                "Chưa ghi nhận bất thường (Bình thường lúc nghỉ)",
-                "Rối loạn vận động vùng thất trái (Regional wall motion abnormality)",
-                "Bệnh van tim thực tổn (Hẹp/hở van mức độ vừa - nặng)",
-                "Phì đại cơ thất trái (LV Hypertrophy)",
+                "Chưa ghi nhận bất thường",
+                "Rối loạn vận động thất trái",
+                "Bệnh van tim thực tổnn",
+                "Phì đại cơ thất trái",
                 "Rối loạn chức năng tâm trương thất trái",
                 "Rối loạn chức năng thất phải",
                 "Tăng áp lực động mạch phổi ước tính"
             ], key="echo_findings_val")
-        st.session_state.lvd_flag = (lvef_val <= 40 or "Rối loạn vận động vùng thất trái (Regional wall motion abnormality)" in echo_findings)
+        st.session_state.lvd_flag = (lvef_val <= 40 or "Rối loạn vận động thất trái" in echo_findings)
         
         if lvef_val <= 40:
-            st.error("⚠️ Phân suất tống máu thất trái giảm nặng (LVEF ≤ 40%): Cần tối ưu điều trị suy tim và xem xét chỉ định mạch vành khẩn trương.")
+            st.error("⚠️ Phân suất tống máu thất trái giảm (LVEF ≤ 40%)")
         else:
             st.success("✅ Chức năng tâm thu thất trái trong giới hạn bảo tồn.")
 
     # Sub-step 2.2: Khả năng lâm sàng nền
     if render_sub_header("Khả năng lâm sàng nền", 2, "step2_sub"):
-        st.subheader("2. Ước tính Khả năng lâm sàng nền theo Figure 4 (Winther Model)")
+        st.subheader("2. Ước tính Khả năng lâm sàng nền")
         
         calc_col1, calc_col2 = st.columns(2)
         with calc_col1:
-            gender = st.radio("Giới tính sinh học:", ["Nữ", "Nam"], key="gender_val")
+            gender = st.radio("Giới:", ["Nữ", "Nam"], key="gender_val")
             age_group = st.selectbox("Nhóm tuổi:", ["30-39", "40-49", "50-59", "60-69", "70-80"], key="age_group_val")
             
             # Auto link symptom type
             s_type_step1 = st.session_state.symptom_analysis.get("type", "Đau/Khó chịu vùng ngực") if "symptom_analysis" in st.session_state else "Đau/Khó chịu vùng ngực"
             s_type_idx = 0 if s_type_step1 == "Đau/Khó chịu vùng ngực" else 1
             if "step2_symptom_type_val" not in st.session_state:
-                st.session_state.step2_symptom_type_val = ["Cơn đau thắt ngực (Chest Pain)", "Khó thở khi gắng sức (Exertional Dyspnoea)"][s_type_idx]
+                st.session_state.step2_symptom_type_val = ["Cơn đau thắt ngực", "Khó thở khi gắng sức"][s_type_idx]
             else:
                 st.session_state.step2_symptom_type_val = st.session_state.step2_symptom_type_val
-            symptom_type = st.radio("Triệu chứng lâm sàng chính:", ["Cơn đau thắt ngực (Chest Pain)", "Khó thở khi gắng sức (Exertional Dyspnoea)"], key="step2_symptom_type_val")
+            symptom_type = st.radio("Triệu chứng lâm sàng chính:", ["Cơn đau thắt ngực", "Khó thở khi gắng sức"], key="step2_symptom_type_val")
             
-            if symptom_type == "Cơn đau thắt ngực (Chest Pain)":
-                st.write("**Bảng tính điểm triệu chứng Đau ngực (Winther Score):**")
+            if symptom_type == "Cơn đau thắt ngực":
+                st.write("**Bảng tính điểm triệu chứng đau ngực (Winther Score):**")
                 w_l = st.checkbox("Đau sau xương ức hoặc trước tim", key="winther_l_val")
                 w_tr = st.checkbox("Khởi phát khi gắng sức hoặc xúc cảm", key="winther_tr_val")
                 w_re = st.checkbox("Giảm khi nghỉ hoặc dùng Nitrates trong 5 phút", key="winther_re_val")
                 symptom_score = int(w_l) + int(w_tr) + int(w_re)
-                st.markdown(f"👉 **Điểm triệu chứng Đau ngực (Winther Score):** `{symptom_score} / 3 điểm`")
+                st.markdown(f"👉 **Điểm (Winther Score):** `{symptom_score} / 3 điểm`")
             else:
                 symptom_score = 2
-                st.info("👉 **Triệu chứng khó thở:** Tự động quy đổi tương đương **2 điểm** theo Ma trận Figure 4 của ESC 2024.")
+                st.info("👉 **Triệu chứng khó thở:** Tự động quy đổi tương đương **2 điểm**")
                 
         with calc_col2:
             st.write("**Yếu tố nguy cơ tim mạch đi kèm (Yếu tố nguy cơ = 1 điểm):**")
-            rf_family = st.checkbox("Tiền sử gia đình mắc mạch vành sớm (Nam < 55, Nữ < 65) [1 điểm]", key="rf_family_val")
+            rf_family = st.checkbox("Tiền sử gia đình mắc bệnh vành sớm (Nam < 55, Nữ < 65) [1 điểm]", key="rf_family_val")
             rf_smoking = st.checkbox("Đang hút thuốc lá hoặc có tiền sử hút thuốc [1 điểm]", key="rf_smoking_val")
             if not st.session_state.get("rf_dyslipidemia_val", False) and st.session_state.dyslipidemia_flag:
                 st.session_state.rf_dyslipidemia_val = True
@@ -958,8 +903,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         """, unsafe_allow_html=True)
         
         # Visualize the Figure 4 Matrix Simulation Dynamic Spotlight
-        st.markdown("#### 📊 Ma trận tra cứu khả năng lâm sàng (Mô phỏng Figure 4 - ESC 2024)")
-        st.caption(f"*Ma trận tùy chỉnh cho đối tượng: **{gender}**. Ô được khoanh vùng màu xanh lá cây 🎯 thể hiện vị trí định vị thực tế của bệnh nhân.*")
+        st.markdown("#### 📊 Tra cứu khả năng lâm sàng")
         
         age_ranges = ["30-39", "40-49", "50-59", "60-69", "70-80"]
         symptom_scores_keys = ["0-1", "2", "3"]
@@ -1017,7 +961,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
 
     # Sub-step 2.3: Điều chỉnh khả năng lâm sàng
     if render_sub_header("Điều chỉnh khả năng lâm sàng", 3, "step2_sub"):
-        st.subheader("3. Cá thể hóa và phân tầng lại nguy cơ (Figure 5)")
+        st.subheader("3. Cá thể hóa và phân tầng lại nguy")
 
         # ESC 2024: RF-CL is the starting estimate. Clinical findings can modify clinical judgement.
         # CACS-CL reclassification is specifically recommended to be considered in LOW RF-CL (>5–15%).
@@ -1034,7 +978,6 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         cacs_val = -1
         cacs_available = "Không áp dụng"
 
-        st.write("**Các dữ kiện lâm sàng dùng để điều chỉnh clinical likelihood:**")
         ecg_adj_default = st.session_state.get('ecg_abnormal', False)
         lvd_adj_default = st.session_state.get('lvd_flag', False)
         # Auto-reflect objective findings into the first two checkboxes, while still allowing physician confirmation.
@@ -1056,7 +999,6 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         adj_pad = st.checkbox("Bệnh nhân có tiền sử bệnh động mạch ngoại biên (PAD)", key="adj_pad_val")
         adj_calc = st.checkbox("X-quang ngực hoặc CT phổi ghi nhận vôi hóa mạch vành", key="adj_calc_val")
         adj_ex_ecg = st.checkbox("Nghiệm pháp gắng sức ECG có bất thường", key="adj_ex_ecg_val")
-        st.caption("ESC 2024: các abnormal clinical findings được dùng để điều chỉnh RF-CL bằng clinical judgement; không có công thức cộng/trừ % cố định cho các yếu tố này.")
         has_clinical_adjusters = (adj_ecg or adj_lvd or adj_pad or adj_calc or adj_ex_ecg)
 
         # CACS module appears only in the LOW RF-CL group (>5–15%).
@@ -1094,10 +1036,6 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
                     st.warning("⚠️ **CACS 400–999:** gánh nặng vôi hóa nhiều; dùng CACS-CL/clinical judgement để lựa chọn thăm dò tiếp theo.")
                 else:
                     st.warning("⚠️ **CACS ≥1000:** gánh nặng vôi hóa rất nhiều; dùng CACS-CL/clinical judgement để lựa chọn thăm dò tiếp theo.")
-                st.caption("Không nội suy hoặc tự tạo công thức từ biểu đồ để sinh ra một % mới.")
-
-        if has_clinical_adjusters:
-            st.warning("💡 **Clinical judgement:** có dữ kiện bất thường có thể làm thay đổi clinical likelihood so với RF-CL nền. ESC 2024 không cung cấp công thức cộng % cố định cho các yếu tố này.")
 
         # By default keep the RF-CL category. Only ask the physician to reclassify when there is
         # a real reason to do so: abnormal clinical modifiers and/or CACS result in LOW RF-CL.
@@ -1159,7 +1097,7 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
     
     # Sub-step 3.1: Khuyến cáo thăm dò
     if render_sub_header("Khuyến cáo thăm dò", 1, "step3_sub"):
-        st.subheader("1. Khuyến cáo lựa chọn kỹ thuật chẩn đoán đầu tay")
+        st.subheader("1. Khuyến cáo lựa chọn thăm dò đầu tay")
         
         lik = st.session_state.get('likelihood_value', 20)
         lik_category = st.session_state.get('likelihood_category')
@@ -1241,10 +1179,10 @@ if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
 
     # Sub-step 3.2: Kết quả cận lâm sàng
     if render_sub_header("Kết quả cận lâm sàng", 2, "step3_sub"):
-        st.subheader("2. Ghi nhận kết quả chẩn đoán hình ảnh thực tế")
+        st.subheader("2. Kết quả chẩn đoán hình ảnh")
         
         selected_test = st.radio(
-            "Phương pháp chẩn đoán hình ảnh thực tế đã thực hiện:",
+            "Phương pháp chẩn đoán hình ảnh :",
             ["Chờ kết quả / Chưa làm", "Chụp cắt lớp vi tính động mạch vành (CCTA)", "Thăm dò hình ảnh chức năng gắng sức", "Chụp động mạch vành xâm lấn (ICA)"],
             key="selected_test_widget"
         )
@@ -1496,13 +1434,10 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
     
     # Sub-step 4.1: Điều trị nội khoa
     if render_sub_header("Điều trị nội khoa", 1, "step4_sub"):
-        st.subheader("1. Thiết lập điều trị nội khoa theo khuyến cáo (GDMT)")
-        
-        tab_prognostic, tab_symptomatic = st.tabs(["🛡️ Thuốc bảo vệ & Cải thiện tiên lượng", "💊 Thuốc giảm đau thắt ngực (Figure 9)"])
+        tab_prognostic, tab_symptomatic = st.tabs(["🛡️ Thuốc bảo vệ & Cải thiện tiên lượng", "💊 Thuốc giảm triệu chứng"])
         
         with tab_prognostic:
             st.subheader("🛡️ Điều trị bảo vệ & cải thiện tiên lượng cho bệnh nhân này")
-            st.caption("Công cụ chỉ hiển thị các khuyến cáo được kích hoạt bởi dữ liệu đã nhập ở Bước 1–3; không liệt kê toàn bộ guideline.")
 
             coronary_status_prog = st.session_state.get('coronary_status', 'Untested')
             prior_mi = st.session_state.get('prior_mi', False)
@@ -1578,7 +1513,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             # LDL-lowering is handled in the dedicated lipid tab using actual LDL/current therapy.
             recommendations.append((
                 "Điều trị hạ LDL-C theo module lipid bên dưới",
-                "CCS là ASCVD đã xác định; mục tiêu LDL-C và tăng cường statin/ezetimibe/PCSK9/bempedoic acid được cá thể hóa theo LDL-C và phác đồ hiện tại ở mục ‘Tối ưu hóa lipid máu’.",
+                "CCS là ASCVD đã xác định; mục tiêu LDL-C và tăng cường statin/ezetimibe/PCSK9/bempedoic acid được cá thể hóa theo LDL-C và phác đồ hiện tại ở mục ‘Kiểm soát lipid máu’.",
                 "ESC CCS 2024 + ESC/EAS 2025"
             ))
 
@@ -1591,7 +1526,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                     </div>
                     """, unsafe_allow_html=True)
             else:
-                st.info("ℹ️ Chưa có đủ dữ liệu để kích hoạt một khuyến cáo thuốc dự phòng biến cố cụ thể ngoài kiểm soát yếu tố nguy cơ và lipid.")
+                st.info("ℹ️ Chưa có đủ dữ liệu để kích hoạt một khuyến cáo thuốc dự phòng biến ciis ngoài kiểm soát yếu tố nguy cơ và lipid.")
 
             for note in cautions:
                 st.warning("⚠️ " + note)
@@ -1624,14 +1559,8 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             else:
                 mechanism_label = "Cơ chế thiếu máu cơ tim chưa xác định đầy đủ"
             
-            low_hr_bp_modifier = st.checkbox(
-                "Nhịp tim và/hoặc huyết áp thấp có ảnh hưởng đến lựa chọn thuốc",
-                key="ccs_low_hr_bp_modifier",
-                help=(
-                    "Đây là clinical modifier do bác sĩ xác nhận. ESC 2024 yêu cầu cá thể hóa lựa chọn thuốc "
-                    "theo BP/HR nhưng không đưa một cutoff số duy nhất để định nghĩa 'low HR/BP'."
-                )
-            )
+            # Clinical modifier retained internally for compatibility, but no longer shown as a separate input.
+            low_hr_bp_modifier = st.session_state.get("ccs_low_hr_bp_modifier", False)
             
             st.markdown(f"""
             <div class='info-box' style='background-color: #f7f9fa; border-left: 5px solid #17b978; margin-bottom: 14px;'>
@@ -1651,18 +1580,18 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             
             # Mode selector
             if 'prescribing_mode_val' not in st.session_state:
-                st.session_state.prescribing_mode_val = "💡 Khuyến nghị phác đồ (Tự động đề xuất theo Guideline)"
+                st.session_state.prescribing_mode_val = "💡 Khuyến nghị phác đồ"
                 
             mode_options = [
-                "💡 Khuyến nghị phác đồ (Tự động đề xuất theo Guideline)",
+                "💡 Khuyến nghị phác đồ",
                 "🛠️ Tự phối hợp và tra cứu"
             ]
             default_mode_idx = mode_options.index(st.session_state.prescribing_mode_val) if st.session_state.prescribing_mode_val in mode_options else 0
-            prescribing_mode = st.radio("Lựa chọn phương thức kê đơn chống đau ngực:", mode_options, index=default_mode_idx)
+            prescribing_mode = st.radio("Lựa chọn phương thức:", mode_options, index=default_mode_idx)
             st.session_state.prescribing_mode_val = prescribing_mode
             
             # 1. Advisor mode
-            if prescribing_mode == "💡 Khuyến nghị phác đồ (Tự động đề xuất theo Guideline)":
+            if prescribing_mode == "💡 Khuyến nghị phác đồ":
                 st.subheader("📋 Gợi ý điều trị dựa trên hồ sơ lâm sàng và ESC 2024")
                 
                 st.markdown("""
@@ -1686,7 +1615,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                 if lvef_val < 40:
                     st.markdown("""
                     **Rối loạn chức năng tâm thu thất trái (LVEF <40%):**
-                    - <span class='class-badge-2a'>Class IIa B</span> **Ivabradine** nên được cân nhắc như add-on chống đau ngực khi triệu chứng chưa kiểm soát, hoặc như một phần điều trị ban đầu ở bệnh nhân được lựa chọn phù hợp.
+                    - <span class='class-badge-2a'>Class IIa B</span> **Ivabradine** nên được cân nhắc như chống đau ngực khi triệu chứng chưa kiểm soát, hoặc như một phần điều trị ban đầu ở bệnh nhân được lựa chọn phù hợp.
                     - CCB cần được lựa chọn thận trọng trong HFrEF; lựa chọn thuốc tiếp tục dựa trên huyết động và bệnh đồng mắc.
                     """, unsafe_allow_html=True)
                 
@@ -1710,7 +1639,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                 
                 if lvef_val > 40:
                     st.info(
-                        "ℹ️ ESC 2024: **Ivabradine add-on không được khuyến cáo (Class III B) khi CCS có LVEF >40% và không có suy tim lâm sàng**. "
+                        "ℹ️ ESC 2024: **Ivabradine không được khuyến cáo (Class III B) khi CCS có LVEF >40% và không có suy tim lâm sàng**. "
                         "Công cụ không tự suy diễn tình trạng suy tim chỉ từ LVEF; bác sĩ cần đối chiếu bối cảnh lâm sàng."
                     )
                 
@@ -1929,7 +1858,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
 
         st.write("")
         # 3. Dynamic Titration and Dosage reference dictionary (Format without raw HTML tags like <br>)
-        st.markdown("#### 3. Bảng tra cứu liều lượng chi tiết và chống chỉ định các thuốc thường gặp:")
+        st.markdown("#### Bảng tra cứu liều lượng chi tiết và chống chỉ định các thuốc thường gặp:")
         with st.expander("📖 Xem bảng tra cứu liều lượng chi tiết (8 nhóm thuốc)", expanded=False):
             st.markdown("""
             | Nhóm thuốc | Thuốc thường gặp (Tên biệt dược) | Liều khởi đầu khuyến cáo | Liều đích mục tiêu | Chống chỉ định chính & Cảnh báo |
@@ -1945,7 +1874,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
             """)
 
     # Sub-step 4.2: Tối ưu hóa lipid máu
-    if render_sub_header("Tối ưu hóa lipid máu", 2, "step4_sub"):
+    if render_sub_header("Kiểm soát lipid máu", 2, "step4_sub"):
         st.subheader("2. Phân tích và điều chỉnh rối loạn lipid máu")
         
         ldlc_now = st.session_state.get('ldlc_val_mmol', 3.0)
