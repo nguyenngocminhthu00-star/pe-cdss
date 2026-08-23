@@ -33,67 +33,71 @@ st.markdown("""
        Chỉ thay đổi hiển thị, không thay đổi nội dung/logic.
        ========================================================= */
 
-    /* H0 — Main page title: intentionally dominant */
+    /* H0 — Main page title: clean PE-like presentation, no surrounding frame */
     h1.main-title {
-        font-size: 2.00rem !important;
-        color: #123a5a !important;
+        font-size: 2.30rem !important;
+        color: #24458f !important;
         text-align: center !important;
-        font-weight: 950 !important;
+        font-weight: 900 !important;
         text-transform: uppercase !important;
-        letter-spacing: 1.0px !important;
-        line-height: 1.00 !important;
-        margin: 12px 0 10px 0 !important;
-        padding: 28px 34px !important;
+        letter-spacing: 0.35px !important;
+        line-height: 1.05 !important;
+        margin: 6px 0 2px 0 !important;
+        padding: 0 !important;
         display: block !important;
         width: 100% !important;
-        background: linear-gradient(135deg, #eef7ff 0%, #f4fbff 45%, #eefbf6 100%) !important;
-        border-top: 6px solid #1e3d59 !important;
-        border-bottom: 6px solid #17b978 !important;
-        border-radius: 16px !important;
-        box-shadow: 0 10px 30px rgba(30, 61, 89, 0.13) !important;
-        text-shadow: 0 2px 3px rgba(0,0,0,0.08) !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
     }
 
     .main-subtitle {
         text-align: center !important;
         color: #475569 !important;
-        font-size: 1.35rem !important;
-        font-weight: 650 !important;
-        margin-top: 4px !important;
-        margin-bottom: 30px !important;
-        letter-spacing: 0.15px !important;
+        font-size: 1.05rem !important;
+        font-weight: 600 !important;
+        line-height: 1.15 !important;
+        margin-top: 0 !important;
+        margin-bottom: 16px !important;
+        letter-spacing: 0 !important;
     }
 
     /* Native markdown heading hierarchy below the 4 main Step headings */
     h1:not(.main-title) {
-        font-size: 2.00rem !important;
+        font-size: 1.60rem !important;
         color: #153b5b !important;
         font-weight: 850 !important;
-        margin-top: 22px !important;
-        margin-bottom: 14px !important;
+        line-height: 1.10 !important;
+        margin-top: 10px !important;
+        margin-bottom: 7px !important;
     }
     h2 {
-        font-size: 1.72rem !important;
+        font-size: 1.35rem !important;
         color: #1a5276 !important;
         font-weight: 820 !important;
-        margin-top: 20px !important;
-        margin-bottom: 12px !important;
+        line-height: 1.12 !important;
+        margin-top: 9px !important;
+        margin-bottom: 6px !important;
     }
     h3 {
-        font-size: 1.38rem !important;
+        font-size: 1.15rem !important;
         color: #256b93 !important;
         font-weight: 800 !important;
         border-bottom: 2px solid #7ccfb0 !important;
-        padding-bottom: 6px !important;
-        margin-top: 24px !important;
-        margin-bottom: 14px !important;
+        padding-bottom: 4px !important;
+        line-height: 1.12 !important;
+        margin-top: 10px !important;
+        margin-bottom: 6px !important;
     }
     h4 {
-        font-size: 1.18rem !important;
+        font-size: 1.08rem !important;
         color: #2c3e50 !important;
         font-weight: 720 !important;
-        margin-top: 16px !important;
-        margin-bottom: 9px !important;
+        line-height: 1.15 !important;
+        margin-top: 8px !important;
+        margin-bottom: 5px !important;
     }
     p, span, label, li {
         font-size: 1.03rem !important;
@@ -101,16 +105,16 @@ st.markdown("""
 
     /* Responsive scaling keeps the hierarchy intact on smaller screens */
     @media (max-width: 1200px) {
-        h1.main-title { font-size: 2.00rem !important; padding: 24px 26px !important; line-height: 1.00 !important; }
-        .main-subtitle { font-size: 1.22rem !important; }
+        h1.main-title { font-size: 2.10rem !important; line-height: 1.05 !important; }
+        .main-subtitle { font-size: 1.00rem !important; }
     }
     @media (max-width: 768px) {
-        h1.main-title { font-size: 2.00rem !important; padding: 20px 16px !important; line-height: 1.00 !important; }
-        .main-subtitle { font-size: 1.05rem !important; }
-        h1:not(.main-title) { font-size: 1.65rem !important; }
-        h2 { font-size: 1.45rem !important; }
-        h3 { font-size: 1.25rem !important; }
-        h4 { font-size: 1.10rem !important; }
+        h1.main-title { font-size: 1.75rem !important; line-height: 1.07 !important; }
+        .main-subtitle { font-size: 0.95rem !important; margin-bottom: 12px !important; }
+        h1:not(.main-title) { font-size: 1.40rem !important; }
+        h2 { font-size: 1.25rem !important; }
+        h3 { font-size: 1.10rem !important; }
+        h4 { font-size: 1.02rem !important; }
     }
 
     /* Step-based Alert Box styles */
@@ -198,15 +202,15 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(23, 185, 120, 0.4) !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 16px 22px !important;
+        padding: 9px 15px !important;
         border-radius: 8px !important;
-        margin-top: 15px !important;
-        margin-bottom: 15px !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
         display: block !important;
     }
     div.main-step-active button p, div.main-step-active [data-testid="stBaseButton-secondary"] p,
     div.main-step-active button span, div.main-step-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 2.1rem !important; /* Massive and absolute largest step header! */
+        font-size: 1.60rem !important;
         font-weight: 900 !important;
         color: #ffffff !important;
         text-transform: uppercase !important;
@@ -219,16 +223,16 @@ st.markdown("""
         border: 2px solid #2ecc71 !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 12px 18px !important;
+        padding: 8px 14px !important;
         border-radius: 8px !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
         opacity: 0.95 !important;
         display: block !important;
     }
     div.main-step-completed button p, div.main-step-completed [data-testid="stBaseButton-secondary"] p,
     div.main-step-completed button span, div.main-step-completed [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.7rem !important; /* Clearly larger than subheadings (1.55rem) */
+        font-size: 1.60rem !important;
         font-weight: 800 !important;
         color: #117a65 !important;
         margin: 0 !important;
@@ -239,16 +243,16 @@ st.markdown("""
         border: 1px dashed #bdc3c7 !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 12px 18px !important;
+        padding: 8px 14px !important;
         border-radius: 8px !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
         opacity: 0.7 !important;
         display: block !important;
     }
     div.main-step-pending button p, div.main-step-pending [data-testid="stBaseButton-secondary"] p,
     div.main-step-pending button span, div.main-step-pending [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.70rem !important; /* Matching completed step size for symmetry */
+        font-size: 1.60rem !important;
         font-weight: 700 !important;
         color: #7f8c8d !important;
         margin: 0 !important;
@@ -263,15 +267,15 @@ st.markdown("""
         border-bottom: none !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 10px 15px !important;
+        padding: 7px 11px !important;
         border-radius: 4px !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
         display: block !important;
     }
     div.sub-header-active button p, div.sub-header-active [data-testid="stBaseButton-secondary"] p,
     div.sub-header-active button span, div.sub-header-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.45rem !important; /* Smaller than step buttons, but highly prominent */
+        font-size: 1.20rem !important;
         font-weight: 800 !important;
         color: #1b4f72 !important;
         margin: 0 !important;
@@ -282,16 +286,16 @@ st.markdown("""
         border: 1px solid #d5dbdb !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 8px 12px !important;
+        padding: 6px 10px !important;
         border-radius: 4px !important;
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
         opacity: 0.85 !important;
         display: block !important;
     }
     div.sub-header-inactive button p, div.sub-header-inactive [data-testid="stBaseButton-secondary"] p,
     div.sub-header-inactive button span, div.sub-header-inactive [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.30rem !important;
+        font-size: 1.15rem !important;
         font-weight: 600 !important;
         color: #5d6d7e !important;
         margin: 0 !important;
@@ -381,19 +385,19 @@ def render_main_step_header(title, step_id):
         width: 100% !important;
         background: {step_bg} !important;
         border: 2px solid {step_border} !important;
-        border-left-width: 9px !important;
-        border-radius: 12px !important;
-        padding: 17px 22px !important;
-        margin: 13px 0 !important;
-        min-height: 72px !important;
+        border-left-width: 7px !important;
+        border-radius: 9px !important;
+        padding: 9px 15px !important;
+        margin: 6px 0 !important;
+        min-height: 50px !important;
         box-shadow: {step_shadow} !important;
         justify-content: flex-start !important;
         text-align: left !important;
     }}
     div[class*="st-key-main_step_btn_{step_id}"] button p,
     div[class*="st-key-main_step_btn_{step_id}"] button span {{
-        font-size: 2.25rem !important;
-        line-height: 1.18 !important;
+        font-size: 1.60rem !important;
+        line-height: 1.10 !important;
         font-weight: 900 !important;
         color: {step_text} !important;
         letter-spacing: 0.25px !important;
@@ -401,12 +405,12 @@ def render_main_step_header(title, step_id):
     }}
     @media (max-width: 1200px) {{
         div[class*="st-key-main_step_btn_{step_id}"] button p,
-        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.90rem !important; }}
+        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.50rem !important; }}
     }}
     @media (max-width: 768px) {{
-        div[class*="st-key-main_step_btn_{step_id}"] button {{ padding: 13px 15px !important; min-height: 60px !important; }}
+        div[class*="st-key-main_step_btn_{step_id}"] button {{ padding: 8px 11px !important; min-height: 44px !important; }}
         div[class*="st-key-main_step_btn_{step_id}"] button p,
-        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.45rem !important; }}
+        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.28rem !important; }}
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -432,7 +436,7 @@ def render_sub_header(title, sub_step_id, session_key):
     sub_border = "#3498db" if is_active else "#c7d8e5"
     sub_text = "#174d70" if is_active else "#4d6475"
     sub_weight = 820 if is_active else 680
-    sub_size = "1.48rem" if is_active else "1.34rem"
+    sub_size = "1.20rem" if is_active else "1.12rem"
 
     widget_key = f"btn_{session_key}_{sub_step_id}"
     st.markdown(f"""
@@ -441,10 +445,10 @@ def render_sub_header(title, sub_step_id, session_key):
         width: 100% !important;
         background: {sub_bg} !important;
         border: 1px solid {sub_border} !important;
-        border-left: 7px solid {sub_border} !important;
-        border-radius: 7px !important;
-        padding: 10px 14px !important;
-        margin: 8px 0 !important;
+        border-left: 6px solid {sub_border} !important;
+        border-radius: 6px !important;
+        padding: 6px 10px !important;
+        margin: 4px 0 !important;
         justify-content: flex-start !important;
         text-align: left !important;
         box-shadow: {'0 3px 10px rgba(52, 152, 219, 0.10)' if is_active else 'none'} !important;
@@ -452,14 +456,14 @@ def render_sub_header(title, sub_step_id, session_key):
     div[class*="st-key-{widget_key}"] button p,
     div[class*="st-key-{widget_key}"] button span {{
         font-size: {sub_size} !important;
-        line-height: 1.22 !important;
+        line-height: 1.10 !important;
         font-weight: {sub_weight} !important;
         color: {sub_text} !important;
         margin: 0 !important;
     }}
     @media (max-width: 768px) {{
         div[class*="st-key-{widget_key}"] button p,
-        div[class*="st-key-{widget_key}"] button span {{ font-size: 1.18rem !important; }}
+        div[class*="st-key-{widget_key}"] button span {{ font-size: 1.05rem !important; }}
     }}
     </style>
     """, unsafe_allow_html=True)
