@@ -33,16 +33,19 @@ st.markdown("""
        Chỉ thay đổi hiển thị, không thay đổi nội dung/logic.
        ========================================================= */
 
-    /* H0 — Main page title: clean PE-like presentation, no surrounding frame */
-    h1.main-title {
-        font-size: 2.30rem !important;
+    /* H0 — Main page title: dominant, PE-like presentation */
+    h1.main-title,
+    div[data-testid="stMarkdownContainer"] h1.main-title,
+    h1.main-title span,
+    h1.main-title * {
+        font-size: 2.45rem !important;
         color: #24458f !important;
         text-align: center !important;
         font-weight: 900 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.35px !important;
-        line-height: 1.05 !important;
-        margin: 6px 0 2px 0 !important;
+        letter-spacing: 0.15px !important;
+        line-height: 1.02 !important;
+        margin: 0 0 1px 0 !important;
         padding: 0 !important;
         display: block !important;
         width: 100% !important;
@@ -53,68 +56,91 @@ st.markdown("""
         text-shadow: none !important;
     }
 
-    .main-subtitle {
+    .main-subtitle,
+    .main-subtitle * {
         text-align: center !important;
         color: #475569 !important;
-        font-size: 1.05rem !important;
+        font-size: 1.02rem !important;
         font-weight: 600 !important;
-        line-height: 1.15 !important;
-        margin-top: 0 !important;
-        margin-bottom: 16px !important;
+        line-height: 1.06 !important;
+        margin: 0 0 4px 0 !important;
         letter-spacing: 0 !important;
     }
 
     /* Native markdown heading hierarchy below the 4 main Step headings */
     h1:not(.main-title) {
-        font-size: 1.60rem !important;
+        font-size: 1.45rem !important;
         color: #153b5b !important;
         font-weight: 850 !important;
-        line-height: 1.10 !important;
-        margin-top: 10px !important;
-        margin-bottom: 7px !important;
+        line-height: 1.06 !important;
+        margin-top: 5px !important;
+        margin-bottom: 3px !important;
     }
     h2 {
-        font-size: 1.35rem !important;
+        font-size: 1.25rem !important;
         color: #1a5276 !important;
         font-weight: 820 !important;
-        line-height: 1.12 !important;
-        margin-top: 9px !important;
-        margin-bottom: 6px !important;
+        line-height: 1.08 !important;
+        margin-top: 5px !important;
+        margin-bottom: 3px !important;
     }
     h3 {
-        font-size: 1.15rem !important;
+        font-size: 1.12rem !important;
         color: #256b93 !important;
         font-weight: 800 !important;
         border-bottom: 2px solid #7ccfb0 !important;
-        padding-bottom: 4px !important;
-        line-height: 1.12 !important;
-        margin-top: 10px !important;
-        margin-bottom: 6px !important;
+        padding-bottom: 3px !important;
+        line-height: 1.08 !important;
+        margin-top: 5px !important;
+        margin-bottom: 3px !important;
     }
     h4 {
-        font-size: 1.08rem !important;
+        font-size: 1.03rem !important;
         color: #2c3e50 !important;
         font-weight: 720 !important;
-        line-height: 1.15 !important;
-        margin-top: 8px !important;
-        margin-bottom: 5px !important;
+        line-height: 1.10 !important;
+        margin-top: 4px !important;
+        margin-bottom: 2px !important;
     }
-    p, span, label, li {
+
+    /* Do not style every span globally: Streamlit places heading/button text in spans. */
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] li,
+    label {
         font-size: 1.03rem !important;
     }
 
-    /* Responsive scaling keeps the hierarchy intact on smaller screens */
+    /* Streamlit itself inserts vertical gaps between element blocks.
+       Reduce that gap, not just CSS margins on the visible headings. */
+    section.main div[data-testid="stVerticalBlock"] {
+        gap: 0.35rem !important;
+    }
+
     @media (max-width: 1200px) {
-        h1.main-title { font-size: 2.10rem !important; line-height: 1.05 !important; }
-        .main-subtitle { font-size: 1.00rem !important; }
+        h1.main-title,
+        div[data-testid="stMarkdownContainer"] h1.main-title,
+        h1.main-title span,
+        h1.main-title * {
+            font-size: 2.30rem !important;
+            line-height: 1.02 !important;
+        }
     }
     @media (max-width: 768px) {
-        h1.main-title { font-size: 1.75rem !important; line-height: 1.07 !important; }
-        .main-subtitle { font-size: 0.95rem !important; margin-bottom: 12px !important; }
-        h1:not(.main-title) { font-size: 1.40rem !important; }
-        h2 { font-size: 1.25rem !important; }
-        h3 { font-size: 1.10rem !important; }
-        h4 { font-size: 1.02rem !important; }
+        h1.main-title,
+        div[data-testid="stMarkdownContainer"] h1.main-title,
+        h1.main-title span,
+        h1.main-title * {
+            font-size: 1.95rem !important;
+            line-height: 1.04 !important;
+        }
+        .main-subtitle, .main-subtitle * {
+            font-size: 0.94rem !important;
+            margin-bottom: 3px !important;
+        }
+        h1:not(.main-title) { font-size: 1.30rem !important; }
+        h2 { font-size: 1.16rem !important; }
+        h3 { font-size: 0.98rem !important; }
+        h4 { font-size: 0.98rem !important; }
     }
 
     /* Step-based Alert Box styles */
@@ -202,15 +228,15 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(23, 185, 120, 0.4) !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 9px 15px !important;
+        padding: 6px 12px !important;
         border-radius: 8px !important;
-        margin-top: 6px !important;
-        margin-bottom: 6px !important;
+        margin-top: 1px !important;
+        margin-bottom: 1px !important;
         display: block !important;
     }
     div.main-step-active button p, div.main-step-active [data-testid="stBaseButton-secondary"] p,
     div.main-step-active button span, div.main-step-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.60rem !important;
+        font-size: 1.42rem !important;
         font-weight: 900 !important;
         color: #ffffff !important;
         text-transform: uppercase !important;
@@ -223,16 +249,16 @@ st.markdown("""
         border: 2px solid #2ecc71 !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 8px 14px !important;
+        padding: 6px 12px !important;
         border-radius: 8px !important;
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
+        margin-top: 1px !important;
+        margin-bottom: 1px !important;
         opacity: 0.95 !important;
         display: block !important;
     }
     div.main-step-completed button p, div.main-step-completed [data-testid="stBaseButton-secondary"] p,
     div.main-step-completed button span, div.main-step-completed [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.60rem !important;
+        font-size: 1.42rem !important;
         font-weight: 800 !important;
         color: #117a65 !important;
         margin: 0 !important;
@@ -243,16 +269,16 @@ st.markdown("""
         border: 1px dashed #bdc3c7 !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 8px 14px !important;
+        padding: 6px 12px !important;
         border-radius: 8px !important;
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
+        margin-top: 1px !important;
+        margin-bottom: 1px !important;
         opacity: 0.7 !important;
         display: block !important;
     }
     div.main-step-pending button p, div.main-step-pending [data-testid="stBaseButton-secondary"] p,
     div.main-step-pending button span, div.main-step-pending [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.60rem !important;
+        font-size: 1.42rem !important;
         font-weight: 700 !important;
         color: #7f8c8d !important;
         margin: 0 !important;
@@ -267,15 +293,15 @@ st.markdown("""
         border-bottom: none !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 7px 11px !important;
+        padding: 4px 8px !important;
         border-radius: 4px !important;
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
+        margin-top: 1px !important;
+        margin-bottom: 1px !important;
         display: block !important;
     }
     div.sub-header-active button p, div.sub-header-active [data-testid="stBaseButton-secondary"] p,
     div.sub-header-active button span, div.sub-header-active [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.20rem !important;
+        font-size: 1.10rem !important;
         font-weight: 800 !important;
         color: #1b4f72 !important;
         margin: 0 !important;
@@ -286,16 +312,16 @@ st.markdown("""
         border: 1px solid #d5dbdb !important;
         width: 100% !important;
         text-align: left !important;
-        padding: 6px 10px !important;
+        padding: 4px 8px !important;
         border-radius: 4px !important;
-        margin-top: 4px !important;
-        margin-bottom: 4px !important;
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
         opacity: 0.85 !important;
         display: block !important;
     }
     div.sub-header-inactive button p, div.sub-header-inactive [data-testid="stBaseButton-secondary"] p,
     div.sub-header-inactive button span, div.sub-header-inactive [data-testid="stBaseButton-secondary"] span {
-        font-size: 1.15rem !important;
+        font-size: 1.03rem !important;
         font-weight: 600 !important;
         color: #5d6d7e !important;
         margin: 0 !important;
@@ -387,17 +413,17 @@ def render_main_step_header(title, step_id):
         border: 2px solid {step_border} !important;
         border-left-width: 7px !important;
         border-radius: 9px !important;
-        padding: 9px 15px !important;
-        margin: 6px 0 !important;
-        min-height: 50px !important;
+        padding: 6px 12px !important;
+        margin: 0 !important;
+        min-height: 42px !important;
         box-shadow: {step_shadow} !important;
         justify-content: flex-start !important;
         text-align: left !important;
     }}
     div[class*="st-key-main_step_btn_{step_id}"] button p,
     div[class*="st-key-main_step_btn_{step_id}"] button span {{
-        font-size: 1.60rem !important;
-        line-height: 1.10 !important;
+        font-size: 1.42rem !important;
+        line-height: 1.04 !important;
         font-weight: 900 !important;
         color: {step_text} !important;
         letter-spacing: 0.25px !important;
@@ -405,21 +431,19 @@ def render_main_step_header(title, step_id):
     }}
     @media (max-width: 1200px) {{
         div[class*="st-key-main_step_btn_{step_id}"] button p,
-        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.50rem !important; }}
+        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.34rem !important; }}
     }}
     @media (max-width: 768px) {{
-        div[class*="st-key-main_step_btn_{step_id}"] button {{ padding: 8px 11px !important; min-height: 44px !important; }}
+        div[class*="st-key-main_step_btn_{step_id}"] button {{ padding: 5px 9px !important; min-height: 38px !important; }}
         div[class*="st-key-main_step_btn_{step_id}"] button p,
-        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.28rem !important; }}
+        div[class*="st-key-main_step_btn_{step_id}"] button span {{ font-size: 1.18rem !important; }}
     }}
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
     if st.button(f"{arrow} {prefix}{title}{status_text}", key=f"main_step_btn_{step_id}"):
         st.session_state.step = step_id
         st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
     
     return is_active
 
@@ -436,7 +460,7 @@ def render_sub_header(title, sub_step_id, session_key):
     sub_border = "#3498db" if is_active else "#c7d8e5"
     sub_text = "#174d70" if is_active else "#4d6475"
     sub_weight = 820 if is_active else 680
-    sub_size = "1.20rem" if is_active else "1.12rem"
+    sub_size = "1.10rem" if is_active else "1.02rem"
 
     widget_key = f"btn_{session_key}_{sub_step_id}"
     st.markdown(f"""
@@ -447,7 +471,7 @@ def render_sub_header(title, sub_step_id, session_key):
         border: 1px solid {sub_border} !important;
         border-left: 6px solid {sub_border} !important;
         border-radius: 6px !important;
-        padding: 6px 10px !important;
+        padding: 4px 8px !important;
         margin: 4px 0 !important;
         justify-content: flex-start !important;
         text-align: left !important;
@@ -463,16 +487,14 @@ def render_sub_header(title, sub_step_id, session_key):
     }}
     @media (max-width: 768px) {{
         div[class*="st-key-{widget_key}"] button p,
-        div[class*="st-key-{widget_key}"] button span {{ font-size: 1.05rem !important; }}
+        div[class*="st-key-{widget_key}"] button span {{ font-size: 0.98rem !important; }}
     }}
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown(f"<div class='{wrapper_class}'>", unsafe_allow_html=True)
     if st.button(f"{arrow} {title}", key=widget_key):
         st.session_state[session_key] = sub_step_id
         st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
     
     return is_active
 
