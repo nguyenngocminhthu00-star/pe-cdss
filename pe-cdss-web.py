@@ -24,7 +24,8 @@ st.markdown(r"""
 <style>
     .stApp { background: #f8fafc; }
     .block-container {
-        padding-top: 1.0rem !important;
+        /* Chừa khoảng trống cho thanh công cụ cố định của Streamlit/Safari. */
+        padding-top: 4.75rem !important;
         padding-bottom: 2.0rem !important;
         max-width: 1480px;
     }
@@ -126,12 +127,65 @@ st.markdown(r"""
     /* Touch targets */
     div[data-testid="stButton"] button { min-height: 40px; }
 
+
+    /* Bảng kiểm chống chỉ định tiêu sợi huyết: nút dạng card có thể mở/thu gọn.
+       Dùng button thay vì nested st.expander để tránh expander lồng expander. */
+    div.st-key-thrombolysis_ci_toggle button {
+        width: 100% !important;
+        min-height: 50px !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        white-space: normal !important;
+        background: #FFFBEB !important;
+        color: #92400E !important;
+        border: 1px solid #F3D18A !important;
+        border-left: 5px solid #D97706 !important;
+        border-radius: 8px !important;
+        font-weight: 800 !important;
+        box-shadow: none !important;
+        padding: 10px 13px !important;
+    }
+    div.st-key-thrombolysis_ci_toggle button:hover {
+        background: #FFF7D6 !important;
+        border-color: #D97706 !important;
+        color: #78350F !important;
+    }
+    div.st-key-thrombolysis_ci_toggle button p {
+        font-size: 1.02rem !important;
+        font-weight: 800 !important;
+        margin: 0 !important;
+    }
+
+    /* Trạng thái huyết động là quyết định rẽ nhánh chính của Bước 2: làm nổi bật như một decision box. */
+    div.st-key-w_primary_hemo {
+        background: linear-gradient(135deg, #eef8ff 0%, #ecfbf5 100%) !important;
+        border: 1px solid #8bc9c2 !important;
+        border-left: 6px solid #176b78 !important;
+        border-radius: 9px !important;
+        padding: 10px 12px 12px 12px !important;
+        margin: 3px 0 12px 0 !important;
+        box-shadow: 0 4px 12px rgba(23,107,120,.10) !important;
+    }
+    div.st-key-w_primary_hemo [data-baseweb="select"] > div {
+        background: #ffffff !important;
+        border: 2px solid #176b78 !important;
+        min-height: 48px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 7px rgba(18,58,90,.08) !important;
+    }
+    div.st-key-w_primary_hemo [data-baseweb="select"] span,
+    div.st-key-w_primary_hemo [data-baseweb="select"] div {
+        font-weight: 720 !important;
+        color: #163f5c !important;
+    }
+
     @media (max-width: 1200px) {
         h1.main-title, div[data-testid="stMarkdownContainer"] h1.main-title,
         h1.main-title span, h1.main-title * { font-size:2.25rem !important; }
     }
     @media (max-width: 768px) {
-        .block-container { padding: .65rem .72rem 1.5rem .72rem !important; }
+        /* Trên mobile vẫn chừa đủ khoảng trống để header không bị thanh app che. */
+        .block-container { padding: 3.85rem .72rem 1.5rem .72rem !important; }
         h1.main-title, div[data-testid="stMarkdownContainer"] h1.main-title,
         h1.main-title span, h1.main-title * {
             font-size:1.78rem !important;
@@ -178,14 +232,14 @@ def persistent_checkbox(label, key, default=False, help_text=None):
     st.session_state.saved_inputs[key] = val
     return val
 
-def persistent_selectbox(label, options, key, default_idx=0, help_text=None):
+def persistent_selectbox(label, options, key, default_idx=0, help_text=None, label_visibility="visible"):
     if key not in st.session_state.saved_inputs:
         st.session_state.saved_inputs[key] = options[default_idx]
     stored_val = st.session_state.saved_inputs[key]
     if stored_val not in options:
         stored_val = options[default_idx]
     idx = options.index(stored_val)
-    val = st.selectbox(label, options, index=idx, key=f"w_{key}", help=help_text)
+    val = st.selectbox(label, options, index=idx, key=f"w_{key}", help=help_text, label_visibility=label_visibility)
     st.session_state.saved_inputs[key] = val
     return val
 
@@ -281,6 +335,62 @@ def goto_step1_sub(n):
 def goto_step3_sub(n):
     st.session_state.step3_open = n
     st.rerun()
+
+# Accordion cấp 2 riêng cho Bước 2.
+# Khác với st.expander native, nội dung chỉ render ở heading đang active,
+# nên khi chuyển quyết định cũ sẽ THU GỌN thật sự và heading kế tiếp tự mở.
+def render_step2_sub_header(title, focus_id):
+    current_focus = st.session_state.get("step2_focus", "hemo")
+    is_active = (current_focus == focus_id)
+    arrow = "▼" if is_active else "▶"
+
+    sub_bg = "#eaf4fb" if is_active else "#fbfdff"
+    sub_border = "#3498db" if is_active else "#c7d8e5"
+    sub_text = "#174d70" if is_active else "#4d6475"
+    sub_weight = 820 if is_active else 680
+    safe_id = str(focus_id).replace("_", "-")
+    widget_key = f"step2_sub_{safe_id}"
+
+    st.markdown(f"""
+    <style>
+    div[class*="st-key-{widget_key}"] button {{
+        width:100% !important;
+        background:{sub_bg} !important;
+        border:1px solid {sub_border} !important;
+        border-left:6px solid {sub_border} !important;
+        border-radius:7px !important;
+        padding:5px 10px !important;
+        margin:4px 0 !important;
+        justify-content:flex-start !important;
+        text-align:left !important;
+        min-height:42px !important;
+        box-shadow:{'0 3px 10px rgba(52,152,219,.10)' if is_active else 'none'} !important;
+    }}
+    div[class*="st-key-{widget_key}"] button p,
+    div[class*="st-key-{widget_key}"] button span {{
+        font-size:{'1.08rem' if is_active else '1.01rem'} !important;
+        line-height:1.12 !important;
+        font-weight:{sub_weight} !important;
+        color:{sub_text} !important;
+        margin:0 !important;
+        white-space:normal !important;
+    }}
+    @media (max-width:768px) {{
+        div[class*="st-key-{widget_key}"] button {{ min-height:46px !important; padding:7px 9px !important; }}
+        div[class*="st-key-{widget_key}"] button p,
+        div[class*="st-key-{widget_key}"] button span {{ font-size:.98rem !important; }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    if st.button(f"{arrow} {title}", key=widget_key):
+        st.session_state.step2_focus = "none" if is_active else focus_id
+        # Nếu bác sĩ chủ động quay lại một heading của nhánh huyết động ổn định,
+        # đồng bộ luôn clinical flow để các heading phía sau không còn được xem là đã đi qua.
+        if not is_active and focus_id in {"organ_damage", "cpes", "prognosis", "rv_biomarkers", "hk_position"}:
+            st.session_state.g2_stable_flow = focus_id
+        st.rerun()
+    return is_active
 
 # ==============================================================================
 # BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ PE
@@ -643,17 +753,23 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
 # ==============================================================================
 if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2):
     st.subheader("📊 GIAI ĐOẠN 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026")
-    with st.expander("🧬 Đánh giá Huyết động học & Tim phổi cấp cứu", expanded=(st.session_state.step2_focus == "hemo")):
-        st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-        st.write("##### 🧬 Đánh giá Huyết động học & Tim phổi cấp cứu")
-        # 1. Trạng thái huyết động chính
-        primary_hemo = persistent_selectbox("1. Hãy chọn trạng thái Huyết động chính của bệnh nhân:", [
-            "Huyết động ổn định (Huyết áp bình thường)",
-            "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)",
-            "Tụt huyết áp kéo dài / Sốc tim thực sự (Huyết áp tâm thu <90 mmHg hoặc giảm >40 mmHg kéo dài >=15 phút, hoặc cần thuốc vận mạch để duy trì HA)",
-            "Sốc tim kháng trị hoặc Ngừng tuần hoàn (SCAI Stage D/E, hoặc cardiac arrest không đạt ROSC sau 30 phút hồi sức)",
-            "Thuyên tắc phổi phát hiện tình cờ, hoàn toàn không có triệu chứng (Category A - Subclinical PE)"
-        ], key="primary_hemo")
+
+    hemo_options = [
+        "Huyết động ổn định (Huyết áp bình thường)",
+        "Tụt huyết áp thoáng qua (<15 phút, tự hồi phục nhanh hoặc đáp ứng nhanh sau bù dịch)",
+        "Tụt huyết áp kéo dài / Sốc tim thực sự (Huyết áp tâm thu <90 mmHg hoặc giảm >40 mmHg kéo dài >=15 phút, hoặc cần thuốc vận mạch để duy trì HA)",
+        "Sốc tim kháng trị hoặc Ngừng tuần hoàn (SCAI Stage D/E, hoặc cardiac arrest không đạt ROSC sau 30 phút hồi sức)",
+        "Thuyên tắc phổi phát hiện tình cờ, hoàn toàn không có triệu chứng (Category A - Subclinical PE)"
+    ]
+    primary_hemo = st.session_state.saved_inputs.get("primary_hemo", hemo_options[0])
+    if primary_hemo not in hemo_options:
+        primary_hemo = hemo_options[0]
+
+    if render_step2_sub_header("🧬 Đánh giá Huyết động học & Tim phổi cấp cứu", "hemo"):
+        # Heading phía trên đã mô tả nhiệm vụ; dropdown được làm nổi bật và không lặp lại câu "Hãy chọn...".
+        primary_hemo = persistent_selectbox(
+            "Trạng thái huyết động chính", hemo_options, key="primary_hemo", label_visibility="collapsed"
+        )
         
         # RESET FLOW STATE IF HEMODYNAMIC TYPE CHANGED TO PREVENT C-GROUP SLIPPAGE
         if 'last_primary_hemo' not in st.session_state:
@@ -691,12 +807,15 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
             </div>
             """, unsafe_allow_html=True)
             st.session_state.resp_modifier = False
-        st.markdown("</div>", unsafe_allow_html=True)
         if st.button("Xác nhận trạng thái huyết động → Tiếp tục", type="primary", use_container_width=True, key="confirm_primary_hemo"):
-            st.session_state.step2_focus = "branch" if ("Sốc tim kháng trị" in primary_hemo or "Tụt huyết áp kéo dài" in primary_hemo or "phát hiện tình cờ" in primary_hemo) else "flow"
+            if "Sốc tim kháng trị" in primary_hemo or "Tụt huyết áp kéo dài" in primary_hemo or "phát hiện tình cờ" in primary_hemo:
+                st.session_state.step2_focus = "branch"
+            else:
+                st.session_state.step2_focus = "organ_damage"
+                st.session_state.g2_stable_flow = "organ_damage"
             st.rerun()
     if "Sốc tim kháng trị" in primary_hemo:
-        with st.expander("📢 Đánh giá Modifier R cho nhóm E", expanded=(st.session_state.step2_focus == "branch")):
+        if render_step2_sub_header("📢 Đánh giá Modifier R cho nhóm E", "branch"):
             st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
             r_e = persistent_checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?", key="r_e")
             st.session_state.resp_modifier = r_e
@@ -705,7 +824,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                 st.session_state.step = 3
                 st.rerun()
     elif "Tụt huyết áp kéo dài" in primary_hemo:
-        with st.expander("📢 Đánh giá Modifier R cho nhóm E", expanded=(st.session_state.step2_focus == "branch")):
+        if render_step2_sub_header("📢 Đánh giá Modifier R cho nhóm E", "branch"):
             st.write("##### 📢 Đánh giá Modifier R cho nhóm E")
             r_e = persistent_checkbox("Đang cần thông khí áp lực dương không xâm lấn (NIV/BiPAP) HOẶC đang phải thông khí xâm lấn (đặt nội khí quản thở máy)?", key="r_e")
             st.session_state.resp_modifier = r_e
@@ -714,7 +833,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                 st.session_state.step = 3
                 st.rerun()
     elif "phát hiện tình cờ" in primary_hemo:
-        with st.expander("📋 Đánh giá Tiêu chuẩn An toàn Điều trị Ngoại trú cho Nhóm A", expanded=(st.session_state.step2_focus == "branch")):
+        if render_step2_sub_header("📋 Đánh giá Tiêu chuẩn An toàn Điều trị Ngoại trú cho Nhóm A", "branch"):
             st.markdown("<div class='section-card'>", unsafe_allow_html=True)
             st.write("##### 📋 Đánh giá Tiêu chuẩn An toàn Điều trị Ngoại trú cho Nhóm A")
             st.caption("Khuyến cáo AHA/ACC 2026 cho phép quản lý ngoại trú (Class 2a, LOE B-R) cho một số bệnh nhân được lựa chọn thuộc Nhóm A khi thỏa mãn đầy đủ các tiêu chuẩn y khoa và xã hội dưới đây:")
@@ -788,7 +907,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
             st.session_state.g2_stable_flow = "organ_damage"
         _flow = st.session_state.g2_stable_flow
         _flow_rank = {"organ_damage": 1, "cpes": 2, "prognosis": 3, "rv_biomarkers": 4, "hk_position": 4}.get(_flow, 1)
-        with st.expander("2.1 📋 Đánh giá Tổn thương cơ quan đích & Giảm tưới máu mô", expanded=(st.session_state.step2_focus != "hemo" and _flow == "organ_damage")):
+        if render_step2_sub_header("2.1 📋 Đánh giá Tổn thương cơ quan đích & Giảm tưới máu mô", "organ_damage"):
             st.caption("Hãy rà soát kỹ các dấu hiệu giảm tưới máu hoặc suy chức năng cơ quan đích dưới đây:")
             
             opt_lactate = persistent_checkbox("Nồng độ Lactate huyết thanh > 2.0 mmol/L", key="opt_lactate")
@@ -844,9 +963,10 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                     st.info("Huyết áp bình thường và không có giảm tưới máu. Hãy bấm nút dưới đây để chuyển sang đánh giá thang điểm CPES.")
                     if st.button("Xác nhận Không giảm tưới máu -> Tiếp tục đánh giá CPES ➡️", type="primary", use_container_width=True):
                         st.session_state.g2_stable_flow = "cpes"
+                        st.session_state.step2_focus = "cpes"
                         st.rerun()
         if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow_rank >= 2:
-            with st.expander("2.2 📊 Đánh giá Thang điểm CPES (Composite Pulmonary Embolism Shock)", expanded=(_flow == "cpes")):
+            if render_step2_sub_header("2.2 📊 Đánh giá Thang điểm CPES (Composite Pulmonary Embolism Shock)", "cpes"):
                 st.caption("CPES (0-6 điểm) giúp sàng lọc sớm nguy cơ tiến triển thành Sốc ẩn ở bệnh nhân có huyết áp ổn định và không có tổn thương cơ quan trước đó.")
                 
                 c1 = persistent_checkbox("1. Tăng men tim Troponin tim (+1)", key="c1")
@@ -881,13 +1001,15 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                     st.info(f"Điểm CPES = {cpes_score}/6 (< 6/6). Hãy tiếp tục chuyển sang đánh giá các thang điểm tiên lượng lâm sàng để phân loại nhóm B hay C.")
                     if st.button("Xác nhận CPES < 6 -> Đánh giá Thang điểm Tiên lượng Lâm sàng ➡️", type="primary", use_container_width=True):
                         st.session_state.g2_stable_flow = "prognosis"
+                        st.session_state.step2_focus = "prognosis"
                         st.rerun()
                         
                 if st.button("⬅️ Quay lại đánh giá Tổn thương cơ quan", type="secondary"):
                     st.session_state.g2_stable_flow = "organ_damage"
+                    st.session_state.step2_focus = "organ_damage"
                     st.rerun()
         if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow_rank >= 3:
-            with st.expander("2.3 📋 Đánh giá Thang điểm Tiên lượng Lâm sàng", expanded=(_flow == "prognosis")):
+            if render_step2_sub_header("2.3 📋 Đánh giá Thang điểm Tiên lượng Lâm sàng", "prognosis"):
                 st.write("##### 📋 BƯỚC 2.3: Đánh giá Thang điểm Tiên lượng Lâm sàng")
                 st.caption("Do không có giảm tưới máu/sốc ẩn, bệnh nhân sẽ được phân loại vào Nhóm B (Nguy cơ thấp) hoặc Nhóm C (Nguy cơ trung bình). Hãy lựa chọn 1 thang điểm duy nhất để đánh giá:")
                 
@@ -989,18 +1111,21 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                     st.markdown("<div class='u-card urgency-medium'><strong>KẾT QUẢ ĐÁNH GIÁ: LÂM SÀNG NGUY CƠ CAO (Category C)</strong><br>Thang điểm tiên lượng lâm sàng chỉ ra nguy cơ cao. Bệnh nhân được xếp vào Nhóm C. Hãy bấm nút dưới đây để đánh giá Thất phải (RV) và Biomarkers để phân nhóm sâu hơn (C1, C2, C3).</div>", unsafe_allow_html=True)
                     if st.button("Đánh giá Thất phải (RV) & Biomarkers ➡️", type="primary", use_container_width=True):
                         st.session_state.g2_stable_flow = "rv_biomarkers"
+                        st.session_state.step2_focus = "rv_biomarkers"
                         st.rerun()
                 else:
                     st.markdown("<div class='u-card urgency-low'><strong>KẾT QUẢ ĐÁNH GIÁ: LÂM SÀNG NGUY CƠ THẤP (Category B)</strong><br>Thang điểm tiên lượng lâm sàng chỉ ra nguy cơ thấp. Bệnh nhân được xếp vào Nhóm B. Hãy bấm nút dưới đây để đánh giá vị trí huyết khối để phân loại B1 hay B2.</div>", unsafe_allow_html=True)
                     if st.button("Đánh giá vị trí huyết khối ➡️", type="primary", use_container_width=True):
                         st.session_state.g2_stable_flow = "hk_position"
+                        st.session_state.step2_focus = "hk_position"
                         st.rerun()
                         
                 if st.button("⬅️ Quay lại đánh giá CPES", type="secondary"):
                     st.session_state.g2_stable_flow = "cpes"
+                    st.session_state.step2_focus = "cpes"
                     st.rerun()
         if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow == "rv_biomarkers":
-            with st.expander("2.4 🧬 Đánh giá Thất phải (RV) & Biomarkers — Nhóm C", expanded=True):
+            if render_step2_sub_header("2.4 🧬 Đánh giá Thất phải (RV) & Biomarkers — Nhóm C", "rv_biomarkers"):
                 st.caption("Xác định mức độ tổn thương tim phải để chia nhóm C thành C1, C2, C3.")
                 
                 st.write("**1. Đánh giá chi tiết Rối loạn chức năng Thất phải (RV) (Siêu âm/CT):**")
@@ -1044,9 +1169,10 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                     
                 if st.button("⬅️ Quay lại chọn Thang điểm tiên lượng", type="secondary"):
                     st.session_state.g2_stable_flow = "prognosis"
+                    st.session_state.step2_focus = "prognosis"
                     st.rerun()
         if primary_hemo == "Huyết động ổn định (Huyết áp bình thường)" and _flow == "hk_position":
-            with st.expander("2.5 🔍 Đánh giá vị trí huyết khối — Nhóm B", expanded=True):
+            if render_step2_sub_header("2.5 🔍 Đánh giá vị trí huyết khối — Nhóm B", "hk_position"):
                 st.caption("Xác định vị trí giải phẫu của huyết khối để chia nhóm B thành B1 (Dưới phân thùy) hoặc B2 (Phân thùy trở lên).")
                 
                 is_subsegmental = persistent_checkbox("Huyết khối chỉ khu trú ở nhánh dưới phân thùy (Subsegmental PE) trên CTPA?", key="is_subsegmental")
@@ -1070,6 +1196,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
                     
                 if st.button("⬅️ Quay lại chọn Thang điểm tiên lượng", type="secondary"):
                     st.session_state.g2_stable_flow = "prognosis"
+                    st.session_state.step2_focus = "prognosis"
                     st.rerun()
     with st.expander("ℹ️ Xem Sơ đồ Tóm tắt Phân tầng AHA/ACC 2026", expanded=False):
         st.subheader("📋 Sơ đồ Tóm tắt Phân tầng AHA/ACC 2026")
@@ -1133,34 +1260,45 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
         
         # Rà soát chống chỉ định tiêu sợi huyết hệ thống
         st.markdown("---")
-        st.write("**Bảng kiểm Chống chỉ định của Tiêu sợi huyết Hệ thống:**")
-        show_thrombolysis_ci = st.toggle("Bấm vào để rà soát chống chỉ định tiêu sợi huyết", key="show_thrombolysis_ci")
-        if show_thrombolysis_ci:
-            abs1 = persistent_checkbox("Tiền sử xuất huyết não hoặc đột quỵ không rõ nguyên nhân bất kỳ thời điểm nào", key="abs1")
-            abs2 = persistent_checkbox("Đột quỵ nhồi máu não trong vòng 6 tháng qua", key="abs2")
-            abs3 = persistent_checkbox("U hệ thần kinh trung ương hoặc dị dạng động tĩnh mạch não", key="abs3")
-            abs4 = persistent_checkbox("Chấn thương lớn, phẫu thuật lớn hoặc chấn thương đầu nặng trong vòng 3 tuần qua", key="abs4")
-            abs5 = persistent_checkbox("Xuất huyết nội tạng đang tiến triển hoặc xuất huyết tiêu hóa trong vòng 1 tháng qua", key="abs5")
-            abs6 = persistent_checkbox("Phình tách động mạch chủ ngực/bụng hoặc nghi ngờ", key="abs6")
-            
-            st.markdown("**Chống chỉ định tương đối (Relative Contraindications):**")
-            rel1 = persistent_checkbox("Cơn thiếu máu não cục bộ thoáng qua (TIA) trong vòng 6 tháng qua", key="rel1")
-            rel2 = persistent_checkbox("Đang dùng kháng đông đường uống", key="rel2")
-            rel3 = persistent_checkbox("Mang thai hoặc trong vòng 1 tuần sau sinh", key="rel3")
-            rel4 = persistent_checkbox("Chọc dò mạch máu ở vị trí không ép được", key="rel4")
-            rel5 = persistent_checkbox("Hồi sức tim phổi (CPR) kéo dài hoặc chấn thương lớn do hồi sức", key="rel5")
-            rel6 = persistent_checkbox("Tăng huyết áp nặng không kiểm soát (HA tâm thu > 180 mmHg hoặc tâm trương > 110 mmHg)", key="rel6")
-            rel7 = persistent_checkbox("Bệnh gan nặng tiến triển hoặc viêm màng ngoài tim cấp", key="rel7")
-            
-            has_absolute = abs1 or abs2 or abs3 or abs4 or abs5 or abs6
-            has_relative = rel1 or rel2 or rel3 or rel4 or rel5 or rel6 or rel7
-            
-            if has_absolute:
-                st.error("🚨 CẢNH BÁO: Bệnh nhân có chống chỉ định TUYỆT ĐỐI với tiêu sợi huyết hệ thống! Bắt buộc cân nhắc phương pháp Lấy huyết khối cơ học (MT) hoặc Phẫu thuật lấy huyết khối.")
-            elif has_relative:
-                st.warning("⚠️ CẢNH BÁO: Bệnh nhân có chống chỉ định tương đối. Cần cân nhắc kỹ lợi ích/nguy cơ, ưu tiên can thiệp qua catheter (CDL) hoặc lấy huyết khối cơ học MT nếu có sẵn.")
-            else:
-                st.success("Không phát hiện chống chỉ định tiêu sợi huyết hệ thống.")
+        if "thrombolysis_ci_open" not in st.session_state:
+            st.session_state.thrombolysis_ci_open = False
+
+        ci_arrow = "▼" if st.session_state.thrombolysis_ci_open else "▶"
+        if st.button(
+            f"{ci_arrow} 🩸 Bảng kiểm Chống chỉ định của Tiêu sợi huyết Hệ thống",
+            key="thrombolysis_ci_toggle",
+            use_container_width=True,
+        ):
+            st.session_state.thrombolysis_ci_open = not st.session_state.thrombolysis_ci_open
+            st.rerun()
+
+        if st.session_state.thrombolysis_ci_open:
+            with st.container(border=True):
+                abs1 = persistent_checkbox("Tiền sử xuất huyết não hoặc đột quỵ không rõ nguyên nhân bất kỳ thời điểm nào", key="abs1")
+                abs2 = persistent_checkbox("Đột quỵ nhồi máu não trong vòng 6 tháng qua", key="abs2")
+                abs3 = persistent_checkbox("U hệ thần kinh trung ương hoặc dị dạng động tĩnh mạch não", key="abs3")
+                abs4 = persistent_checkbox("Chấn thương lớn, phẫu thuật lớn hoặc chấn thương đầu nặng trong vòng 3 tuần qua", key="abs4")
+                abs5 = persistent_checkbox("Xuất huyết nội tạng đang tiến triển hoặc xuất huyết tiêu hóa trong vòng 1 tháng qua", key="abs5")
+                abs6 = persistent_checkbox("Phình tách động mạch chủ ngực/bụng hoặc nghi ngờ", key="abs6")
+                
+                st.markdown("**Chống chỉ định tương đối (Relative Contraindications):**")
+                rel1 = persistent_checkbox("Cơn thiếu máu não cục bộ thoáng qua (TIA) trong vòng 6 tháng qua", key="rel1")
+                rel2 = persistent_checkbox("Đang dùng kháng đông đường uống", key="rel2")
+                rel3 = persistent_checkbox("Mang thai hoặc trong vòng 1 tuần sau sinh", key="rel3")
+                rel4 = persistent_checkbox("Chọc dò mạch máu ở vị trí không ép được", key="rel4")
+                rel5 = persistent_checkbox("Hồi sức tim phổi (CPR) kéo dài hoặc chấn thương lớn do hồi sức", key="rel5")
+                rel6 = persistent_checkbox("Tăng huyết áp nặng không kiểm soát (HA tâm thu > 180 mmHg hoặc tâm trương > 110 mmHg)", key="rel6")
+                rel7 = persistent_checkbox("Bệnh gan nặng tiến triển hoặc viêm màng ngoài tim cấp", key="rel7")
+                
+                has_absolute = abs1 or abs2 or abs3 or abs4 or abs5 or abs6
+                has_relative = rel1 or rel2 or rel3 or rel4 or rel5 or rel6 or rel7
+                
+                if has_absolute:
+                    st.error("🚨 CẢNH BÁO: Bệnh nhân có chống chỉ định TUYỆT ĐỐI với tiêu sợi huyết hệ thống! Bắt buộc cân nhắc phương pháp Lấy huyết khối cơ học (MT) hoặc Phẫu thuật lấy huyết khối.")
+                elif has_relative:
+                    st.warning("⚠️ CẢNH BÁO: Bệnh nhân có chống chỉ định tương đối. Cần cân nhắc kỹ lợi ích/nguy cơ, ưu tiên can thiệp qua catheter (CDL) hoặc lấy huyết khối cơ học MT nếu có sẵn.")
+                else:
+                    st.success("Không phát hiện chống chỉ định tiêu sợi huyết hệ thống.")
         st.markdown("</div>", unsafe_allow_html=True)
         if st.button("Tiếp tục → Phân nhóm & phân luồng điều trị", type="primary", use_container_width=True, key="step3_to_2"):
             st.session_state.step3_open = 2
