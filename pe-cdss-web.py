@@ -470,7 +470,7 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
         else:
             cptp_category = "HIGH"
 
-    if render_flow_sub_header("1.1 📋 Xác suất tiền nghiệm (CPTP)", 1, "step1_sub", "step1_sub"):
+    if render_flow_sub_header("1.1 📋 Xác suất tiền nghiệm", 1, "step1_sub", "step1_sub"):
         
         # Câu hỏi sàng lọc chống chỉ định loại trừ không hình ảnh học
         is_anticoagulated = persistent_checkbox("Bệnh nhân đang sử dụng kháng đông liều đầy đủ?", key="is_anticoagulated")
@@ -478,7 +478,7 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
         if is_anticoagulated:
             st.markdown("""
             <div class='u-card urgency-medium'>
-                <strong>⚠️ CẢNH BÁO LÂM SÀNG:</strong> Không áp dụng máy móc các chiến lược loại trừ chuẩn bằng D-dimer/YEARS ở bệnh nhân đang dùng kháng đông liều điều trị, vì các nghiên cứu thẩm định chủ yếu loại trừ nhóm này. Nếu nghi ngờ PE tái phát/đột phá khi đang kháng đông, ưu tiên hình ảnh học để xác nhận hoặc loại trừ và so sánh với hình ảnh trước đó; D-dimer âm tính/bình thường chỉ có thể hỗ trợ loại trừ, còn D-dimer tăng không đủ để chẩn đoán tái phát.
+                <strong>⚠️ CẢNH BÁO LÂM SÀNG:</strong> Nếu nghi ngờ PE tái phát/đột phá khi đang kháng đông, ưu tiên hình ảnh học để xác nhận hoặc loại trừ và so sánh với hình ảnh trước đó.
             </div>
             """, unsafe_allow_html=True)
             
@@ -523,15 +523,12 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
                 
                 st.markdown("</div>", unsafe_allow_html=True)
                 
-                if not is_preg_cus_positive:
-                    st.info("🤰 Trong công cụ này, thai kỳ tiếp tục theo nhánh Pregnancy-adapted YEARS riêng; không yêu cầu nhập thêm Wells/Geneva trước khi sang thuật toán YEARS thích ứng thai kỳ.")
-            
             # ==================================================================
             # BỆNH NHÂN KHÔNG MANG THAI - DÙNG WELLS / GENEVA TIÊU CHUẨN
             # ==================================================================
             else:
                 st.markdown("<div class='section-card'>", unsafe_allow_html=True)
-                score_type = persistent_radio("Chọn Thang điểm Đánh giá Xác suất lâm sàng tiền nghiệm:", ["Thang điểm Wells", "Thang điểm Geneva Rút gọn"], key="score_type")
+                score_type = persistent_radio("Chọn thang điểm:", ["Thang điểm Wells", "Thang điểm Geneva Rút gọn"], key="score_type")
                 
                 if score_type == "Thang điểm Wells":
                     st.info("Tính điểm Wells:")
@@ -582,14 +579,14 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
                 <div class='u-card urgency-high'>
                     <strong>>>> KẾT LUẬN: CẦN HÌNH ẢNH HỌC ĐỂ XÁC NHẬN / LOẠI TRỪ PE TÁI PHÁT</strong><br>
                     Bệnh nhân đang sử dụng kháng đông liều điều trị. Không áp dụng máy móc PERC/YEARS hoặc ngưỡng D-dimer hiệu chỉnh như ở bệnh nhân chưa dùng kháng đông.<br><br>
-                    <strong>Hành động đề xuất:</strong> Ưu tiên chụp CT động mạch phổi (CTPA) để xác nhận hoặc loại trừ PE tái phát và so sánh với hình ảnh trước đó. Xạ hình thông khí - tưới máu (V/Q) là lựa chọn thay thế phù hợp khi không thể thực hiện CTPA, đặc biệt nếu có phim V/Q nền để đối chiếu. D-dimer âm tính/bình thường có thể hỗ trợ loại trừ; D-dimer tăng không được dùng đơn độc để chẩn đoán PE tái phát.
+                    <strong>Hành động đề xuất:</strong> Ưu tiên chụp CT động mạch phổi (CTPA) để xác nhận hoặc loại trừ PE tái phát và so sánh với hình ảnh trước đó. Xạ hình thông khí - tưới máu (V/Q) là lựa chọn thay thế khi không thể thực hiện CTPA
                 </div>
                 """, unsafe_allow_html=True)
                 
                 st.markdown("<div class='section-card'>", unsafe_allow_html=True)
                 st.write("🌿 **Nhánh chẩn đoán thay thế (Nếu chống chỉ định CTPA):**")
                 st.caption("Nếu CTPA không thể thực hiện hoặc không phù hợp (ví dụ dị ứng thuốc cản quang iod nặng hoặc các hạn chế khác):")
-                st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường (planar V/Q)** nhờ độ nhạy và độ đặc hiệu cao hơn đáng kể.")
+                st.info("👉 **Khuyến cáo (Class 2a):** Thực hiện **Xạ hình thông khí - tưới máu phổi (V/Q Scan)**. Trong đó, **V/Q SPECT được khuyến cáo ưu tiên hơn V/Q phẳng thông thường)** nhờ độ nhạy và độ đặc hiệu cao hơn đáng kể.")
                 st.markdown("</div>", unsafe_allow_html=True)
                 
             elif st.session_state.is_pregnant:
@@ -784,7 +781,7 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
 # ==============================================================================
 # BƯỚC 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026 (RẼ NHÁNH TUẦN TỰ)
 # ==============================================================================
-if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2):
+if render_main_step_header("📊 BƯỚC 2: PHÂN NHÓM LÂM SÀNG", 2):
 
     hemo_options = [
         "Huyết động ổn định (Huyết áp bình thường)",
@@ -1247,7 +1244,7 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
 # ==============================================================================
 # BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH LIỀU
 # ==============================================================================
-if render_main_step_header("💊 BƯỚC 3: Điều trị", 3):
+if render_main_step_header("💊 BƯỚC 3: ĐIỀU TRỊ", 3):
     st.session_state.is_pregnant = st.session_state.saved_inputs.get('is_pregnant', False)
     # Khôi phục các biến đầu vào để các heading điều trị có thể render độc lập mà không mất dữ liệu.
     _s3 = st.session_state.saved_inputs
