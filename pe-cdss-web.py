@@ -336,6 +336,57 @@ def goto_step3_sub(n):
     st.session_state.step3_open = n
     st.rerun()
 
+# Accordion cấp 2 dùng chung cho Bước 1 và Bước 3.
+# Cùng ngôn ngữ thị giác với các heading động ở Bước 2; chỉ render nội dung của heading đang mở.
+def render_flow_sub_header(title, focus_id, state_key, key_prefix):
+    current_focus = st.session_state.get(state_key, focus_id)
+    is_active = (current_focus == focus_id)
+    arrow = "▼" if is_active else "▶"
+
+    sub_bg = "#eaf4fb" if is_active else "#fbfdff"
+    sub_border = "#3498db" if is_active else "#c7d8e5"
+    sub_text = "#174d70" if is_active else "#4d6475"
+    sub_weight = 820 if is_active else 680
+    safe_id = str(focus_id).replace("_", "-")
+    widget_key = f"{key_prefix}_{safe_id}"
+
+    st.markdown(f"""
+    <style>
+    div[class*="st-key-{widget_key}"] button {{
+        width:100% !important;
+        background:{sub_bg} !important;
+        border:1px solid {sub_border} !important;
+        border-left:6px solid {sub_border} !important;
+        border-radius:7px !important;
+        padding:5px 10px !important;
+        margin:4px 0 !important;
+        justify-content:flex-start !important;
+        text-align:left !important;
+        min-height:42px !important;
+        box-shadow:{'0 3px 10px rgba(52,152,219,.10)' if is_active else 'none'} !important;
+    }}
+    div[class*="st-key-{widget_key}"] button p,
+    div[class*="st-key-{widget_key}"] button span {{
+        font-size:{'1.08rem' if is_active else '1.01rem'} !important;
+        line-height:1.12 !important;
+        font-weight:{sub_weight} !important;
+        color:{sub_text} !important;
+        margin:0 !important;
+        white-space:normal !important;
+    }}
+    @media (max-width:768px) {{
+        div[class*="st-key-{widget_key}"] button {{ min-height:46px !important; padding:7px 9px !important; }}
+        div[class*="st-key-{widget_key}"] button p,
+        div[class*="st-key-{widget_key}"] button span {{ font-size:.98rem !important; }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    if st.button(f"{arrow} {title}", key=widget_key):
+        st.session_state[state_key] = 0 if is_active else focus_id
+        st.rerun()
+    return is_active
+
 # Accordion cấp 2 riêng cho Bước 2.
 # Khác với st.expander native, nội dung chỉ render ở heading đang active,
 # nên khi chuyển quyết định cũ sẽ THU GỌN thật sự và heading kế tiếp tự mở.
@@ -396,9 +447,30 @@ def render_step2_sub_header(title, focus_id):
 # BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ PE
 # ==============================================================================
 if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
-    st.subheader("⚡ GIAI ĐOẠN 1: TIẾP CẬN CHẨN ĐOÁN BAN ĐẦU")
-    with st.expander("1.1 📋 Đánh giá Sơ bộ & Xác suất lâm sàng tiền nghiệm (CPTP)", expanded=(st.session_state.step1_sub == 1)):
-        st.subheader("📋 Đánh giá Sơ bộ & Xác suất lâm sàng tiền nghiệm (CPTP)")
+    # Khôi phục các biến cần dùng giữa 1.1 và 1.2 từ persistent state để accordion có thể render từng phần độc lập.
+    _s1 = st.session_state.saved_inputs
+    is_anticoagulated = _s1.get("is_anticoagulated", False)
+    is_suspected = _s1.get("is_suspected", True)
+    st.session_state.is_pregnant = _s1.get("is_pregnant", st.session_state.is_pregnant)
+    _score_type_saved = _s1.get("score_type", "Thang điểm Wells (Khuyên dùng)")
+    if "Wells" in _score_type_saved:
+        cptp_score = (3.0 if _s1.get("w1", False) else 0.0) + (3.0 if _s1.get("w2", False) else 0.0) + (1.5 if _s1.get("w3", False) else 0.0) + (1.5 if _s1.get("w4", False) else 0.0) + (1.5 if _s1.get("w5", False) else 0.0) + (1.0 if _s1.get("w6", False) else 0.0) + (1.0 if _s1.get("w7", False) else 0.0)
+        if cptp_score < 2.0:
+            cptp_category = "LOW"
+        elif cptp_score <= 6.0:
+            cptp_category = "INTERMEDIATE"
+        else:
+            cptp_category = "HIGH"
+    else:
+        cptp_score = sum(1.0 for _k in ["g1", "g2", "g3", "g4", "g5", "g6", "g8"] if _s1.get(_k, False)) + (1.0 if _s1.get("g7", False) else 0.0)
+        if cptp_score <= 1.0:
+            cptp_category = "LOW"
+        elif cptp_score <= 4.0:
+            cptp_category = "INTERMEDIATE"
+        else:
+            cptp_category = "HIGH"
+
+    if render_flow_sub_header("1.1 📋 Đánh giá Sơ bộ & Xác suất lâm sàng tiền nghiệm (CPTP)", 1, "step1_sub", "step1_sub"):
         
         # Câu hỏi sàng lọc chống chỉ định loại trừ không hình ảnh học
         is_anticoagulated = persistent_checkbox("Bệnh nhân ĐANG sử dụng thuốc kháng đông liều đầy đủ (therapeutic anticoagulation)?", key="is_anticoagulated")
@@ -542,8 +614,7 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
         if st.button("Tiếp tục → Thuật toán loại trừ không hình ảnh học", type="primary", use_container_width=True, key="step1_to_sub2"):
             st.session_state.step1_sub = 2
             st.rerun()
-    with st.expander("1.2 ⚡ Thuật toán Loại trừ Không hình ảnh học", expanded=(st.session_state.step1_sub == 2)):
-        st.subheader("⚡ 2. Thuật toán Loại trừ Không hình ảnh học")
+    if render_flow_sub_header("1.2 ⚡ Thuật toán Loại trừ Không hình ảnh học", 2, "step1_sub", "step1_sub"):
         
         if is_suspected:
             if is_anticoagulated:
@@ -752,7 +823,6 @@ if render_main_step_header("⚡ BƯỚC 1: CHẨN ĐOÁN & LOẠI TRỪ", 1):
 # BƯỚC 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026 (RẼ NHÁNH TUẦN TỰ)
 # ==============================================================================
 if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2):
-    st.subheader("📊 GIAI ĐOẠN 2: PHÂN LOẠI LÂM SÀNG CẤP TÍNH AHA/ACC 2026")
 
     hemo_options = [
         "Huyết động ổn định (Huyết áp bình thường)",
@@ -1218,9 +1288,22 @@ if render_main_step_header("📊 BƯỚC 2: PHÂN LOẠI LÂM SÀNG AHA 2026", 2
 # ==============================================================================
 if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH LIỀU", 3):
     st.session_state.is_pregnant = st.session_state.saved_inputs.get('is_pregnant', False)
-    st.subheader("💊 GIAI ĐOẠN 3: CÁ THỂ HÓA ĐIỀU TRỊ VÀ TÍNH LIỀU THUỐC")
-    with st.expander("3.1 🧬 Nhập thông số sinh học & Tình huống đặc biệt", expanded=(st.session_state.step3_open == 1)):
-        st.subheader("🧬 1. Nhập thông số sinh học & Tình huống đặc biệt")
+    # Khôi phục các biến đầu vào để các heading điều trị có thể render độc lập mà không mất dữ liệu.
+    _s3 = st.session_state.saved_inputs
+    weight = _s3.get("weight", 70)
+    height = _s3.get("height", 165)
+    scr = _s3.get("scr", 1.0)
+    age_calc = _s3.get("age_calc", 60)
+    gender_calc = _s3.get("gender_calc", "Nam")
+    bmi = weight / ((height / 100) ** 2)
+    gender_mul = 0.85 if gender_calc == "Nữ" else 1.0
+    crcl = ((140 - age_calc) * weight * gender_mul) / (72 * scr)
+    has_aps = _s3.get("has_aps", False)
+    is_breastfeeding_t2 = _s3.get("is_breastfeeding_t2", False)
+    has_cancer = _s3.get("has_cancer", False)
+    has_drug_interactions = _s3.get("has_drug_interactions", False)
+
+    if render_flow_sub_header("3.1 🧬 Nhập thông số sinh học & Tình huống đặc biệt", 1, "step3_open", "step3_sub"):
         
         # Nhập thông số cân nặng chiều cao chức năng thận bằng persistent widget để không bao giờ bị reset!
         col_w, col_h, col_cr = st.columns(3)
@@ -1303,7 +1386,7 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
         if st.button("Tiếp tục → Phân nhóm & phân luồng điều trị", type="primary", use_container_width=True, key="step3_to_2"):
             st.session_state.step3_open = 2
             st.rerun()
-    with st.expander("3.2 📍 Phân nhóm lâm sàng & Phân luồng điều trị (Triage/PERT)", expanded=(st.session_state.step3_open == 2)):
+    if render_flow_sub_header("3.2 📍 Phân nhóm lâm sàng & Phân luồng điều trị (Triage/PERT)", 2, "step3_open", "step3_sub"):
         r_suffix = "R" if st.session_state.resp_modifier else ""
         final_group = f"{st.session_state.final_category}{r_suffix}" if st.session_state.final_category else "Chưa xác định"
         
@@ -1312,7 +1395,6 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
         # --------------------------------------------------------------------------
         # PHÁC ĐỒ TRIAGE & KHUYẾN CÁO PERT (Sửa COR/LOE theo chuẩn Hướng dẫn)
         # --------------------------------------------------------------------------
-        st.write("##### 📍 Phân luồng điều trị (Triage) & Khuyến cáo PERT:")
         
         if st.session_state.final_category in ["A", "B1", "B2"]:
             st.markdown("""
@@ -1352,7 +1434,7 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
         if st.button("Tiếp tục → Kháng đông & tính liều", type="primary", use_container_width=True, key="step3_to_3"):
             st.session_state.step3_open = 3
             st.rerun()
-    with st.expander("3.3 💊 Kháng đông & tính liều cá thể hóa", expanded=(st.session_state.step3_open == 3)):
+    if render_flow_sub_header("3.3 💊 Kháng đông & tính liều cá thể hóa", 3, "step3_open", "step3_sub"):
         # --------------------------------------------------------------------------
         # PHÁC ĐỒ ĐIỀU TRỊ CHUYÊN BIỆT CHO THAI KỲ / CHO CON BÚ TRƯỚC (KHÔNG HIỆN DOACs)
         # --------------------------------------------------------------------------
@@ -1525,9 +1607,7 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
             st.session_state.step3_open = _next3
             st.rerun()
     if st.session_state.final_category in ["C3", "D1", "D2", "E1", "E2"]:
-        with st.expander("3.4 ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao", expanded=(st.session_state.step3_open == 4)):
-            st.write("---")
-            st.write("##### ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao (AHA/ACC 2026):")
+        if render_flow_sub_header("3.4 ⚡ Liệu pháp Can thiệp tái tưới máu nâng cao", 4, "step3_open", "step3_sub"):
             
             # Đồng bộ phác đồ Alteplase chuẩn (Bỏ lỗi tự ý chia liều unapproved)
             st.info("💊 **Phác đồ Tiêu sợi huyết Hệ thống (Systemic Thrombolysis):**\n- **Các thuốc được FDA phê duyệt cho PE:** **rt-PA (Alteplase), Streptokinase, và Urokinase**. Trong đó, rt-PA (alteplase) là thuốc phổ biến nhất trong thực hành lâm sàng hiện đại.\n- **Phác đồ Alteplase chuẩn:** **100 mg truyền tĩnh mạch liên tục trong 2 giờ**.\n- *Cân nhắc liều thấp (Lower-dose):* Có thể cân nhắc truyền liều thấp (ví dụ: **50 mg rt-PA truyền trong 2 giờ** hoặc các phác đồ liều thấp khác) để giảm nguy cơ chảy máu (**Class 2b, LOE C-LD**), đặc biệt ở bệnh nhân có nguy cơ xuất huyết cao (Không áp dụng công thức chia liều cố định universally theo cân nặng).\n- *Lưu ý về Tenecteplase (TNK-tPA):* Đã được nghiên cứu lâm sàng nhưng **CHƯA ĐƯỢC FDA PHÊ DUYỆT** cho chỉ định thuyên tắc phổi (off-label) và không được xem là phác đồ tương đương quy chuẩn.")
@@ -1585,16 +1665,14 @@ if render_main_step_header("💊 BƯỚC 3: CÁ THỂ HÓA ĐIỀU TRỊ & TÍNH
                 st.session_state.step3_open = _next4
                 st.rerun()
     if st.session_state.resp_modifier:
-        with st.expander("3.5 📢 Hỗ trợ hô hấp — Modifier R", expanded=(st.session_state.step3_open == 5)):
+        if render_flow_sub_header("3.5 📢 Hỗ trợ hô hấp — Modifier R", 5, "step3_open", "step3_sub"):
             st.error("📢 **CẢNH BÁO SUY HÔ HẤP (Respiratory Modifier R):**\nBệnh nhân có suy hô hấp đi kèm. Theo Hướng dẫn AHA/ACC 2026, liệu pháp oxy dòng cao qua gọng mũi (HFNC) được khuyến cáo sử dụng ở bệnh nhân có suy hô hấp giảm oxy máu từ vừa đến nặng (Class 2a, LOE C-LD).\\n\\n*Lưu ý lâm sàng cực kỳ quan trọng:* Khuyến cáo không tự ý áp dụng thông khí áp lực dương (như NIV/CPAP hoặc thở máy xâm lấn) như một phương án ưu tiên thường quy, vì áp lực dương lồng ngực làm giảm tiền gánh và tăng hậu gánh thất phải cấp, dễ dẫn đến sụp đổ tuần hoàn tim phải cấp (NIV/thông khí áp lực dương chính là một marker lâm sàng của mức độ nguy kịch E-R).")
             if (not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]) and st.button("Tiếp tục → Kế hoạch duy trì dài hạn", type="primary", use_container_width=True, key="step3_after_resp"):
                 st.session_state.step3_open = 6
                 st.rerun()
     if not st.session_state.is_pregnant and not is_breastfeeding_t2 and st.session_state.final_category in ["C1", "C2", "C3", "D1", "D2", "E1", "E2"]:
-        with st.expander("3.6 🔄 Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn", expanded=(st.session_state.step3_open == 6)):
-            st.markdown("---")
+        if render_flow_sub_header("3.6 🔄 Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn", 6, "step3_open", "step3_sub"):
             st.markdown("<div style='background-color: #F8FAFC; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px;'>", unsafe_allow_html=True)
-            st.write("🔄 **Kế hoạch Chuyển đổi Kháng đông & Duy trì dài hạn (AHA/ACC 2026):**")
             
             # Check các tình huống đặc biệt để hướng dẫn chuyển đổi
             if has_aps:
