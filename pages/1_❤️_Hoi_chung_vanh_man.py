@@ -455,7 +455,8 @@ def render_main_step_header(title, step_id):
     """, unsafe_allow_html=True)
     
     if st.button(f"{arrow} {prefix}{title}{status_text}", key=f"main_step_btn_{step_id}"):
-        st.session_state.step = step_id
+        # Toggle accordion: click the open heading to close it; click another to open it.
+        st.session_state.step = 0 if is_active else step_id
         st.rerun()
     
     return is_active
@@ -506,7 +507,8 @@ def render_sub_header(title, sub_step_id, session_key):
     """, unsafe_allow_html=True)
     
     if st.button(f"{arrow} {title}", key=widget_key):
-        st.session_state[session_key] = sub_step_id
+        # Toggle accordion: active sub-heading can be collapsed; opening another closes the previous one.
+        st.session_state[session_key] = 0 if is_active else sub_step_id
         st.rerun()
     
     return is_active
@@ -693,7 +695,7 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
 # ====================================================
 # BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU
 # ====================================================
-elif render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
+if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
     
     # Sub-step 2.1: Siêu âm tim
     if render_sub_header("Siêu âm tim", 1, "step2_sub"):
@@ -943,7 +945,7 @@ elif render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
 # ====================================================
 # BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN
 # ====================================================
-elif render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
+if render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
     
     # Sub-step 3.1: Khuyến cáo thăm dò
     if render_sub_header("Khuyến cáo thăm dò", 1, "step3_sub"):
@@ -1175,7 +1177,7 @@ elif render_main_step_header("BƯỚC 3: XÁC ĐỊNH CHẨN ĐOÁN", 3):
 # ====================================================
 # BƯỚC 4: ĐIỀU TRỊ TỐI ƯU
 # ====================================================
-elif render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
+if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
     
     # Sub-step 4.1: Điều trị nội khoa
     if render_sub_header("Điều trị nội khoa", 1, "step4_sub"):
