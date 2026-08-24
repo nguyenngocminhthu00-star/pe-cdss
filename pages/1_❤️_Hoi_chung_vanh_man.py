@@ -747,7 +747,7 @@ if render_main_step_header("BƯỚC 1: ĐÁNH GIÁ BAN ĐẦU", 1):
                     if st.session_state.hba1c_val >= 6.5 and not known_dm:
                         st.warning("⚠️ HbA1c đang ở ngưỡng gợi ý đái tháo đường (≥6,5%). Công cụ không tự động xác lập chẩn đoán; cần xác nhận chẩn đoán theo bối cảnh lâm sàng/tiêu chuẩn chẩn đoán phù hợp.")
                     if st.session_state.egfr_val < 60:
-                        st.error(f"⚠️ eGFR giảm ({st.session_state.egfr_val} mL/min): Có suy giảm chức năng thận; cần đối chiếu tính mạn tính và nguyên nhân.")
+                        st.error(f"⚠️ eGFR giảm ({st.session_state.egfr_val} mL/min): Có suy giảm chức năng thận.")
                     if not st.session_state.thyroid_assessed:
                         st.info("ℹ️ ESC 2024 khuyến cáo đánh giá chức năng tuyến giáp ít nhất một lần ở người bệnh nghi ngờ CCS.")
 
@@ -903,8 +903,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
         """, unsafe_allow_html=True)
         
         # Visualize the Figure 4 Matrix Simulation Dynamic Spotlight
-        st.markdown("#### 📊 Tra cứu khả năng lâm sàng")
-        
+        # Bảng tra cứu được ẩn mặc định và chỉ hiển thị khi người dùng bấm mở.
         age_ranges = ["30-39", "40-49", "50-59", "60-69", "70-80"]
         symptom_scores_keys = ["0-1", "2", "3"]
         rf_classes = ["0-1", "2-3", "4-5"]
@@ -956,7 +955,8 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
                 html_table += "</tr>"
                 
         html_table += "</tbody></table>"
-        st.markdown(html_table, unsafe_allow_html=True)
+        with st.expander("📊 Tra cứu khả năng lâm sàng", expanded=False):
+            st.markdown(html_table, unsafe_allow_html=True)
         st.session_state.base_likelihood = base_likelihood
 
     # Sub-step 2.3: Điều chỉnh khả năng lâm sàng
