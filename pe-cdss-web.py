@@ -1,7 +1,7 @@
 import streamlit as st
 
 # =========================
-# MENU TRUNG TÂM
+# KHAI BÁO CÁC TRANG
 # =========================
 
 pe = st.Page(
@@ -23,10 +23,41 @@ lipid = st.Page(
     icon="🩸"
 )
 
-menu = st.navigation([
-    pe,
-    ccs,
-    lipid
-])
+# =========================
+# ĐĂNG KÝ ĐIỀU HƯỚNG
+# Ẩn menu tự động của Streamlit
+# =========================
+
+menu = st.navigation(
+    [pe, ccs, lipid],
+    position="hidden"
+)
+
+# =========================
+# MENU TRUNG TÂM BÊN TRÁI
+# =========================
+
+with st.sidebar:
+    st.page_link(
+        pe,
+        label="Thuyên tắc phổi cấp",
+        icon="🫁"
+    )
+
+    st.page_link(
+        ccs,
+        label="Hội chứng vành mạn",
+        icon="❤️"
+    )
+
+    st.page_link(
+        lipid,
+        label="Rối loạn lipid máu",
+        icon="🩸"
+    )
+
+# =========================
+# CHẠY TRANG ĐƯỢC CHỌN
+# =========================
 
 menu.run()
