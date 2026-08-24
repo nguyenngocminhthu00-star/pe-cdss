@@ -1068,10 +1068,6 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ CHUYÊN SÂU", 2):
                     "Rất thấp (≤5%)": "#28a745", "Thấp (>5–15%)": "#17a2b8",
                     "Trung bình (>15–50%)": "#ffc107", "Cao (>50–85%)": "#fd7e14", "Rất cao (>85%)": "#dc3545"
                 }[reclass_choice]
-        else:
-            # Hide the redundant reclassification box when there is nothing to integrate.
-            st.caption("Không có dữ kiện bổ sung cần tái phân loại: công cụ giữ nguyên nhóm RF-CL nền cho bước lựa chọn thăm dò.")
-
         st.markdown(f"""
         <div style='background-color: #f1f2f6; border-radius: 6px; padding: 15px; border-left: 6px solid {final_col}; margin: 15px 0;'>
             <h4 style='margin: 0; color: #333;'>Khả năng lâm sàng sử dụng cho bước tiếp theo:</h4>
@@ -1595,7 +1591,6 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                 st.subheader("📋 Gợi ý điều trị dựa trên hồ sơ lâm sàng và ESC 2024")
                 
                 st.markdown("""
-                **Khuyến cáo nền cho đa số bệnh nhân CCS:**
                 - <span class='class-badge-1'>Class I B</span> **Beta-blocker và/hoặc CCB** được khuyến cáo ban đầu để kiểm soát nhịp tim và triệu chứng ở đa số bệnh nhân CCS.
                 - <span class='class-badge-2a'>Class IIa B</span> Nếu beta-blocker hoặc CCB đơn trị không kiểm soát triệu chứng, nên cân nhắc **beta-blocker + DHP-CCB** nếu không chống chỉ định.
                 - <span class='class-badge-2a'>Class IIa B</span> **Long-acting nitrate hoặc ranolazine** nên được cân nhắc như add-on khi triệu chứng chưa kiểm soát, hoặc trong điều trị ban đầu ở bệnh nhân được lựa chọn phù hợp.
@@ -1640,7 +1635,6 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                 if lvef_val > 40:
                     st.info(
                         "ℹ️ ESC 2024: **Ivabradine không được khuyến cáo (Class III B) khi CCS có LVEF >40% và không có suy tim lâm sàng**. "
-                        "Công cụ không tự suy diễn tình trạng suy tim chỉ từ LVEF; bác sĩ cần đối chiếu bối cảnh lâm sàng."
                     )
                 
                 if st.button("👉 ÁP DỤNG GỢI Ý THUỐC NÀY", key="apply_advisor_btn"):
@@ -1698,13 +1692,13 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
                         if prescribe_bb:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Chẹn Beta (BB)", expanded=True):
                                 st.markdown("""
-                                - **❌ Không phù hợp/chống chỉ định theo hồ sơ an toàn thuốc:** Nhịp tim chậm rõ, block AV độ II–III khi chưa có máy tạo nhịp, hội chứng suy nút xoang hoặc suy tim mất bù cấp. Đây là cảnh báo an toàn thuốc, không phải một ESC Class III chung cho toàn bộ nhóm beta-blocker.
-                                - **⚠️ Thận trọng quan trọng:** Hen phế quản nặng hoặc bệnh phổi tắc nghẽn mạn tính (COPD) có co thắt phế quản tiến triển (ưu tiên chọn chẹn beta siêu chọn lọc tim).
+                                - **❌ Không phù hợp/chống chỉ định theo hồ sơ an toàn thuốc:** Nhịp tim chậm rõ, block AV độ II–III khi chưa có máy tạo nhịp, hội chứng suy nút xoang hoặc suy tim mất bù cấp.
+                                - **⚠️ Thận trọng quan trọng:** Hen phế quản nặng hoặc bệnh phổi tắc nghẽn mạn tính (COPD) có co thắt phế quản tiến triển (ưu tiên chọn chẹn beta chọn lọc trên tim).
                                 """)
                         if prescribe_dhp_ccb:
                             with st.expander("📖 Chống chỉ định & Thận trọng của Chẹn kênh Canxi DHP (DHP-CCB)", expanded=True):
                                 st.markdown("""
-                                - **❌ Chống chỉ định/thận trọng theo hồ sơ an toàn thuốc:** Hạ huyết áp nặng hoặc hẹp van động mạch chủ khít có triệu chứng. Không gắn nhãn ESC Class III nếu không có Recommendation Table tương ứng.
+                                - **❌ Chống chỉ định/thận trọng theo hồ sơ an toàn thuốc:** Hạ huyết áp nặng hoặc hẹp van động mạch chủ khít có triệu chứng.
                                 - **⚠️ Thận trọng quan trọng:** Nguy cơ gây phù ngoại biên vùng cổ chân ở liều cao (10mg).
                                 """)
                         if prescribe_non_dhp_ccb:
@@ -1885,7 +1879,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
         
         st.markdown("""
         <div class='recommendation-box' style='padding: 10px; margin-bottom: 15px;'>
-            <strong>PHÂN LOẠI NGUY CƠ TIM MẠCH:</strong> Bệnh nhân đã được xác định mắc hội chứng vành mạn (CCS) thuộc nhóm nguy cơ tim mạch rất cao (Very High Cardiovascular Risk). ESC/EAS Focused Update 2025 tiếp tục xếp CCS trong nhóm ASCVD đã xác định.
+            <strong>PHÂN LOẠI NGUY CƠ TIM MẠCH:</strong> Bệnh nhân đã được xác định mắc hội chứng vành mạn (CCS) thuộc nhóm nguy cơ tim mạch rất cao (Very High Cardiovascular Risk).
         </div>
         """, unsafe_allow_html=True)
         
@@ -1907,7 +1901,7 @@ if render_main_step_header("BƯỚC 4: ĐIỀU TRỊ TỐI ƯU", 4):
         - **Tỷ lệ giảm:** Giảm **≥ 50%** so với nồng độ LDL-C nền khi chưa bắt đầu điều trị.
         """, unsafe_allow_html=True)
         
-        st.markdown("#### ⚙️ Lộ trình Phối hợp Thuốc Hạ Lipid (Stepwise Therapy Escalation)")
+        st.markdown("#### ⚙️ Lộ trình Phối hợp Thuốc Hạ Lipid")
         current_therapy = st.selectbox(
             "Phác đồ hạ lipid hiện tại của bệnh nhân:",
             ["Chưa điều trị bằng thuốc hạ lipid máu",
