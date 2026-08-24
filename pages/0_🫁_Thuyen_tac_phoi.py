@@ -9,16 +9,6 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
-# MENU ĐIỀU HƯỚNG — đồng bộ với công cụ CCS
-st.sidebar.page_link(
-    "pe-cdss-web.py",
-    label="🫁 Thuyên tắc phổi cấp"
-)
-st.sidebar.page_link(
-    "pages/1_❤️_Hoi_chung_vanh_man.py",
-    label="❤️ Hội chứng vành mạn"
-)
-
 # Giao diện đồng bộ CCS: phân cấp trực quan + accordion + responsive mobile
 st.markdown(r"""
 <style>
