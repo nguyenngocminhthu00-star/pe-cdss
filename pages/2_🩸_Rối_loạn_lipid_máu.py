@@ -12,8 +12,8 @@ Khan SS, et al. Development and Validation of the American Heart Association
 PREVENT Equations. Circulation. 2024;149:430-449.
 DOI: 10.1161/CIRCULATIONAHA.123.067626
 
-Phiên bản v2:
-- Toàn bộ heading của workflow dùng st.expander -> chạm để thu/phóng nội dung.
+Phiên bản v3:
+- Toàn bộ heading dùng đúng hệ thống nút accordion của PE/CCS; không dùng st.expander mặc định.
 - PREVENT-ASCVD Base 10 năm được tính OFFLINE bằng phương trình đã công bố;
   không gọi endpoint AHA nên không còn lỗi HTTP 403.
 - Phần "Cá thể hóa bằng yếu tố làm tăng nguy cơ" chỉ xuất hiện khi
@@ -41,12 +41,9 @@ st.set_page_config(
 # =========================================================
 # GIAO DIỆN
 # =========================================================
-st.markdown(
-    """
+st.markdown("""
 <style>
-    .stApp {
-        background: #f8fafc;
-    }
+    .stApp, .reportview-container { background: #f8fafc; }
 
     .block-container {
         max-width: 1480px;
@@ -54,133 +51,256 @@ st.markdown(
         padding-bottom: 3rem;
     }
 
-    .lipid-title {
-        font-weight: 900;
-        font-size: clamp(2.0rem, 3.2vw, 3.15rem);
-        line-height: 1.08;
-        color: #123a5a;
-        letter-spacing: -0.025em;
-        margin-bottom: .25rem;
+    h1.main-title,
+    div[data-testid="stMarkdownContainer"] h1.main-title,
+    h1.main-title span,
+    h1.main-title * {
+        font-size: 2.45rem !important;
+        color: #24458f !important;
+        text-align: center !important;
+        font-weight: 900 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.15px !important;
+        line-height: 1.02 !important;
+        margin: 0 0 1px 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        width: 100% !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        white-space: nowrap !important;
     }
 
-    .lipid-subtitle {
-        color: #5b6b78;
-        font-weight: 650;
-        font-size: 1.05rem;
-        margin-bottom: .9rem;
+    .main-subtitle, .main-subtitle * {
+        text-align: center !important;
+        color: #475569 !important;
+        font-size: 1.02rem !important;
+        font-weight: 600 !important;
+        line-height: 1.06 !important;
+        margin: 0 0 4px 0 !important;
     }
 
-    .accent-line {
-        height: 4px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #123a5a 0%, #0f766e 55%, #10b981 100%);
-        margin: .3rem 0 1.45rem 0;
+    .header-divider {
+        width: 100% !important;
+        height: 1px !important;
+        background: #d5dee8 !important;
+        border: 0 !important;
+        margin: 12px 0 20px 0 !important;
+        padding: 0 !important;
     }
 
-    /* Tất cả heading workflow đều là box accordion */
-    div[data-testid="stExpander"] details {
-        border: 1.5px solid #9fc7d9 !important;
-        border-radius: .78rem !important;
-        background: rgba(255,255,255,.78) !important;
-        overflow: hidden;
-        margin-bottom: .62rem;
-        box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
-    }
-
-    div[data-testid="stExpander"] details > summary {
-        background: #edf7fb !important;
-        color: #164e63 !important;
+    h1:not(.main-title) {
+        font-size: 1.45rem !important;
+        color: #153b5b !important;
         font-weight: 850 !important;
-        padding: .76rem .92rem !important;
+        line-height: 1.06 !important;
+        margin-top: 5px !important;
+        margin-bottom: 3px !important;
+    }
+    h2 {
+        font-size: 1.25rem !important;
+        color: #1a5276 !important;
+        font-weight: 820 !important;
+        line-height: 1.08 !important;
+        margin-top: 5px !important;
+        margin-bottom: 3px !important;
+    }
+    h3 {
+        font-size: 1.12rem !important;
+        color: #256b93 !important;
+        font-weight: 800 !important;
+        border-bottom: 2px solid #7ccfb0 !important;
+        padding-bottom: 3px !important;
+        line-height: 1.08 !important;
+        margin-top: 5px !important;
+        margin-bottom: 3px !important;
+    }
+    h4 {
+        font-size: 1.03rem !important;
+        color: #2c3e50 !important;
+        font-weight: 720 !important;
+        line-height: 1.10 !important;
+        margin-top: 4px !important;
+        margin-bottom: 2px !important;
     }
 
-    div[data-testid="stExpander"] details[open] > summary {
-        background: linear-gradient(90deg, #e8f5fa 0%, #ecfdf5 100%) !important;
-        border-bottom: 1px solid #d8e7ed;
-    }
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] li,
+    label { font-size: 1.03rem !important; }
 
-    div[data-testid="stExpander"] details > div {
-        padding-top: .35rem;
-    }
+    section.main div[data-testid="stVerticalBlock"] { gap: 0.35rem !important; }
 
     .path-main {
-        border: 1px solid #99d5c2;
-        border-left: 7px solid #10b981;
-        border-radius: .8rem;
-        padding: .9rem 1rem;
-        background: #ecfdf5;
-        margin: .35rem 0 .8rem 0;
+        background-color: #e8f4f8;
+        border-left: 6px solid #1e3d59;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
     }
-
-    .path-main b {
-        color: #065f46;
-    }
-
     .path-extra {
-        border: 1px solid #f6c76d;
-        border-left: 7px solid #f59e0b;
-        border-radius: .8rem;
-        padding: .85rem 1rem;
-        background: #fffbeb;
-        margin: .55rem 0;
+        background-color: #fff8e8;
+        border-left: 6px solid #f39c12;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
     }
-
     .target-card {
-        border: 1px solid #a7c7e7;
-        border-radius: .85rem;
-        background: #eff6ff;
-        padding: 1rem 1.1rem;
-        margin: .55rem 0 .8rem 0;
+        background-color: #e8f4f8;
+        border-left: 6px solid #1e3d59;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
     }
-
     .treat-card {
-        border: 1px solid #d7e1e8;
-        border-radius: .85rem;
-        background: white;
-        padding: 1rem 1.1rem;
-        margin: .55rem 0 .8rem 0;
-        box-shadow: 0 3px 12px rgba(15, 23, 42, .04);
+        background-color: #f7f9fa;
+        border: 1px solid #d3d3d3;
+        padding: 12px;
+        border-radius: 4px;
+        margin: 10px 0;
     }
 
-    .status-good {
-        border-left: 6px solid #10b981;
-        background: #ecfdf5;
-        padding: .8rem 1rem;
-        border-radius: .6rem;
-        margin: .5rem 0;
+    @media (max-width: 1200px) {
+        h1.main-title,
+        div[data-testid="stMarkdownContainer"] h1.main-title,
+        h1.main-title span,
+        h1.main-title * { font-size: 2.30rem !important; }
     }
-
-    .status-warn {
-        border-left: 6px solid #f59e0b;
-        background: #fffbeb;
-        padding: .8rem 1rem;
-        border-radius: .6rem;
-        margin: .5rem 0;
-    }
-
-    .small-note {
-        color: #64748b;
-        font-size: .92rem;
-    }
-
-    @media (max-width: 800px) {
-        .block-container {
-            padding-top: 2rem;
+    @media (max-width: 768px) {
+        .block-container { padding-top: 2rem; }
+        h1.main-title,
+        div[data-testid="stMarkdownContainer"] h1.main-title,
+        h1.main-title span,
+        h1.main-title * {
+            font-size: 1.95rem !important;
+            line-height: 1.04 !important;
+            white-space: normal !important;
         }
-
-        div[data-testid="stExpander"] details > summary {
-            padding: .66rem .75rem !important;
-        }
+        .main-subtitle, .main-subtitle * { font-size: 0.94rem !important; }
+        h1:not(.main-title) { font-size: 1.30rem !important; }
+        h2 { font-size: 1.16rem !important; }
+        h3, h4 { font-size: 0.98rem !important; }
     }
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 
 # =========================================================
 # HÀM TIỆN ÍCH
 # =========================================================
+
+def render_main_step_header(title, step_id):
+    current_step = st.session_state.lipid_step
+    is_active = current_step == step_id
+    is_completed = current_step > step_id
+    is_open = st.session_state.get("lipid_open_main", current_step) == step_id
+
+    arrow = "▼" if is_open else "▶"
+    prefix = "✅ " if is_completed else ""
+    status_text = " [ĐANG THỰC HIỆN]" if is_active else ""
+
+    if is_active:
+        step_bg = "linear-gradient(135deg, #123a5a 0%, #176b78 52%, #17b978 100%)"
+        step_border = "#17b978"
+        step_text = "#ffffff"
+        step_shadow = "0 8px 22px rgba(23, 107, 120, 0.30)"
+    elif is_completed:
+        step_bg = "linear-gradient(135deg, #e7f8f1 0%, #d2f1e5 100%)"
+        step_border = "#2ecc71"
+        step_text = "#0d684f"
+        step_shadow = "0 5px 14px rgba(46, 204, 113, 0.16)"
+    else:
+        step_bg = "linear-gradient(135deg, #eef5fb 0%, #e7f1f8 100%)"
+        step_border = "#79a9c7"
+        step_text = "#183f5f"
+        step_shadow = "0 4px 12px rgba(30, 61, 89, 0.10)"
+
+    widget_key = f"lipid_main_step_btn_{step_id}"
+    st.markdown(f"""
+    <style>
+    div[class*="st-key-{widget_key}"] button {{
+        width: 100% !important;
+        background: {step_bg} !important;
+        border: 2px solid {step_border} !important;
+        border-left-width: 7px !important;
+        border-radius: 9px !important;
+        padding: 6px 12px !important;
+        margin: 0 !important;
+        min-height: 42px !important;
+        box-shadow: {step_shadow} !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+    }}
+    div[class*="st-key-{widget_key}"] button p,
+    div[class*="st-key-{widget_key}"] button span {{
+        font-size: 1.42rem !important;
+        line-height: 1.04 !important;
+        font-weight: 900 !important;
+        color: {step_text} !important;
+        letter-spacing: 0.25px !important;
+        margin: 0 !important;
+    }}
+    @media (max-width: 768px) {{
+        div[class*="st-key-{widget_key}"] button {{ padding: 5px 9px !important; min-height: 38px !important; }}
+        div[class*="st-key-{widget_key}"] button p,
+        div[class*="st-key-{widget_key}"] button span {{ font-size: 1.18rem !important; }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    if st.button(f"{arrow} {prefix}{title}{status_text}", key=widget_key):
+        st.session_state.lipid_open_main = 0 if is_open else step_id
+        st.rerun()
+
+    return is_open
+
+
+def render_sub_header(title, sub_step_id, session_key):
+    current_sub = st.session_state.get(session_key, 1)
+    is_active = current_sub == sub_step_id
+    arrow = "▼" if is_active else "▶"
+
+    sub_bg = "#eaf4fb" if is_active else "#fbfdff"
+    sub_border = "#3498db" if is_active else "#c7d8e5"
+    sub_text = "#174d70" if is_active else "#4d6475"
+    sub_weight = 820 if is_active else 680
+    sub_size = "1.10rem" if is_active else "1.02rem"
+
+    widget_key = f"lipid_btn_{session_key}_{sub_step_id}"
+    st.markdown(f"""
+    <style>
+    div[class*="st-key-{widget_key}"] button {{
+        width: 100% !important;
+        background: {sub_bg} !important;
+        border: 1px solid {sub_border} !important;
+        border-left: 6px solid {sub_border} !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+        margin: 4px 0 !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        box-shadow: {'0 3px 10px rgba(52, 152, 219, 0.10)' if is_active else 'none'} !important;
+    }}
+    div[class*="st-key-{widget_key}"] button p,
+    div[class*="st-key-{widget_key}"] button span {{
+        font-size: {sub_size} !important;
+        line-height: 1.10 !important;
+        font-weight: {sub_weight} !important;
+        color: {sub_text} !important;
+        margin: 0 !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    if st.button(f"{arrow} {title}", key=widget_key):
+        st.session_state[session_key] = 0 if is_active else sub_step_id
+        st.rerun()
+
+    return is_active
+
+
 def is_severe_hyperchol(ldl_now, untreated_known, untreated_ldl):
     if ldl_now >= 190:
         return True
@@ -528,20 +648,22 @@ if "lipid_risk" not in st.session_state:
     st.session_state.lipid_risk = None
 if "lipid_step2" not in st.session_state:
     st.session_state.lipid_step2 = {}
+if "lipid_open_main" not in st.session_state:
+    st.session_state.lipid_open_main = st.session_state.lipid_step
+if "lipid_step1_sub" not in st.session_state:
+    st.session_state.lipid_step1_sub = 1
+if "lipid_step2_sub" not in st.session_state:
+    st.session_state.lipid_step2_sub = 1
+if "lipid_step3_sub" not in st.session_state:
+    st.session_state.lipid_step3_sub = 1
 
 
 # =========================================================
 # TIÊU ĐỀ
 # =========================================================
-st.markdown(
-    '<div class="lipid-title">🩸 TIẾP CẬN RỐI LOẠN LIPID MÁU</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<div class="lipid-subtitle">Hệ thống Hỗ trợ Quyết định Lâm sàng theo ACC/AHA 2026</div>',
-    unsafe_allow_html=True,
-)
-st.markdown('<div class="accent-line"></div>', unsafe_allow_html=True)
+st.markdown("<h1 class='main-title'>🩸 TIẾP CẬN RỐI LOẠN LIPID MÁU</h1>", unsafe_allow_html=True)
+st.markdown("<div class='main-subtitle'>Hệ thống Hỗ trợ Quyết định Lâm sàng theo ACC/AHA 2026</div>", unsafe_allow_html=True)
+st.markdown("<div class='header-divider'></div>", unsafe_allow_html=True)
 
 st.caption(
     "Phạm vi hiện tại: người lớn. Phiên bản này chưa triển khai xử trí thai kỳ/cho con bú. "
@@ -558,9 +680,9 @@ step1_label = (
     else "✅ BƯỚC 1: THÔNG TIN BAN ĐẦU"
 )
 
-with st.expander(step1_label, expanded=(st.session_state.lipid_step == 1)):
+if render_main_step_header("BƯỚC 1: THÔNG TIN BAN ĐẦU", 1):
     if st.session_state.lipid_step == 1:
-        with st.expander("🔹 1.1 Thông tin cần thiết để phân nhóm", expanded=True):
+        if render_sub_header("1.1 Thông tin cần thiết để phân nhóm", 1, "lipid_step1_sub"):
             col1, col2 = st.columns(2)
             with col1:
                 age = st.number_input("Tuổi:", min_value=18, max_value=120, value=55, step=1, key="lip_age")
@@ -711,6 +833,8 @@ with st.expander(step1_label, expanded=(st.session_state.lipid_step == 1)):
                 st.session_state.lipid_risk = None
                 st.session_state.lipid_step2 = {}
                 st.session_state.lipid_step = 2
+                st.session_state.lipid_open_main = 2
+                st.session_state.lipid_step2_sub = 1
                 st.rerun()
 
     else:
@@ -725,6 +849,7 @@ with st.expander(step1_label, expanded=(st.session_state.lipid_step == 1)):
             )
         if st.button("↩️ Sửa thông tin ban đầu", key="lip_back_to_1"):
             st.session_state.lipid_step = 1
+            st.session_state.lipid_open_main = 1
             st.rerun()
 
 
@@ -738,7 +863,7 @@ elif st.session_state.lipid_step == 2:
 else:
     step2_label = "✅ BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM"
 
-with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
+if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2):
     if st.session_state.lipid_step == 1:
         st.info("Hoàn tất Bước 1 để mở phần đánh giá nguy cơ và phân nhóm.")
 
@@ -787,7 +912,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
         # DỰ PHÒNG TIÊN PHÁT
         # -------------------------------------------------
         if path == "Dự phòng tiên phát":
-            with st.expander("🔹 2.1 Tính nguy cơ bằng PREVENT-ASCVD", expanded=True):
+            if render_sub_header("2.1 Tính nguy cơ bằng PREVENT-ASCVD", 1, "lipid_step2_sub"):
                 st.caption(
                     "PREVENT-ASCVD Base 10 năm được tính trực tiếp trong ứng dụng bằng phương trình đã công bố; "
                     "không gọi dịch vụ web AHA."
@@ -889,10 +1014,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
 
             # Yêu cầu thiết kế của người dùng: chỉ hiện từ 6% đến 15%
             if risk10 is not None and 6.0 <= risk10 <= 15.0:
-                with st.expander(
-                    "🔹 2.2 Cá thể hóa bằng các yếu tố làm tăng nguy cơ",
-                    expanded=True,
-                ):
+                if render_sub_header("2.2 Cá thể hóa bằng các yếu tố làm tăng nguy cơ", 2, "lipid_step2_sub"):
                     enhancers = []
 
                     fam = st.checkbox(
@@ -965,7 +1087,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
             else:
                 step2["risk_enhancers"] = []
 
-            with st.expander("🔹 2.3 Tái phân loại bằng CAC khi cần", expanded=False):
+            if render_sub_header("2.3 Tái phân loại bằng CAC khi cần", 3, "lipid_step2_sub"):
                 if d["subclinical_type"] == "Chưa có":
                     consider_cac = st.checkbox(
                         "Quyết định điều trị vẫn chưa chắc chắn và muốn cân nhắc CAC để tái phân loại",
@@ -988,7 +1110,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
         # TĂNG CHOLESTEROL MÁU NẶNG
         # -------------------------------------------------
         elif path == "Tăng cholesterol máu nặng":
-            with st.expander("🔹 2.1 Tăng cholesterol máu nặng", expanded=True):
+            if render_sub_header("2.1 Tăng cholesterol máu nặng", 1, "lipid_step2_sub"):
                 st.success(
                     "LDL-C hiện tại hoặc LDL-C trước điều trị ≥190 mg/dL → "
                     "không dùng PREVENT để quyết định có điều trị hay không."
@@ -1023,10 +1145,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
         # ĐÁI THÁO ĐƯỜNG
         # -------------------------------------------------
         elif path == "Đái tháo đường chưa có bệnh tim mạch do xơ vữa":
-            with st.expander(
-                "🔹 2.1 Đái tháo đường chưa có bệnh tim mạch do xơ vữa",
-                expanded=True,
-            ):
+            if render_sub_header("2.1 Đái tháo đường chưa có bệnh tim mạch do xơ vữa", 1, "lipid_step2_sub"):
                 dm_type = st.radio(
                     "Loại đái tháo đường:",
                     ["Típ 2", "Típ 1"],
@@ -1084,10 +1203,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
         # DỰ PHÒNG THỨ PHÁT
         # -------------------------------------------------
         elif path == "Dự phòng thứ phát":
-            with st.expander(
-                "🔹 2.1 Bệnh tim mạch do xơ vữa đã xác định — dự phòng thứ phát",
-                expanded=True,
-            ):
+            if render_sub_header("2.1 Bệnh tim mạch do xơ vữa đã xác định — dự phòng thứ phát", 1, "lipid_step2_sub"):
                 st.markdown("**Biến cố ASCVD chính:**")
                 major1 = st.checkbox("ACS trong 12 tháng qua", key="sec_acs")
                 major2 = st.checkbox(
@@ -1148,10 +1264,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
         # XƠ VỮA ĐMV DƯỚI LÂM SÀNG
         # -------------------------------------------------
         elif path == "Xơ vữa động mạch vành dưới lâm sàng":
-            with st.expander(
-                "🔹 2.1 Xơ vữa động mạch vành dưới lâm sàng",
-                expanded=True,
-            ):
+            if render_sub_header("2.1 Xơ vữa động mạch vành dưới lâm sàng", 1, "lipid_step2_sub"):
                 age_eligible = (
                     (d["sex"] == "Nam" and d["age"] >= 40)
                     or (d["sex"] == "Nữ" and d["age"] >= 45)
@@ -1220,7 +1333,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
                         st.info("Kết quả CT chưa ghi rõ mức độ vôi hóa; không tự suy diễn mức độ.")
 
         else:
-            with st.expander("🔹 2.1 Phân nhóm", expanded=True):
+            if render_sub_header("2.1 Phân nhóm", 1, "lipid_step2_sub"):
                 st.warning(
                     "Dữ liệu hiện tại chưa nằm trọn trong một nhánh tự động của phiên bản này. "
                     "Không dùng PREVENT ngoài điều kiện guideline."
@@ -1230,7 +1343,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
         # TĂNG TRIGLYCERID CHẠY SONG SONG
         # -------------------------------------------------
         if d["tg_active"]:
-            with st.expander("🔸 2.X Tăng triglycerid máu đồng thời", expanded=False):
+            if render_sub_header("2.X Tăng triglycerid máu đồng thời", 4, "lipid_step2_sub"):
                 if d["fasting_status"] == "Không nhịn đói":
                     st.warning(
                         f"TG không nhịn đói {d['tg']:.0f} mg/dL: đã phát hiện tăng triglycerid. "
@@ -1280,6 +1393,8 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
             else:
                 st.session_state.lipid_step2 = step2
                 st.session_state.lipid_step = 3
+                st.session_state.lipid_open_main = 3
+                st.session_state.lipid_step3_sub = 1
                 st.rerun()
 
     else:
@@ -1291,6 +1406,7 @@ with st.expander(step2_label, expanded=(st.session_state.lipid_step == 2)):
             )
         if st.button("↩️ Sửa đánh giá nguy cơ / phân nhóm", key="lip_back_to_2"):
             st.session_state.lipid_step = 2
+            st.session_state.lipid_open_main = 2
             st.rerun()
 
 
@@ -1303,7 +1419,7 @@ step3_label = (
     else "🔒 BƯỚC 3: ĐIỀU TRỊ"
 )
 
-with st.expander(step3_label, expanded=(st.session_state.lipid_step == 3)):
+if render_main_step_header("BƯỚC 3: ĐIỀU TRỊ", 3):
     if st.session_state.lipid_step < 3:
         st.info("Hoàn tất Bước 2 để mở phần điều trị.")
 
@@ -1326,7 +1442,7 @@ with st.expander(step3_label, expanded=(st.session_state.lipid_step == 3)):
         # -------------------------------------------------
         # 3.1 PHÁC ĐỒ HIỆN TẠI
         # -------------------------------------------------
-        with st.expander("🔹 3.1 Điều trị hạ lipid hiện tại", expanded=True):
+        if render_sub_header("3.1 Điều trị hạ lipid hiện tại", 1, "lipid_step3_sub"):
             treated, current_statin, current_nonstatin = treatment_current_regimen(
                 default_on_statin=d.get("statin_now", False)
             )
@@ -1342,7 +1458,7 @@ with st.expander(step3_label, expanded=(st.session_state.lipid_step == 3)):
         # -------------------------------------------------
         # 3.2 MỤC TIÊU + KHUYẾN CÁO
         # -------------------------------------------------
-        with st.expander("🔹 3.2 Mục tiêu và khuyến cáo điều trị", expanded=True):
+        if render_sub_header("3.2 Mục tiêu và khuyến cáo điều trị", 2, "lipid_step3_sub"):
             # DỰ PHÒNG TIÊN PHÁT
             if path == "Dự phòng tiên phát":
                 risk = st.session_state.lipid_risk["ascvd_10"]
@@ -1830,7 +1946,7 @@ Guideline cũng cho phép tăng cường hơn nữa đến LDL-C &lt;55 mg/dL / 
         # 3.3 TG ĐỒNG THỜI
         # -------------------------------------------------
         if d["tg_active"]:
-            with st.expander("🔸 3.3 Xử trí tăng triglycerid đồng thời", expanded=False):
+            if render_sub_header("3.3 Xử trí tăng triglycerid đồng thời", 3, "lipid_step3_sub"):
                 if d["fasting_status"] == "Không nhịn đói":
                     st.warning(
                         "Cần xét nghiệm lipid máu **nhịn đói** trước khi phân tầng và đưa khuyến cáo điều trị "
@@ -1918,13 +2034,13 @@ Guideline cũng cho phép tăng cường hơn nữa đến LDL-C &lt;55 mg/dL / 
         # -------------------------------------------------
         # 3.4 LIỀU THUỐC
         # -------------------------------------------------
-        with st.expander("🔹 3.4 Liều các thuốc hạ LDL-C thường dùng", expanded=False):
+        if render_sub_header("3.4 Liều các thuốc hạ LDL-C thường dùng", 4, "lipid_step3_sub"):
             render_dose_table()
 
         # -------------------------------------------------
         # 3.5 THẬN TRỌNG
         # -------------------------------------------------
-        with st.expander("🔹 3.5 Thận trọng và tương tác cần nhớ", expanded=False):
+        if render_sub_header("3.5 Thận trọng và tương tác cần nhớ", 5, "lipid_step3_sub"):
             st.markdown(
                 """
 - Trước khi khởi trị statin, cần rà soát tương tác thuốc.
@@ -1939,13 +2055,13 @@ Guideline cũng cho phép tăng cường hơn nữa đến LDL-C &lt;55 mg/dL / 
         # -------------------------------------------------
         # 3.6 THEO DÕI
         # -------------------------------------------------
-        with st.expander("🔹 3.6 Theo dõi sau khởi trị hoặc tăng cường điều trị", expanded=False):
+        if render_sub_header("3.6 Theo dõi sau khởi trị hoặc tăng cường điều trị", 6, "lipid_step3_sub"):
             st.info(
                 "🔄 Đánh giá lại lipid máu sau **4–12 tuần** kể từ khi khởi trị hoặc thay đổi liều/thuốc; "
                 "sau đó theo dõi định kỳ, cá thể hóa theo nguy cơ, đáp ứng và độ ổn định."
             )
 
-        with st.expander("📚 Tài liệu nền", expanded=False):
+        if render_sub_header("Tài liệu nền", 7, "lipid_step3_sub"):
             st.markdown(
                 """
 **2026 ACC/AHA/AACVPR/ABC/ACPM/ADA/AGS/APhA/ASPC/NLA/PCNA Guideline on the Management of Dyslipidemia**  
