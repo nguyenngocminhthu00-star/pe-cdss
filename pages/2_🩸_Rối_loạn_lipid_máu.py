@@ -12,20 +12,22 @@ Khan SS, et al. Development and Validation of the American Heart Association
 PREVENT Equations. Circulation. 2024;149:430-449.
 DOI: 10.1161/CIRCULATIONAHA.123.067626
 
-Phiên bản v5:
-- Toàn bộ heading dùng đúng hệ thống nút accordion của PE/CCS; không dùng st.expander mặc định.
-- PREVENT-ASCVD Base 10 năm được tính OFFLINE bằng phương trình đã công bố; không gọi endpoint AHA.
-- BMI không nằm trong PREVENT-ASCVD; BMI thuộc PREVENT-HF.
-- Mọi nơi CẦN NHẬP cholesterol đều cho chọn mg/dL hoặc mmol/L; nội bộ chuẩn hóa về mg/dL.
-- PREVENT-ASCVD dùng ngưỡng: thấp <3%, cận biên 3–<5%, trung gian 5–<10%, cao ≥10%.
-- Kết quả PREVENT được hiển thị bằng card nổi bật.
+Phiên bản v6:
+- Giữ hệ thống giao diện/accordion theo PE/CCS.
+- PREVENT-ASCVD Base 10 năm tính offline; BMI không thuộc PREVENT-ASCVD.
+- Mọi nơi CẦN NHẬP cholesterol đều có lựa chọn mg/dL hoặc mmol/L.
+- Bước 1 chỉ thu thập dữ liệu để nhận diện trục quản lý chính và vấn đề lipid đồng thời.
+- "Đang dùng statin" được chuyển khỏi Bước 1:
+  + chỉ hỏi trong nhánh PREVENT khi phương trình thực sự cần biến statin;
+  + và hỏi chi tiết ở Bước 3 nếu Bước 1 ghi nhận đang dùng thuốc hạ lipid.
+- Tăng triglycerid KHÔNG còn được xem như một nhánh loại trừ với LDL/ASCVD:
+  + luôn giữ nguyên trục điều trị chính (ASCVD / LDL-C ≥190 / đái tháo đường / xơ vữa dưới lâm sàng / dự phòng tiên phát);
+  + TG tăng được đánh giá ngắn gọn ở Bước 2 và bổ sung điều trị song song ở Bước 3.
+- Nếu chưa dùng thuốc hạ lipid ở Bước 1, Bước 3 không hỏi lại phác đồ hiện tại.
+- Nếu đang dùng thuốc hạ lipid, Bước 3 hỏi thuốc cụ thể + liều và tự suy ra cường độ statin.
 - Risk enhancers dùng để cá thể hóa định tính; không cộng cơ học để tạo một % PREVENT mới.
-- Bước 1 liên kết trực tiếp với Bước 3:
-  + Chỉ hỏi LDL-C trước điều trị khi bệnh nhân đang dùng thuốc hạ lipid.
-  + Nếu đang điều trị, Bước 3 hỏi thuốc đang dùng và liều; cường độ statin được suy ra từ thuốc/liều.
-  + Nếu chưa điều trị, Bước 3 không hỏi lại tình trạng điều trị hiện tại.
-- File này KHÔNG tạo sidebar; sidebar do file điều hướng trung tâm quản lý.
-- Phiên bản này chưa triển khai nhánh thai kỳ/cho con bú.
+- File này không tạo sidebar; sidebar do file điều hướng trung tâm quản lý.
+- Chưa triển khai thai kỳ/cho con bú.
 """
 
 import math
@@ -692,24 +694,36 @@ STATIN_INTENSITY_BY_DOSE = {
 }
 
 
-def _current_regimen_defaults(on_llt=False, on_statin=False):
+def _current_regimen_defaults(on_llt=False):
     return {
         "treated": bool(on_llt),
-        "current_statin": "Chưa xác định cường độ statin" if on_statin else "Không dùng statin",
+        "has_statin": False,
+        "current_statin": "Không dùng statin",
         "statin_drug": None,
         "statin_dose": None,
         "current_nonstatin": [],
     }
 
 
-def treatment_current_regimen_linked(default_on_statin=False):
+def treatment_current_regimen_linked():
+    """
+    Chỉ được gọi khi Bước 1 đã ghi nhận người bệnh đang dùng thuốc hạ lipid.
+    Tại đây mới hỏi chính xác có statin hay không, thuốc nào và liều nào.
+    """
     current_nonstatin = []
     statin_drug = None
     statin_dose = None
 
     st.info("Bước 1 đã ghi nhận: **người bệnh đang dùng thuốc hạ lipid máu**.")
 
-    if default_on_statin:
+    has_statin = st.radio(
+        "Phác đồ hiện tại có statin không?",
+        ["Có", "Không"],
+        horizontal=True,
+        key="lipid_current_has_statin",
+    ) == "Có"
+
+    if has_statin:
         statin_drug = st.selectbox(
             "Statin đang dùng:",
             ["Không rõ thuốc/liều"] + list(STATIN_DOSE_OPTIONS.keys()),
@@ -731,9 +745,9 @@ def treatment_current_regimen_linked(default_on_statin=False):
             st.success(f"Phân loại tự động: **{current_statin}**.")
     else:
         current_statin = "Không dùng statin"
-        st.caption("Bước 1 ghi nhận phác đồ hiện tại **không có statin**.")
 
     st.markdown("**Thuốc hạ LDL-C không statin đang dùng:**")
+
     ez = st.checkbox("Ezetimibe", key="lipid_current_ezetimibe")
     if ez:
         current_nonstatin.append("Ezetimibe 10 mg/ngày")
@@ -748,7 +762,11 @@ def treatment_current_regimen_linked(default_on_statin=False):
     if ali:
         ali_dose = st.selectbox(
             "Liều alirocumab:",
-            ["75 mg tiêm dưới da mỗi 2 tuần", "150 mg tiêm dưới da mỗi 2 tuần", "300 mg tiêm dưới da mỗi 4 tuần"],
+            [
+                "75 mg tiêm dưới da mỗi 2 tuần",
+                "150 mg tiêm dưới da mỗi 2 tuần",
+                "300 mg tiêm dưới da mỗi 4 tuần",
+            ],
             key="lipid_current_alirocumab_dose",
         )
         current_nonstatin.append(f"Alirocumab {ali_dose}")
@@ -760,17 +778,19 @@ def treatment_current_regimen_linked(default_on_statin=False):
 
     inc = st.checkbox("Inclisiran", key="lipid_current_inclisiran")
     if inc:
-        current_nonstatin.append("Inclisiran 284 mg tiêm dưới da: liều đầu, sau 3 tháng, sau đó mỗi 6 tháng")
+        current_nonstatin.append(
+            "Inclisiran 284 mg tiêm dưới da: liều đầu, sau 3 tháng, sau đó mỗi 6 tháng"
+        )
         st.caption("Inclisiran: 284 mg liều đầu, liều thứ hai sau 3 tháng, sau đó mỗi 6 tháng.")
 
-    if not default_on_statin and not current_nonstatin:
+    if not has_statin and not current_nonstatin:
         st.warning(
-            "Bước 1 ghi nhận đang dùng thuốc hạ lipid nhưng hiện chưa chọn được thuốc cụ thể. "
-            "Hãy xác nhận lại phác đồ đang dùng."
+            "Bước 1 ghi nhận đang dùng thuốc hạ lipid nhưng chưa xác định được thuốc nào trong các lựa chọn hiện tại."
         )
 
     regimen = {
         "treated": True,
+        "has_statin": has_statin,
         "current_statin": current_statin,
         "statin_drug": statin_drug,
         "statin_dose": statin_dose,
@@ -891,18 +911,11 @@ if render_main_step_header("BƯỚC 1: THÔNG TIN BAN ĐẦU", 1):
                 help="Thông tin này được liên kết trực tiếp với Bước 3.",
             )
 
-            statin_now = False
             untreated_known = False
             ever_ldl190 = False
             untreated_ldl = None
 
             if on_llt:
-                statin_now = st.checkbox(
-                    "Trong phác đồ hiện tại có statin",
-                    key="lip_statin_now",
-                    help="PREVENT-ASCVD sử dụng biến đang dùng statin.",
-                )
-
                 severe_threshold = fmt_lipid(190, lipid_unit, "chol", include_other=True)
                 untreated_status = st.radio(
                     "Có biết LDL-C trước khi bắt đầu điều trị hạ lipid không?",
@@ -1014,7 +1027,6 @@ if render_main_step_header("BƯỚC 1: THÔNG TIN BAN ĐẦU", 1):
                     "tg": float(tg),
                     "fasting_status": fasting_status,
                     "on_llt": bool(on_llt),
-                    "statin_now": bool(statin_now),
                     "untreated_known": untreated_known,
                     "untreated_ldl": float(untreated_ldl) if untreated_ldl is not None else None,
                     "ever_ldl190": bool(ever_ldl190),
@@ -1044,10 +1056,8 @@ if render_main_step_header("BƯỚC 1: THÔNG TIN BAN ĐẦU", 1):
     else:
         d = st.session_state.lipid_initial
         if d:
-            if "statin_now" not in d:
-                d["statin_now"] = bool(d.get("lipid_lowering_now", False))
             if "on_llt" not in d:
-                d["on_llt"] = bool(d.get("lipid_lowering_now", d.get("statin_now", False)))
+                d["on_llt"] = bool(d.get("lipid_lowering_now", False))
             if "lipid_unit" not in d:
                 d["lipid_unit"] = "mg/dL"
             unit = d["lipid_unit"]
@@ -1077,10 +1087,8 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
 
     elif st.session_state.lipid_step == 2:
         d = st.session_state.lipid_initial
-        if "statin_now" not in d:
-            d["statin_now"] = bool(d.get("lipid_lowering_now", False))
         if "on_llt" not in d:
-            d["on_llt"] = bool(d.get("lipid_lowering_now", d.get("statin_now", False)))
+            d["on_llt"] = bool(d.get("lipid_lowering_now", False))
         if "lipid_unit" not in d:
             d["lipid_unit"] = "mg/dL"
         path = d["main_path"]
@@ -1088,7 +1096,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
         st.markdown(
             f"""
 <div class="path-main">
-<b>🎯 NHÓM ĐIỀU TRỊ CHÍNH:</b> {path}
+<b>🎯 TRỤC ĐIỀU TRỊ CHÍNH:</b> {path}
 </div>
 """,
             unsafe_allow_html=True,
@@ -1112,7 +1120,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
 
         if coexisting:
             st.markdown(
-                '<div class="path-extra"><b>⚠️ TÌNH TRẠNG ĐỒNG THỜI CẦN LƯU Ý:</b><br>'
+                '<div class="path-extra"><b>⚠️ VẤN ĐỀ SONG SONG CẦN XỬ TRÍ:</b><br>'
                 + " • ".join(coexisting)
                 + "</div>",
                 unsafe_allow_html=True,
@@ -1138,6 +1146,18 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
                     st.error("PREVENT-ASCVD 10 năm không được áp dụng ngoài tuổi 30–79 trong nhánh này.")
                 else:
                     st.markdown("**Mô hình:** PREVENT-ASCVD Base")
+
+                    if d.get("on_llt", False):
+                        prevent_statin_now = st.radio(
+                            "Phác đồ hạ lipid hiện tại có statin không?",
+                            ["Có", "Không / không rõ"],
+                            horizontal=True,
+                            key="prevent_statin_now",
+                            help="PREVENT-ASCVD cần biết bệnh nhân hiện có dùng statin hay không.",
+                        ) == "Có"
+                    else:
+                        prevent_statin_now = False
+                        st.caption("Bước 1 ghi nhận chưa dùng thuốc hạ lipid → PREVENT sử dụng biến statin = Không.")
 
                     default_unit = d.get("lipid_unit", "mg/dL")
                     prevent_unit = st.radio(
@@ -1188,7 +1208,7 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
                     st.caption(
                         f"PREVENT đang sử dụng: eGFR {d['egfr']:.0f} • "
                         f"Đái tháo đường: {'Có' if d['diabetes'] else 'Không'} • "
-                        f"Đang dùng statin: {'Có' if d['statin_now'] else 'Không'}."
+                        f"Đang dùng statin: {'Có' if prevent_statin_now else 'Không'}."
                     )
 
                     if st.button(
@@ -1205,13 +1225,14 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
                                 sbp=sbp,
                                 egfr=d["egfr"],
                                 antihypertensive=antihypertensive,
-                                statin=d["statin_now"],
+                                statin=prevent_statin_now,
                                 diabetes=d["diabetes"],
                                 smoker=smoker,
                             )
                             st.session_state.lipid_risk = {
                                 "ascvd_10": float(risk10),
                                 "model_name": "PREVENT-ASCVD Base (offline)",
+                                "statin_now": bool(prevent_statin_now),
                             }
                         except ValueError as e:
                             st.session_state.lipid_risk = None
@@ -1586,20 +1607,40 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
         # TĂNG TRIGLYCERID CHẠY SONG SONG
         # -------------------------------------------------
         if d["tg_active"]:
-            if render_sub_header("2.X Tăng triglycerid máu đồng thời", 4, "lipid_step2_sub"):
+            if render_sub_header("2.X Đánh giá tăng triglycerid đồng thời", 4, "lipid_step2_sub"):
+                unit = d.get("lipid_unit", "mg/dL")
+                tg_text = fmt_lipid(d["tg"], unit, "tg", include_other=True)
+
+                st.info(
+                    "Tăng triglycerid được xử lý **song song** với trục LDL-C/ASCVD chính; "
+                    "không thay thế hoặc làm mất nhánh điều trị chính."
+                )
+
                 if d["fasting_status"] == "Không nhịn đói":
                     st.warning(
-                        f"TG không nhịn đói {d['tg']:.0f} mg/dL: đã phát hiện tăng triglycerid. "
-                        "Cần lipid máu nhịn đói để xác nhận và phân tầng điều trị tăng triglycerid, "
-                        "đặc biệt trước khi xếp mức 500–999 hoặc ≥1000 mg/dL."
+                        f"TG không nhịn đói: **{tg_text}**. "
+                        "Cần lipid máu nhịn đói để xác nhận mức độ trước khi áp dụng nhánh điều trị TG nặng."
                     )
                     step2["tg_verified_fasting"] = False
+                    step2["tg_persistent"] = False
+                    step2["fcs"] = False
+
                 else:
-                    st.success(f"TG nhịn đói: **{d['tg']:.0f} mg/dL — {d['tg_level']}**")
                     step2["tg_verified_fasting"] = True
 
+                    if d["tg"] < 500:
+                        tg_band = "150–499 mg/dL"
+                        st.success(f"TG nhịn đói: **{tg_text} — {tg_band}**")
+                    elif d["tg"] < 1000:
+                        tg_band = "500–999 mg/dL"
+                        st.warning(f"TG nhịn đói: **{tg_text} — {tg_band}**")
+                    else:
+                        tg_band = "≥1000 mg/dL"
+                        st.error(f"TG nhịn đói: **{tg_text} — {tg_band}**")
+                    step2["tg_band"] = tg_band
+
                     persistent = st.checkbox(
-                        "Tăng triglycerid còn kéo dài sau khi đánh giá nguyên nhân thứ phát và can thiệp lối sống",
+                        "TG còn tăng sau đánh giá nguyên nhân thứ phát và can thiệp lối sống",
                         key="tg_persistent",
                     )
                     step2["tg_persistent"] = persistent
@@ -1611,17 +1652,11 @@ if render_main_step_header("BƯỚC 2: ĐÁNH GIÁ NGUY CƠ VÀ PHÂN NHÓM", 2)
                         )
                         step2["fcs"] = fcs
                         st.error(
-                            "🚨 TG ≥1000 mg/dL: ưu tiên ban đầu là hạ triglycerid để giảm nguy cơ viêm tụy."
-                        )
-                    elif d["tg"] >= 500:
-                        st.warning(
-                            "⚠️ TG 500–999 mg/dL: tăng nguy cơ viêm tụy; "
-                            "cần xử trí nguyên nhân thứ phát và chế độ ăn chuyên biệt."
+                            "TG ≥1000 mg/dL: ưu tiên trước mắt là hạ triglycerid để giảm nguy cơ viêm tụy, "
+                            "nhưng trục điều trị LDL-C/ASCVD vẫn được giữ nguyên."
                         )
                     else:
-                        st.info(
-                            "TG 150–499 mg/dL: ưu tiên lối sống, nguyên nhân thứ phát và kiểm soát nguy cơ ASCVD."
-                        )
+                        step2["fcs"] = False
 
         st.session_state.lipid_step2 = step2
 
@@ -1668,10 +1703,8 @@ if render_main_step_header("BƯỚC 3: ĐIỀU TRỊ", 3):
 
     else:
         d = st.session_state.lipid_initial
-        if "statin_now" not in d:
-            d["statin_now"] = bool(d.get("lipid_lowering_now", False))
         if "on_llt" not in d:
-            d["on_llt"] = bool(d.get("lipid_lowering_now", d.get("statin_now", False)))
+            d["on_llt"] = bool(d.get("lipid_lowering_now", False))
         if "lipid_unit" not in d:
             d["lipid_unit"] = "mg/dL"
         s2 = st.session_state.lipid_step2
@@ -1680,7 +1713,7 @@ if render_main_step_header("BƯỚC 3: ĐIỀU TRỊ", 3):
         st.markdown(
             f"""
 <div class="path-main">
-<b>🎯 NHÓM ĐIỀU TRỊ CHÍNH:</b> {path}
+<b>🎯 TRỤC ĐIỀU TRỊ CHÍNH:</b> {path}
 </div>
 """,
             unsafe_allow_html=True,
@@ -1693,15 +1726,12 @@ if render_main_step_header("BƯỚC 3: ĐIỀU TRỊ", 3):
             "lipid_current_regimen",
             _current_regimen_defaults(
                 on_llt=d.get("on_llt", False),
-                on_statin=d.get("statin_now", False),
             ),
         )
 
         if d.get("on_llt", False):
             if render_sub_header("3.1 Phác đồ hạ lipid đang dùng", 1, "lipid_step3_sub"):
-                regimen = treatment_current_regimen_linked(
-                    default_on_statin=d.get("statin_now", False),
-                )
+                regimen = treatment_current_regimen_linked()
 
                 current_parts = []
                 if regimen.get("statin_drug"):
@@ -1716,10 +1746,7 @@ if render_main_step_header("BƯỚC 3: ĐIỀU TRỊ", 3):
                     st.info("Phác đồ hiện tại: **" + " + ".join(current_parts) + "**")
 
         treated = bool(d.get("on_llt", False))
-        current_statin = regimen.get(
-            "current_statin",
-            "Chưa xác định cường độ statin" if d.get("statin_now", False) else "Không dùng statin",
-        )
+        current_statin = regimen.get("current_statin", "Không dùng statin")
         current_nonstatin = regimen.get("current_nonstatin", [])
 
         # -------------------------------------------------
@@ -2213,7 +2240,11 @@ Guideline cũng cho phép tăng cường hơn nữa đến LDL-C &lt;55 mg/dL / 
         # 3.3 TG ĐỒNG THỜI
         # -------------------------------------------------
         if d["tg_active"]:
-            if render_sub_header("3.3 Xử trí tăng triglycerid đồng thời", 3, "lipid_step3_sub"):
+            if render_sub_header("3.3 Điều trị tăng triglycerid đồng thời", 3, "lipid_step3_sub"):
+                st.info(
+                    "Phần này **bổ sung** vào điều trị theo trục LDL-C/ASCVD ở mục 3.2; "
+                    "không thay thế điều trị chính."
+                )
                 if d["fasting_status"] == "Không nhịn đói":
                     st.warning(
                         "Cần xét nghiệm lipid máu **nhịn đói** trước khi phân tầng và đưa khuyến cáo điều trị "
@@ -2227,7 +2258,7 @@ Guideline cũng cho phép tăng cường hơn nữa đến LDL-C &lt;55 mg/dL / 
                         st.markdown(
                             """
 <div class="treat-card">
-<b>TG 150–499 mg/dL:</b><br>
+<b>TG 150–499 mg/dL (1,7–5,6 mmol/L):</b><br>
 • Lối sống và xử trí nguyên nhân thứ phát là nền tảng.<br>
 • Nếu statin có chỉ định theo nguy cơ ASCVD, statin vẫn là điều trị nền.<br>
 • Khi TG tăng, non-HDL-C hoặc ApoB được ưu tiên hơn LDL-C đơn độc để hỗ trợ quyết định lâm sàng.
@@ -2245,7 +2276,7 @@ Guideline cũng cho phép tăng cường hơn nữa đến LDL-C &lt;55 mg/dL / 
                         st.markdown(
                             """
 <div class="target-card">
-<b>TG 500–999 mg/dL — tăng nguy cơ viêm tụy</b>
+<b>TG 500–999 mg/dL (5,6–11,3 mmol/L) — tăng nguy cơ viêm tụy</b>
 </div>
 """,
                             unsafe_allow_html=True,
@@ -2271,7 +2302,7 @@ Guideline cũng cho phép tăng cường hơn nữa đến LDL-C &lt;55 mg/dL / 
                         st.markdown(
                             """
 <div class="target-card">
-<b>🚨 TG ≥1000 mg/dL — ưu tiên ban đầu: giảm TG để phòng viêm tụy</b>
+<b>🚨 TG ≥1000 mg/dL (≥11,3 mmol/L) — ưu tiên ban đầu: giảm TG để phòng viêm tụy</b>
 </div>
 """,
                             unsafe_allow_html=True,
